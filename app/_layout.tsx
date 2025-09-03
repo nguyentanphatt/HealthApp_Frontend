@@ -16,7 +16,8 @@ export default function RootLayout() {
     const checkIntroduction = async () => {
       const hasSeen = await AsyncStorage.getItem("hasSeenIntroduction");
       if (!hasSeen) {
-        router.replace("/introduction");
+        //router.replace("/introduction");
+        router.replace('/auth/signin')
       }
     };
     checkIntroduction();
@@ -30,9 +31,10 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar hidden />
-      <Stack>
-        <Stack.Screen name="introduction" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="introduction" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="auth/signin" />
       </Stack>
     </>
   );

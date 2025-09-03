@@ -1,6 +1,5 @@
 import { AnimatedIndicator } from "@/components/AnimatedIndicator";
 import { introductionData } from "@/constants/data";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
@@ -9,8 +8,9 @@ const Introduction = () => {
     const router = useRouter()
     const [selectedIndex, setSelectedIndex] = useState(0)
     const handleContinue = async () => {
-        await AsyncStorage.setItem('hasSeenIntroduction', 'true');
-        router.replace('/(tabs)');
+        //await AsyncStorage.setItem('hasSeenIntroduction', 'true');
+        //router.replace('/(tabs)');
+        router.push("/auth/signin");
     }
   return (
     <View className="font-lato-regular flex-1 items-center justify-center gap-20 py-16 w-full">
@@ -18,8 +18,7 @@ const Introduction = () => {
         loop={false}
         showsPagination={false}
         onIndexChanged={setSelectedIndex}
-        style={{}} // Sử dụng flex: 1 để chiếm toàn bộ không gian
-        className="border-red-500 h-[400px]"
+        className="h-[400px]"
       >
         {introductionData.map((item) => (
           <View

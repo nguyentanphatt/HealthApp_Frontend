@@ -7,6 +7,9 @@ import blur01 from '@/assets/images/blur01.png';
 import blur02 from '@/assets/images/blur02.png';
 import blur03 from '@/assets/images/blur03.png';
 import blur04 from '@/assets/images/blur04.png';
+
+import googleicon from '@/assets/images/googleicon.png';
+import star from '@/assets/images/star.png';
 export const images = {
   fitness,
   sleep,
@@ -16,4 +19,6 @@ export const images = {
   blur02,
   blur03,
   blur04,
+  star,
+  googleicon
 };
