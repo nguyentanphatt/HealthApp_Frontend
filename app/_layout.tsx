@@ -17,7 +17,7 @@ export default function RootLayout() {
       const hasSeen = await AsyncStorage.getItem("hasSeenIntroduction");
       if (!hasSeen) {
         //router.replace("/introduction");
-        router.replace('/auth/signin')
+        router.replace('/auth/verify')
       }
     };
     checkIntroduction();
