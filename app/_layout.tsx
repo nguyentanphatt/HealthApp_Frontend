@@ -4,6 +4,7 @@ import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
+import Toast from 'react-native-toast-message';
 import "../global.css";
 export default function RootLayout() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function RootLayout() {
       const hasSeen = await AsyncStorage.getItem("hasSeenIntroduction");
       if (!hasSeen) {
         //router.replace("/introduction");
-        router.replace('/auth/verify')
+        router.replace('/auth/signup')
       }
     };
     checkIntroduction();
@@ -36,6 +37,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="auth/signin" />
       </Stack>
+      <Toast swipeable visibilityTime={2000} topOffset={50}/>
     </>
   );
 }

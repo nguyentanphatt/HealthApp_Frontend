@@ -1,35 +1,46 @@
 import InputWithIcon from "@/components/InputWithIcon";
 import { images } from "@/constants/image";
-import { Link } from "expo-router";
+import { sendOtp, signup } from "@/services/user";
+import { validateConfirmPassword, validateEmail, validatePassword } from "@/utils/validate";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
+import Toast from "react-native-toast-message";
 
 const Signup = () => {
+  const router = useRouter()
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState({
+    email: "",
+    password: "",
+    confirmPassword: ""
+  });
 
-  const validateEmail = (email: string) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regex.test(email)) {
-      setErrorMessage("Email không hợp lệ");
-    } else {
-      setErrorMessage("");
+  const handleSignup = async() => {
+    if (
+      errorMessage.email ||
+      errorMessage.password ||
+      errorMessage.confirmPassword
+    ) {
+      return;
+    }
+    const response = await signup(email, password);
+    if(response.success){
+      await AsyncStorage.setItem('email', email)
+      await sendOtp(email)
+      router.push('/auth/verify')
+    }
+    else {
+      Toast.show({
+        type: 'error',
+        text1: 'Đăng ký thất bại',
+        text2: response.message
+      });
     }
   };
-
-  const handleEmailChange = (value: string) => {
-    setEmail(value);
-    validateEmail(value);
-  };
-
-  const handleSignup = () => {
-    // Check account in database
-    //True -> send OTP
-    //False -> show error message
-  };
-
   const googleSignin = () => {
     //Signin with google
     //Return data to storage in database
@@ -50,12 +61,17 @@ const Signup = () => {
         source={images.star}
         className="-z-10 absolute top-[20%] -left-[15%] w-[100px] h-[100px]"
       />
-      <View className="flex-1 items-center justify-center w-full gap-[5%] z-10 bg-white/40 backdrop-blur-md px-5">
+      <View className="flex-1 items-center justify-center w-full gap-[6%] z-10 bg-white/40 backdrop-blur-md px-5">
         <InputWithIcon
           icon="envelope"
           placeholder="Email"
           value={email}
-          onChangeText={handleEmailChange}
+          onChangeText={setEmail}
+          onBlur={() => {
+            const emailError = validateEmail(email);
+            setErrorMessage((prev) => ({ ...prev, email: emailError }));
+          }}
+          error={errorMessage.email}
         />
 
         <InputWithIcon
@@ -64,6 +80,11 @@ const Signup = () => {
           secureTextEntry
           value={password}
           onChangeText={setPassword}
+          onBlur={() => {
+            const passwordError = validatePassword(password);
+            setErrorMessage((prev) => ({ ...prev, password: passwordError }));
+          }}
+          error={errorMessage.password}
         />
         <InputWithIcon
           icon="key"
@@ -71,6 +92,17 @@ const Signup = () => {
           secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
+          onBlur={() => {
+            const confirmPasswordError = validateConfirmPassword(
+              password,
+              confirmPassword
+            );
+            setErrorMessage((prev) => ({
+              ...prev,
+              confirmPassword: confirmPasswordError,
+            }));
+          }}
+          error={errorMessage.confirmPassword}
         />
         <TouchableOpacity
           className="flex items-center justify-center py-4 w-full bg-cyan-blue rounded-full"
