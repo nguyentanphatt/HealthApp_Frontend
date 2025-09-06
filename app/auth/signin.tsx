@@ -1,32 +1,36 @@
 import InputWithIcon from "@/components/InputWithIcon";
 import { images } from "@/constants/image";
-import { Link } from "expo-router";
+import { sendOtp, signin } from "@/services/user";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AxiosError } from "axios";
+import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
+import Toast from "react-native-toast-message";
 
 const Signin = () => {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
 
-  const validateEmail = (email: string) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regex.test(email)) {
-      setErrorMessage("Email không hợp lệ");
-    } else {
-      setErrorMessage("");
+  const handleSignin = async () => {
+    try {
+      const response = await signin(email, password)
+      if(response.success) {
+        await AsyncStorage.multiSet([
+          ["email", email],
+          ["type", "signin"],
+        ]);
+        await sendOtp(email)
+        router.push('/auth/verify')
+      }
+    } catch (error) {
+      const err = error as AxiosError<{ message: string }>;
+      Toast.show({
+        type: "error",
+        text1: err.response?.data.message,
+      });
     }
-  }
-
-  const handleEmailChange = (value: string) => {
-    setEmail(value);
-    validateEmail(value);
-  };
-
-  const handleSignin = () => {
-    // Check account in database
-    //True -> send OTP
-    //False -> show error message
   }
 
   const googleSignin = () => {
@@ -54,7 +58,7 @@ const Signin = () => {
           icon="envelope"
           placeholder="Email"
           value={email}
-          onChangeText={handleEmailChange}
+          onChangeText={setEmail}
         />
 
         <View className="w-full">

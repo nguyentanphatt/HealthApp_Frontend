@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "HealthApp",
+    "slug": "HealthApp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
+    "scheme": "HealthApp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
