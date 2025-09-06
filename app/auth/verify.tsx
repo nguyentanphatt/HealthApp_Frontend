@@ -48,12 +48,14 @@ const Verify = () => {
     try {
      const response = await verifyOtp(email, otp);
      if(response.success){
+      await AsyncStorage.setItem("accessToken", response.data.accessToken);
+      await AsyncStorage.setItem("refreshToken", response.data.refreshToken);
       if(type === 'signup'){
         Toast.show({
           type: "success",
           text1: "Đăng ký thành công",
         });
-        router.push("/auth/signin");
+        router.push("/(tabs)");
       } else {
         Toast.show({
           type: "success",
