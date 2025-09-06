@@ -1,6 +1,7 @@
 import { images } from "@/constants/image";
-import { verifyOtp } from "@/services/user";
+import { sendOtp, verifyOtp } from "@/services/user";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
@@ -9,6 +10,7 @@ import Toast from "react-native-toast-message";
 const Verify = () => {
   const router = useRouter()
   const [email, setEmail] = useState("");
+  const [type, setType] = useState("");
   const [otp, setOtp] = useState("");
   const [timeLeft, setTimeLeft] = useState(5 * 60);
 
@@ -31,7 +33,13 @@ const Verify = () => {
   useEffect(() => {
     const loadEmail = async () => {
       const storedEmail = await AsyncStorage.getItem("email");
-      setEmail(storedEmail || "")
+      const type = await AsyncStorage.getItem("type");
+      if (storedEmail && type) {
+        setEmail(storedEmail);
+        setType(type);
+        await AsyncStorage.removeItem("email");
+        await AsyncStorage.removeItem("type");
+      }
     };
     loadEmail();
   }, []);
@@ -40,23 +48,40 @@ const Verify = () => {
     try {
      const response = await verifyOtp(email, otp);
      if(response.success){
-      Toast.show({
-        type: 'success',
-        text1: 'Đăng ký thành công',
-        text2: response.message
-      })
-      router.push('/auth/signin')
+      if(type === 'signup'){
+        Toast.show({
+          type: "success",
+          text1: "Đăng ký thành công",
+        });
+        router.push("/auth/signin");
+      } else {
+        Toast.show({
+          type: "success",
+          text1: "Đăng nhập thành công"
+        });
+        router.push("/(tabs)");
+      }
+      
      } 
     } catch (error) {
+      const err = error as AxiosError<{ message: string }>;
       Toast.show({
-        type: 'error',
-        text1: 'Xác thực thất bại'
-      })
+        type: "error",
+        text1: err.response?.data.message,
+      });
     }
   }
 
-  const resend = () => {
-
+  const resend = async () => {
+    try {
+      await sendOtp(email)
+      Toast.show({
+        type: "success",
+        text1: "Đã gửi lại mã OTP",
+      });
+    } catch (error) {
+      throw error
+    }
   }
 
   return (
@@ -101,9 +126,11 @@ const Verify = () => {
           />
           <Text className="self-end mt-2 px-5">{formatTime(timeLeft)}</Text>
         </View>
-        <Text className="text-cyan-blue text-center" onPress={resend}>
-          Gửi lại OTP
-        </Text>
+        <TouchableOpacity onPress={resend}>
+          <Text className="text-cyan-blue text-center" >
+            Gửi lại OTP
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity
           className="flex items-center justify-center py-4 w-full bg-cyan-blue rounded-full"
           onPress={() => handleVerify(otp)}

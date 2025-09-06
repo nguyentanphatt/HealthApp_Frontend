@@ -29,7 +29,10 @@ const Signup = () => {
     }
     const response = await signup(email, password);
     if(response.success){
-      await AsyncStorage.setItem('email', email)
+      await AsyncStorage.multiSet([
+        ["email", email],
+        ["type", "signup"]
+      ]);
       await sendOtp(email)
       router.push('/auth/verify')
     }

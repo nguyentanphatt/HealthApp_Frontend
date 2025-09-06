@@ -18,7 +18,7 @@ export default function RootLayout() {
       const hasSeen = await AsyncStorage.getItem("hasSeenIntroduction");
       if (!hasSeen) {
         //router.replace("/introduction");
-        router.replace('/auth/signup')
+        router.replace('/auth/signin')
       }
     };
     checkIntroduction();
@@ -37,7 +37,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="auth/signin" />
       </Stack>
-      <Toast swipeable visibilityTime={2000} topOffset={50}/>
+      <Toast swipeable visibilityTime={3000} topOffset={50}/>
     </>
   );
 }

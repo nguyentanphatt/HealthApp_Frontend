@@ -29,3 +29,12 @@ export const verifyOtp = async (email: string, otp: string) => {
         throw error
     }
 }
+
+export const signin = async (email: string, password: string) => {
+    try {
+        const response = await client.post('/api/auth/login', {email, password})
+        return response.data
+    } catch (error) {
+        throw error
+    }
+}
