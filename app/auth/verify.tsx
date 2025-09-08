@@ -1,4 +1,5 @@
 import { images } from "@/constants/image";
+import useAuthStorage from "@/hooks/useAuthStorage";
 import { sendOtp, verifyOtp } from "@/services/user";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AxiosError } from "axios";
@@ -13,6 +14,7 @@ const Verify = () => {
   const [type, setType] = useState("");
   const [otp, setOtp] = useState("");
   const [timeLeft, setTimeLeft] = useState(5 * 60);
+  const { saveAuthData } = useAuthStorage()
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -48,8 +50,7 @@ const Verify = () => {
     try {
      const response = await verifyOtp(email, otp);
      if(response.success){
-      await AsyncStorage.setItem("accessToken", response.data.accessToken);
-      await AsyncStorage.setItem("refreshToken", response.data.refreshToken);
+      await saveAuthData(response.data)
       if(type === 'signup'){
         Toast.show({
           type: "success",

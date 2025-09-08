@@ -38,3 +38,12 @@ export const signin = async (email: string, password: string) => {
         throw error
     }
 }
+
+export const getNewToken = async (refreshToken: string) => {
+    try {
+        const response = await client.post('/api/auth/refresh', {refreshToken})
+        return response.data
+    } catch (error) {
+        throw error
+    }
+}

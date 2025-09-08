@@ -1,5 +1,6 @@
 import { AnimatedIndicator } from "@/components/AnimatedIndicator";
 import { introductionData } from "@/constants/data";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
@@ -8,8 +9,7 @@ const Introduction = () => {
     const router = useRouter()
     const [selectedIndex, setSelectedIndex] = useState(0)
     const handleContinue = async () => {
-        //await AsyncStorage.setItem('hasSeenIntroduction', 'true');
-        //router.replace('/(tabs)');
+        await AsyncStorage.setItem('hasSeenIntroduction', 'true');
         router.push("/auth/signin");
     }
   return (
