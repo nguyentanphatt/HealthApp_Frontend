@@ -58,7 +58,7 @@ export default function RootLayout() {
     <>
       <StatusBar hidden />
       <Stack
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ headerShown: false, contentStyle: {backgroundColor: '#f6f6f6'} }}
         initialRouteName={initialRoute}
       >
         <Stack.Screen name="introduction" />

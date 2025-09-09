@@ -123,9 +123,9 @@ export default function CalendarSwiper() {
         scrollEventThrottle={16}
       />
 
-      <Text className="mt-4 text-base text-center">
+      {/* <Text className="mt-4 text-base text-center">
         Ngày đang chọn: {dayjs(selectedDate).format("DD/MM/YYYY")}
-      </Text>
+      </Text> */}
     </View>
   );
 }
