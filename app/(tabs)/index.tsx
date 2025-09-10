@@ -84,12 +84,12 @@ export default function HomeScreen() {
             </View>
           </Card>
 
-          {/* Grid demo */}
           <View className="flex-row">
             <FunctionCard
               classname={card({ type: "left" })}
-              iconName="bed"
-              title="Giấc ngủ"
+              iconName="glass-water-droplet"
+              title="Nước"
+              href="/water"
             >
               <WaterVector />
               <Text className="text-black/60 text-xl">

@@ -34,7 +34,8 @@ export default function RootLayout() {
         await loadStoredAuth();
         if (storedRefresh && storedAccess) {
           await checkAndRefreshToken(storedAccess, storedRefresh);
-          setInitialRoute("(tabs)");
+          //setInitialRoute("(tabs)");
+          setInitialRoute("water/index");
         } else {
           setInitialRoute("auth/signin");
         }
@@ -64,6 +65,8 @@ export default function RootLayout() {
         <Stack.Screen name="introduction" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="auth/signin" />
+        <Stack.Screen name="water/index" />
+        <Stack.Screen name="water/edit/index" />
       </Stack>
       <Toast swipeable visibilityTime={3000} topOffset={50} />
     </>
