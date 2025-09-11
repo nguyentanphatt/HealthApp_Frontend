@@ -16,10 +16,12 @@ export default function RootLayout() {
     "Lato-Bold": require("../assets/fonts/Lato-Bold.ttf"),
   });
 
-  const { checkAndRefreshToken, loadStoredAuth } = useAuthStorage();
+  const { checkAndRefreshToken, loadStoredAuth, refreshToken } = useAuthStorage();
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
 
   useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | undefined;
+
     const init = async () => {
       try {
         const hasSeen = await AsyncStorage.getItem("hasSeenIntroduction");
@@ -30,12 +32,24 @@ export default function RootLayout() {
 
         const storedAccess = await SecureStore.getItemAsync("access_token");
         const storedRefresh = await SecureStore.getItemAsync("refresh_token");
-
+        console.log("token", storedAccess);
+        
         await loadStoredAuth();
         if (storedRefresh && storedAccess) {
           await checkAndRefreshToken(storedAccess, storedRefresh);
           //setInitialRoute("(tabs)");
           setInitialRoute("water/index");
+
+          interval = setInterval(
+            async () => {
+              const a = await SecureStore.getItemAsync("access_token");
+              const r = await SecureStore.getItemAsync("refresh_token");
+              if (a && r) {
+                await checkAndRefreshToken(a, r);
+              }
+            },
+            5 * 60 * 1000
+          );
         } else {
           setInitialRoute("auth/signin");
         }
@@ -45,6 +59,10 @@ export default function RootLayout() {
     };
 
     init();
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, []);
 
   if (!loaded || !initialRoute) {

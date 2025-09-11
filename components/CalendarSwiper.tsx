@@ -17,10 +17,16 @@ type DayItem = {
   fullDate: string;
 };
 
-export default function CalendarSwiper() {
-  const [days, setDays] = useState<DayItem[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string>("");
+const ITEM_WIDTH = 70;
 
+export default function CalendarSwiper({
+  onDateChange,
+  selectedDate,
+}: {
+  onDateChange?: (date: string, timestamp: number) => void;
+  selectedDate?: string;
+}) {
+  const [days, setDays] = useState<DayItem[]>([]);
   const listRef = useRef<FlatList<DayItem>>(null);
   const earliestDate = useRef(dayjs());
 
@@ -29,19 +35,8 @@ export default function CalendarSwiper() {
     const start = today.subtract(30, "day");
     const initialDays = generateDays(start, 31);
     setDays(initialDays);
-    setSelectedDate(today.format("YYYY-MM-DD"));
     earliestDate.current = start;
   }, []);
-
-  useEffect(() => {
-    if (days.length > 0) {
-      listRef.current?.scrollToIndex({
-        index: days.length - 1,
-        animated: true,
-        viewPosition: 1,
-      });
-    }
-  }, [days]);
 
   const generateDays = (start: dayjs.Dayjs, count: number): DayItem[] => {
     return Array.from({ length: count }).map((_, i) => {
@@ -60,11 +55,10 @@ export default function CalendarSwiper() {
     setDays((prev) => [...newDays, ...prev]);
     earliestDate.current = newStart;
 
-    
     requestAnimationFrame(() => {
       listRef.current?.scrollToOffset({
-        offset: 70 * newDays.length, 
-        animated: true,
+        offset: ITEM_WIDTH * newDays.length,
+        animated: false,
       });
     });
   }, []);
@@ -76,11 +70,18 @@ export default function CalendarSwiper() {
     }
   };
 
+  const handleSelectDate = (date: string) => {
+    if (onDateChange) {
+      onDateChange(date, new Date(date).getTime());
+    }
+  };
+
   const renderItem: ListRenderItem<DayItem> = ({ item }) => {
     const isSelected = item.fullDate === selectedDate;
+
     return (
       <TouchableOpacity
-        onPress={() => setSelectedDate(item.fullDate)}
+        onPress={() => handleSelectDate(item.fullDate)}
         className={`mx-1 size-16 flex items-center justify-center rounded-lg ${
           isSelected ? "bg-cyan-blue" : "bg-gray-300"
         }`}
@@ -114,18 +115,20 @@ export default function CalendarSwiper() {
         keyExtractor={(item) => item.fullDate}
         renderItem={renderItem}
         showsHorizontalScrollIndicator={false}
-        getItemLayout={(data, index) => ({
-          length: 70,
-          offset: 70 * index,
+        getItemLayout={(_, index) => ({
+          length: ITEM_WIDTH,
+          offset: ITEM_WIDTH * index,
           index,
         })}
+        onContentSizeChange={() => {
+          if (days.length > 0) {
+            listRef.current?.scrollToEnd({ animated: false });
+          }
+        }}
         onScroll={handleScroll}
         scrollEventThrottle={16}
+        extraData={selectedDate}
       />
-
-      {/* <Text className="mt-4 text-base text-center">
-        Ngày đang chọn: {dayjs(selectedDate).format("DD/MM/YYYY")}
-      </Text> */}
     </View>
   );
 }

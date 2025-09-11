@@ -1,101 +1,227 @@
 import CalendarSwiper from "@/components/CalendarSwiper";
 import InfoCard from "@/components/InfoCard";
 import WaterVector from "@/components/vector/WaterVector";
-import { WaterStatus } from "@/constants/type";
-import { getWaterStatus, saveWaterRecord } from "@/services/water";
+import WaterHistory from "@/components/WaterHistory";
+import Weather from "@/components/Weather";
+import { DailyIntake, WaterStatus, WeatherResponse } from "@/constants/type";
+import {
+  getIp,
+  getWaterStatus,
+  saveWaterRecord,
+  updateWaterDailyGoal,
+  WaterWeekly,
+  WeatherSuggest,
+} from "@/services/water";
 import { FontAwesome6 } from "@expo/vector-icons";
+import dayjs from "dayjs";
 import { Href, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View
+} from "react-native";
+import { BarChart } from "react-native-gifted-charts";
+import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
-
 const Page = () => {
-  const router = useRouter()
+  const router = useRouter();
   const [visible, setVisible] = useState(false);
   const [amount, setAmount] = useState(360);
-  const [waterStatus, setWaterStatus] = useState<WaterStatus>();
-  const [loading, setLoading] = useState(false)
-  const [currentDate, setCurrentDate] = useState(Date.now())
-  const currentDateIso = new Date(currentDate).toISOString().split("T")[0];
+  const [waterStatus, setWaterStatus] = useState<WaterStatus>({
+    dailyGoal: 0,
+    currentIntake: 0,
+    date: "",
+    history: [],
+  });
+  const [weatherReport, setWeatherReport] = useState<WeatherResponse>({
+    temp: 0,
+    humidity: 0,
+    recommended: 0,
+    success: true,
+    message: "",
+  });
+  const [waterWeeklyData, setWaterWeeklyData] = useState<DailyIntake[]>([])
+  const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(0);
+  const currentDate = Date.now();
   const items = Array.from({ length: 100 }, (_, i) => {
     const amount = (i + 1) * 10;
     return { label: `${amount}`, amount };
   });
-
-  const handleCloseModal = () => {
-    setVisible(false)
-  }
-
   const fetchWaterStatus = async () => {
     try {
-      setLoading(true);
-      const res = await getWaterStatus()
-      if(!res.success){
-        console.error("Lỗi....")
+      const nowDate = (Date.now() / 1000).toFixed(0);
+      if (selectedDate !== 0 && selectedDate.toString() !== nowDate) {
+        const res = await getWaterStatus({
+          date: (selectedDate * 1000).toString(),
+        });
+        if (!res.success) {
+          console.error("Lỗi....");
+        }
+        setWaterStatus(res.data);
+      } else {
+        const res = await getWaterStatus();
+        if (!res.success) {
+          console.error("Lỗi....");
+        }
+        setWaterStatus(res.data);
       }
-      setWaterStatus(res.data)
     } catch (error) {
       console.error("Fetch error:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchWaterStatus();
-  }, []);
-
-  const handleConfirm = async (amount: number, time:string) => {
-    console.log("amount", amount);
-    console.log("time", time);
-    
-    
+  const fetchWeatherAI = async () => {
     try {
-      await saveWaterRecord(amount, time)
-      fetchWaterStatus();
+      const ip = await getIp();
+      const response = await WeatherSuggest(ip);
+      setWeatherReport(response);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchWaterChartData = async () => {
+    try {
+      const nowDate = (Date.now() / 1000).toFixed(0);
+      if (selectedDate !== 0 && selectedDate.toString() !== nowDate) {
+        const res = await WaterWeekly({
+          date: (selectedDate * 1000).toString(),
+        });
+        if (!res.success) {
+          console.error("Lỗi....");
+        }
+        setWaterWeeklyData(res.data.dailyIntake)
+      } else {
+        const res = await WaterWeekly();
+        if (!res.success) {
+          console.error("Lỗi....");
+        }
+        setWaterWeeklyData(res.data.dailyIntake);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+    }
+  }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        await Promise.all([
+          fetchWaterStatus(),
+          fetchWeatherAI(),
+          fetchWaterChartData(),
+        ]);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [selectedDate]);
+
+  const handleConfirm = async (amount: number, time: string) => {
+    try {
+      await saveWaterRecord(amount, time);
+      await fetchWaterStatus();
     } catch (error) {
       console.error("Save error:", error);
     }
   };
 
-  const formatTime = (isoString: string) => {
-    const date = new Date(isoString);
-    const hours = date.getUTCHours().toString().padStart(2, "0");
-    const minutes = date.getUTCMinutes().toString().padStart(2, "0");
-    return `${hours}:${minutes}`;
-  };
- 
+  const filtered = waterStatus?.history.sort(
+    (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
+  );
 
-  const filtered = waterStatus?.history
-    .filter((record) => record.time.startsWith(currentDateIso))
-    .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-  return (
-    <View className="flex-1 gap-2.5 px-4 py-10 h-[300px] font-lato-regular">
-      <View className="flex flex-row items-center justify-between pt-5">
-        <TouchableOpacity onPress={() => router.push("/(tabs)")}>
-          <FontAwesome6 name="chevron-left" size={24} color="black" />
-        </TouchableOpacity>
-        <Text className="text-2xl font-bold  self-center">Nước</Text>
-        <View style={{ width: 24 }} />
+  const percent =
+    ((waterStatus?.currentIntake ?? 0) / (waterStatus?.dailyGoal ?? 1)) * 100;
+
+  const handleUpdateGoal = async (amount: number, time: string) => {
+    try {
+      const response = await updateWaterDailyGoal(amount, time);
+      if (response.success) {
+        Toast.show({
+          type: "success",
+          text1: response.message,
+        });
+        router.replace("/water");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" color="#000" />
       </View>
-      <CalendarSwiper />
+    );
+  }
+  const data = waterWeeklyData.map(item => ({
+    value: item.totalMl,
+    label: item.dayOfWeek
+  }))
+  
+  return (
+    <ScrollView
+      className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
+      stickyHeaderIndices={[0]}
+      contentContainerStyle={{ paddingBottom: 50 }}
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="flex bg-[#f6f6f6] pt-10">
+        <View className="flex flex-row items-center justify-between">
+          <TouchableOpacity onPress={() => router.push("/(tabs)")}>
+            <FontAwesome6 name="chevron-left" size={24} color="black" />
+          </TouchableOpacity>
+          <Text className="text-2xl font-bold  self-center">Nước</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <CalendarSwiper
+          selectedDate={
+            selectedDate
+              ? dayjs.unix(selectedDate).format("YYYY-MM-DD")
+              : dayjs().format("YYYY-MM-DD")
+          }
+          onDateChange={(date, timestamp) => {
+            setSelectedDate(Number((timestamp / 1000).toFixed(0)));
+          }}
+        />
+      </View>
       <View className="flex-row">
         <View className="relative flex-1 items-center justify-center bg-white rounded-md shadow-md mr-1">
           <WaterVector />
           <Text className="absolute top-2 right-2 text-black text-lg">
             - {waterStatus?.dailyGoal}
+            {` ml`}
           </Text>
         </View>
         <View className="flex-1 justify-between ml-1">
-          <InfoCard
-            title="Mục tiêu"
-            content={waterStatus?.dailyGoal.toString() || "2000ml"}
-          />
+          <TouchableOpacity
+            onPress={() =>
+              router.push(
+                `/water/goal?amount=${waterStatus?.dailyGoal}&time=${waterStatus?.date}` as Href
+              )
+            }
+          >
+            <InfoCard
+              title="Mục tiêu"
+              content={`${waterStatus?.dailyGoal?.toString()} ml` || "2000ml"}
+            />
+          </TouchableOpacity>
           <InfoCard
             title="Tiến độ"
-            content={waterStatus?.currentIntake.toString() || "0ml"}
+            content={waterStatus?.currentIntake?.toString() || "0ml"}
             subcontent={
-              ` / ${waterStatus?.dailyGoal.toString()}` || " / 2000ml"
+              ` / ${waterStatus?.dailyGoal?.toString()} ml` || " / 2000ml"
             }
           />
           <TouchableOpacity className="flex flex-row items-center justify-center gap-2.5 bg-white p-2 rounded-md shadow-md h-[70px]">
@@ -116,7 +242,7 @@ const Page = () => {
         visible={visible}
         transparent
         animationType="fade"
-        onRequestClose={handleCloseModal}
+        onRequestClose={() => setVisible(false)}
       >
         <View className="flex-1 items-center justify-center bg-black/30">
           <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
@@ -153,7 +279,7 @@ const Page = () => {
             <TouchableOpacity
               onPress={() => {
                 handleConfirm(amount, currentDate.toString());
-                handleCloseModal();
+                setVisible(false);
               }}
               className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
             >
@@ -162,31 +288,39 @@ const Page = () => {
           </View>
         </View>
       </Modal>
+      <WaterHistory filtered={filtered} percent={percent} />
 
-      <ScrollView className="max-h-[400px]">
-        <View className="flex gap-2.5">
-          {loading ? (
-            <Text className="text-center">Đang tải...</Text>
-          ) : (
-            filtered?.map((rec, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() =>
-                  router.push(
-                    `/water/edit?amount=${rec.amount}&time=${rec.time}` as Href
-                  )
-                }
-              >
-                <InfoCard
-                  title={formatTime(rec.time)}
-                  content={`${rec.amount} ml`}
-                />
-              </TouchableOpacity>
-            ))
-          )}
+      <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4">
+        <View>
+          <Text className="font-bold text-xl">Tiến trình của bạn</Text>
+          <Text className="text-black/60">Hãy giữ phong độ nào !</Text>
         </View>
-      </ScrollView>
-    </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 8 }}
+        >
+          <BarChart
+            data={data}
+            barWidth={24}
+            frontColor="#00BFFF"
+            noOfSections={3}
+            yAxisLabelTexts={["0", "500", "1000", "1500", "2000"]}
+            maxValue={2000}
+            xAxisLabelTextStyle={{ color: "black" }}
+            yAxisTextStyle={{ color: "black" }}
+          />
+        </ScrollView>
+      </View>
+
+      <Weather
+        handleUpdateGoal={() =>
+          handleUpdateGoal(weatherReport.recommended, Date.now().toString())
+        }
+        weatherReport={weatherReport}
+        waterStatus={waterStatus}
+      />
+    </ScrollView>
   );
 };
 

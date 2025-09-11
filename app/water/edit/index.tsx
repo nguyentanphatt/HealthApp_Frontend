@@ -1,7 +1,10 @@
+import { updateWaterRecord } from "@/services/water";
+import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { BackHandler, Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
 
 const Page = () => {
@@ -11,9 +14,7 @@ const Page = () => {
   }>();
   const router = useRouter();
   const initAmount = Number(amount) || 250;
-  const parseIso = (isoString: string): Date => {
-    return new Date(isoString);
-  };
+  const dateTimestamp = convertISOToTimestamp(time) 
   const date = new Date(time);
   const initHour = date.getUTCHours();
   const initMinute = date.getUTCMinutes();
@@ -21,15 +22,16 @@ const Page = () => {
   const [selectedAmount, setSelectedAmount] = useState(initAmount);
   const [selectedHour, setSelectedHour] = useState(initHour);
   const [selectedMinute, setSelectedMinute] = useState(initMinute);
+  const [visible, setVisible] = useState(false);
 
   const hours = Array.from({ length: 24 }, (_, i) => ({
     label: (i + 1).toString(),
     value: i,
   }));
 
-  const minutes = Array.from({ length: 59 }, (_, i) => ({
-    label: (i + 1).toString(),
-    value: i + 1,
+  const minutes = Array.from({ length: 60 }, (_, i) => ({
+    label: i.toString().padStart(2, "0"),
+    value: i,
   }));
 
   const times = 9; 
@@ -38,8 +40,8 @@ const Page = () => {
 
   const repeatedMinutes = Array.from({ length: times }).flatMap(() => minutes);
   const middleMinutesIndex = Math.floor(times / 2) * minutes.length;
-
-  const handleSave = (amount: number, hour: number, minute: number) => {
+  
+  const handleSave = async (amount: number, hour: number, minute: number, date: string) => {
     const newTime = new Date(time);
     newTime.setUTCHours(hour);
     newTime.setUTCMinutes(minute);
@@ -50,10 +52,44 @@ const Page = () => {
     console.log("Saved:", {
       amount,
       time: timestamp,
+      oldTime: date
     });
 
-    //router.back();
+    try {
+      const response = await updateWaterRecord(
+        amount,
+        date,
+        timestamp.toString()
+      );
+      if(response.success){
+        Toast.show({
+          type:'success',
+          text1: response.message
+        })
+        router.push('/water');
+      }
+    } catch (error) {
+      console.error(error)
+    }
   };
+
+  const isChanged = (initAmount !== selectedAmount) && (initHour !== selectedHour) && (initMinute !== selectedMinute);
+  useEffect(() => {
+    const backAction = () => {
+      if (isChanged) {
+        setVisible(true);
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, [isChanged]);
 
   return (
     <View className="flex-1 gap-2.5 px-4 py-10 h-[300px] font-lato-regular">
@@ -109,7 +145,7 @@ const Page = () => {
         <WheelPickerExpo
           height={240}
           width={150}
-          initialSelectedIndex={middleMinutesIndex + initHour - 1}
+          initialSelectedIndex={middleMinutesIndex + initMinute}
           items={repeatedMinutes}
           selectedStyle={{
             borderColor: "gray",
@@ -139,13 +175,56 @@ const Page = () => {
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
-            handleSave(Number(selectedAmount), selectedHour, selectedMinute);
+            handleSave(
+              Number(selectedAmount),
+              selectedHour,
+              selectedMinute,
+              dateTimestamp.toString()
+            );
           }}
           className="flex-row items-center justify-center w-[45%] bg-cyan-blue py-3 rounded-md shadow-md"
         >
-          <Text className="text-xl text-white font-bold ">Thêm</Text>
+          <Text className="text-xl text-white font-bold ">Sửa</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setVisible(false)}
+      >
+        <View className="flex-1 items-center justify-center bg-black/30">
+          <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
+            <Text className="text-lg font-bold mb-4">
+              Dữ liệu chưa được lưu, bạn có muốn thoát ?
+            </Text>
+
+            <View className="flex flex-row items-center justify-between">
+              <TouchableOpacity
+                onPress={() => router.back()}
+                className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
+              >
+                <Text className="text-xl text-black font-bold ">Thoát</Text>
+              </TouchableOpacity>
+              <Text>|</Text>
+              <TouchableOpacity
+                onPress={() =>
+                  handleSave(
+                    Number(selectedAmount),
+                    selectedHour,
+                    selectedMinute,
+                    dateTimestamp.toString()
+                  )
+                }
+                className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
+              >
+                <Text className="text-xl text-black font-bold ">Lưu</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
