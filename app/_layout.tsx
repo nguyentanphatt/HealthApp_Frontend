@@ -1,5 +1,6 @@
 import useAuthStorage from "@/hooks/useAuthStorage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Font from "expo-font";
 import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -18,6 +19,7 @@ export default function RootLayout() {
 
   const { checkAndRefreshToken, loadStoredAuth, refreshToken } = useAuthStorage();
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
+  const queryClient = new QueryClient();
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | undefined;
@@ -74,10 +76,13 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <StatusBar hidden />
       <Stack
-        screenOptions={{ headerShown: false, contentStyle: {backgroundColor: '#f6f6f6'} }}
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: "#f6f6f6" },
+        }}
         initialRouteName={initialRoute}
       >
         <Stack.Screen name="introduction" />
@@ -87,6 +92,6 @@ export default function RootLayout() {
         <Stack.Screen name="water/edit/index" />
       </Stack>
       <Toast swipeable visibilityTime={3000} topOffset={50} />
-    </>
+    </QueryClientProvider>
   );
 }

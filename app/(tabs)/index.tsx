@@ -3,7 +3,10 @@ import Card from "@/components/Card";
 import FunctionCard from "@/components/FunctionCard";
 import ProgressItem from "@/components/ProgressItem";
 import WaterVector from "@/components/vector/WaterVector";
+import { getWaterStatus } from "@/services/water";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
 import { tv } from "tailwind-variants";
@@ -13,6 +16,35 @@ const CALENDAR_HEIGHT = 140;
 export default function HomeScreen() {
   const scrollY = useRef(new Animated.Value(0)).current;
   const [bgActive, setBgActive] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(0);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    queryClient.prefetchQuery({
+      queryKey: ["waterStatus", 0],
+      queryFn: () => getWaterStatus(),
+      staleTime: 1000 * 60 * 5,
+    });
+  }, []);
+
+  const {
+      data: waterStatus,
+      isLoading: loadingWaterStatus,
+      refetch: refetchWaterStatus,
+    } = useQuery({
+      queryKey: ["waterStatus", selectedDate],
+      queryFn: () =>
+        getWaterStatus(
+          selectedDate !== 0
+            ? { date: (selectedDate * 1000).toString() }
+            : undefined
+        ),
+      staleTime: 1000 * 60 * 5,
+      select: (res) => res.data
+    });
+
+  const currentDate = Date.now();
+  
   useEffect(() => {
     const listenerId = scrollY.addListener(({ value }) => {
       if (value >= 20 && !bgActive) setBgActive(true);
@@ -33,7 +65,6 @@ export default function HomeScreen() {
       },
     },
   });
-
   return (
     <View className="flex-1 px-4 font-lato-regular">
       <Animated.ScrollView
@@ -54,9 +85,19 @@ export default function HomeScreen() {
           style={[
             bgActive && { backgroundColor: "#f6f6f6" },
             { paddingTop: 40 },
+            { zIndex: 10 }
           ]}
         >
-          <CalendarSwiper />
+          <CalendarSwiper
+            selectedDate={
+              selectedDate
+                ? dayjs.unix(selectedDate).format("YYYY-MM-DD")
+                : dayjs().format("YYYY-MM-DD")
+            }
+            onDateChange={(date, timestamp) => {
+              setSelectedDate(Number((timestamp / 1000).toFixed(0)));
+            }}
+          />
         </Animated.View>
 
         <View className="flex-1 gap-2.5">
@@ -91,9 +132,12 @@ export default function HomeScreen() {
               title="Nước"
               href="/water"
             >
-              <WaterVector />
+              <WaterVector 
+                progress={waterStatus ? (waterStatus.currentIntake / waterStatus.dailyGoal) * 100 : 0}
+                animated={true}
+              />
               <Text className="text-black/60 text-xl">
-                <Text className="font-bold text-3xl text-black">0</Text>/ 2000ml
+                <Text className="font-bold text-3xl text-black">{waterStatus?.currentIntake}</Text>/ {waterStatus?.dailyGoal}ml
               </Text>
             </FunctionCard>
             <View className="flex-1 justify-between">
@@ -163,6 +207,8 @@ export default function HomeScreen() {
               }),
             },
           ],
+          pointerEvents: "none",
+          zIndex: 1,
         }}
       >
         <Text className="text-3xl font-bold">HealthCare</Text>

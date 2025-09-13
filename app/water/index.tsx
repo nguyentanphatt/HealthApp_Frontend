@@ -3,7 +3,6 @@ import InfoCard from "@/components/InfoCard";
 import WaterVector from "@/components/vector/WaterVector";
 import WaterHistory from "@/components/WaterHistory";
 import Weather from "@/components/Weather";
-import { DailyIntake, WaterStatus, WeatherResponse } from "@/constants/type";
 import {
   getIp,
   getWaterStatus,
@@ -13,9 +12,10 @@ import {
   WeatherSuggest,
 } from "@/services/water";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Href, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -31,117 +31,69 @@ const Page = () => {
   const router = useRouter();
   const [visible, setVisible] = useState(false);
   const [amount, setAmount] = useState(360);
-  const [waterStatus, setWaterStatus] = useState<WaterStatus>({
-    dailyGoal: 0,
-    currentIntake: 0,
-    date: "",
-    history: [],
-  });
-  const [weatherReport, setWeatherReport] = useState<WeatherResponse>({
-    temp: 0,
-    humidity: 0,
-    recommended: 0,
-    success: true,
-    message: "",
-  });
-  const [waterWeeklyData, setWaterWeeklyData] = useState<DailyIntake[]>([])
-  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(0);
   const currentDate = Date.now();
   const items = Array.from({ length: 100 }, (_, i) => {
     const amount = (i + 1) * 10;
     return { label: `${amount}`, amount };
   });
-  const fetchWaterStatus = async () => {
-    try {
-      const nowDate = (Date.now() / 1000).toFixed(0);
-      if (selectedDate !== 0 && selectedDate.toString() !== nowDate) {
-        const res = await getWaterStatus({
-          date: (selectedDate * 1000).toString(),
-        });
-        if (!res.success) {
-          console.error("Lỗi....");
-        }
-        setWaterStatus(res.data);
-      } else {
-        const res = await getWaterStatus();
-        if (!res.success) {
-          console.error("Lỗi....");
-        }
-        setWaterStatus(res.data);
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-    }
-  };
+  
+  const {
+    data: waterStatus,
+    isLoading: loadingWaterStatus,
+    refetch: refetchWaterStatus,
+  } = useQuery({
+    queryKey: ["waterStatus", selectedDate],
+    queryFn: () =>
+      getWaterStatus(
+        selectedDate !== 0
+          ? { date: (selectedDate * 1000).toString() }
+          : undefined
+      ),
+    staleTime: 1000 * 60 * 5,
+    select: (res) => res.data
+  });
 
-  const fetchWeatherAI = async () => {
-    try {
+  const {
+    data: weatherReport,
+    isLoading: loadingWeather,
+    refetch: refetchWeather,
+  } = useQuery({
+    queryKey: ["weatherReport"],
+    queryFn: async () => {
       const ip = await getIp();
-      const response = await WeatherSuggest(ip);
-      setWeatherReport(response);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+      return WeatherSuggest(ip);
+    },
+  });
 
-  const fetchWaterChartData = async () => {
-    try {
-      const nowDate = (Date.now() / 1000).toFixed(0);
-      if (selectedDate !== 0 && selectedDate.toString() !== nowDate) {
-        const res = await WaterWeekly({
-          date: (selectedDate * 1000).toString(),
-        });
-        if (!res.success) {
-          console.error("Lỗi....");
-        }
-        setWaterWeeklyData(res.data.dailyIntake)
-      } else {
-        const res = await WaterWeekly();
-        if (!res.success) {
-          console.error("Lỗi....");
-        }
-        setWaterWeeklyData(res.data.dailyIntake);
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-    }
+  const {
+    data: waterWeeklyData,
+    isLoading: loadingWeekly,
+    refetch: refetchWeekly,
+  } = useQuery({
+    queryKey: ["waterWeekly", selectedDate],
+    queryFn: () =>
+      WaterWeekly(
+        selectedDate !== 0
+          ? { date: (selectedDate * 1000).toString() }
+          : undefined
+      ),
+      staleTime: 1000 * 60 * 5,
+      select: (res) => res.data.dailyIntake
   }
+  );
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        await Promise.all([
-          fetchWaterStatus(),
-          fetchWeatherAI(),
-          fetchWaterChartData(),
-        ]);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [selectedDate]);
+  const loading = loadingWaterStatus || loadingWeather || loadingWeekly;
 
   const handleConfirm = async (amount: number, time: string) => {
     try {
       await saveWaterRecord(amount, time);
-      await fetchWaterStatus();
+      refetchWaterStatus();
+      refetchWeekly();
     } catch (error) {
       console.error("Save error:", error);
     }
   };
-
-  const filtered = waterStatus?.history.sort(
-    (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
-  );
-
-  const percent =
-    ((waterStatus?.currentIntake ?? 0) / (waterStatus?.dailyGoal ?? 1)) * 100;
 
   const handleUpdateGoal = async (amount: number, time: string) => {
     try {
@@ -151,25 +103,32 @@ const Page = () => {
           type: "success",
           text1: response.message,
         });
-        router.replace("/water");
+        refetchWaterStatus();
       }
     } catch (error) {
       console.error(error);
     }
   };
 
-  if (loading) {
+  if (loading || !waterStatus || !weatherReport || !waterWeeklyData) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator size="large" color="#000" />
       </View>
     );
   }
-  const data = waterWeeklyData.map(item => ({
+
+  const filtered = waterStatus.history.sort(
+    (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
+  );
+
+  const percent =
+    ((waterStatus.currentIntake ?? 0) / (waterStatus.dailyGoal ?? 1)) * 100;
+
+  const data = waterWeeklyData.map((item) => ({
     value: item.totalMl,
-    label: item.dayOfWeek
-  }))
-  
+    label: item.dayOfWeek,
+  }));
   return (
     <ScrollView
       className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
@@ -198,9 +157,12 @@ const Page = () => {
       </View>
       <View className="flex-row">
         <View className="relative flex-1 items-center justify-center bg-white rounded-md shadow-md mr-1">
-          <WaterVector />
+          <WaterVector 
+            progress={waterStatus ? (waterStatus.currentIntake / waterStatus.dailyGoal) * 100 : 0}
+            animated={true}
+          />
           <Text className="absolute top-2 right-2 text-black text-lg">
-            - {waterStatus?.dailyGoal}
+            - {waterStatus?.dailyGoal || 0}
             {` ml`}
           </Text>
         </View>
@@ -224,7 +186,10 @@ const Page = () => {
               ` / ${waterStatus?.dailyGoal?.toString()} ml` || " / 2000ml"
             }
           />
-          <TouchableOpacity className="flex flex-row items-center justify-center gap-2.5 bg-white p-2 rounded-md shadow-md h-[70px]">
+          <TouchableOpacity
+            onPress={() => router.push("/water/notification" as Href)}
+            className="flex flex-row items-center justify-center gap-2.5 bg-white p-2 rounded-md shadow-md h-[70px]"
+          >
             <FontAwesome6 name="calendar" size={24} color="black" />
             <Text className="text-xl">Nhắc nhở tôi</Text>
           </TouchableOpacity>
@@ -290,7 +255,7 @@ const Page = () => {
       </Modal>
       <WaterHistory filtered={filtered} percent={percent} />
 
-      <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4">
+      <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4 mt-4">
         <View>
           <Text className="font-bold text-xl">Tiến trình của bạn</Text>
           <Text className="text-black/60">Hãy giữ phong độ nào !</Text>

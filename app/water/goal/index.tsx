@@ -1,6 +1,7 @@
 import { updateWaterDailyGoal } from "@/services/water";
 import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
@@ -15,6 +16,7 @@ const Page = () => {
   }>();
   
   const initAmount = Number(amount);
+  const queryClient = useQueryClient()
   const [selectedAmount, setSelectedAmount] = useState<number>(initAmount);
   const timestamp = convertISOToTimestamp(time);
 
@@ -27,6 +29,7 @@ const Page = () => {
     try {
       const response = await updateWaterDailyGoal(amount, time);
       if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ["waterStatus"] });
         Toast.show({
           type: "success",
           text1: response.message,

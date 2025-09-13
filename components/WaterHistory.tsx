@@ -28,7 +28,7 @@ const WaterHistory = ({ filtered, percent }: { filtered: WaterRecords[], percent
           key={index}
           onPress={() =>
             router.push(
-              `/water/edit?amount=${item.amount}&time=${item.time}` as Href
+              `/water/edit?amount=${item.amount}&time=${item.time}&type=history` as Href
             )
           }
           className="mb-2.5"

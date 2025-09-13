@@ -1,6 +1,7 @@
 import { updateWaterRecord } from "@/services/water";
 import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { BackHandler, Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -8,11 +9,16 @@ import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
 
 const Page = () => {
-  const { amount, time } = useLocalSearchParams<{
+  const { amount, time, type } = useLocalSearchParams<{
     amount: string;
     time: string;
+    type:string;
   }>();
+
+  console.log("type", type);
+  
   const router = useRouter();
+  const queryClient = useQueryClient();
   const initAmount = Number(amount) || 250;
   const dateTimestamp = convertISOToTimestamp(time) 
   const date = new Date(time);
@@ -41,7 +47,7 @@ const Page = () => {
   const repeatedMinutes = Array.from({ length: times }).flatMap(() => minutes);
   const middleMinutesIndex = Math.floor(times / 2) * minutes.length;
   
-  const handleSave = async (amount: number, hour: number, minute: number, date: string) => {
+  const handleSave = async (amount: number, hour: number, minute: number, date: string,  type:string) => {
     const newTime = new Date(time);
     newTime.setUTCHours(hour);
     newTime.setUTCMinutes(minute);
@@ -56,17 +62,20 @@ const Page = () => {
     });
 
     try {
-      const response = await updateWaterRecord(
-        amount,
-        date,
-        timestamp.toString()
-      );
-      if(response.success){
-        Toast.show({
-          type:'success',
-          text1: response.message
-        })
-        router.push('/water');
+      if(type === 'history'){
+        const response = await updateWaterRecord(
+          amount,
+          date,
+          timestamp.toString()
+        );
+        if (response.success) {
+          queryClient.invalidateQueries({ queryKey: ["waterStatus"] });
+          Toast.show({
+            type: "success",
+            text1: response.message,
+          });
+          router.push("/water");
+        }
       }
     } catch (error) {
       console.error(error)
@@ -179,7 +188,8 @@ const Page = () => {
               Number(selectedAmount),
               selectedHour,
               selectedMinute,
-              dateTimestamp.toString()
+              dateTimestamp.toString(),
+              type
             );
           }}
           className="flex-row items-center justify-center w-[45%] bg-cyan-blue py-3 rounded-md shadow-md"
@@ -214,7 +224,8 @@ const Page = () => {
                     Number(selectedAmount),
                     selectedHour,
                     selectedMinute,
-                    dateTimestamp.toString()
+                    dateTimestamp.toString(),
+                    type
                   )
                 }
                 className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
