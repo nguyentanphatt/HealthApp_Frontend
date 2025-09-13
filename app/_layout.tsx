@@ -29,6 +29,18 @@ export default function RootLayout() {
 
     const init = async () => {
       try {
+        // Check app version để auto-reset khi update
+        const currentVersion = "1.0.1"; // Thay đổi version này khi cần reset
+        const storedVersion = await AsyncStorage.getItem("app_version");
+        
+        if (storedVersion !== currentVersion) {
+          console.log("🔄 App version changed, clearing old data...");
+          await AsyncStorage.clear();
+          await SecureStore.deleteItemAsync("access_token");
+          await SecureStore.deleteItemAsync("refresh_token");
+          await AsyncStorage.setItem("app_version", currentVersion);
+        }
+        
         const hasSeen = await AsyncStorage.getItem("hasSeenIntroduction");
         if (!hasSeen) {
           setInitialRoute("introduction");
@@ -42,8 +54,8 @@ export default function RootLayout() {
         await loadStoredAuth();
         if (storedRefresh && storedAccess) {
           await checkAndRefreshToken(storedAccess, storedRefresh);
-          //setInitialRoute("(tabs)");
-          setInitialRoute("water/index");
+          setInitialRoute("(tabs)");
+          //setInitialRoute("water/index");
 
           interval = setInterval(
             async () => {
