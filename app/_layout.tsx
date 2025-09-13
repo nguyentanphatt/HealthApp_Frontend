@@ -30,8 +30,10 @@ export default function RootLayout() {
     const init = async () => {
       try {
         // Check app version để auto-reset khi update
-        const currentVersion = "1.0.1"; // Thay đổi version này khi cần reset
+        const currentVersion = "1.0.3"; // Thay đổi version này khi cần reset
         const storedVersion = await AsyncStorage.getItem("app_version");
+        console.log("🔍 Current version:", currentVersion, "Stored version:", storedVersion);
+        console.log("🔍 storedVersion type:", typeof storedVersion, "is null:", storedVersion === null);
         
         if (storedVersion !== currentVersion) {
           console.log("🔄 App version changed, clearing old data...");
@@ -39,20 +41,30 @@ export default function RootLayout() {
           await SecureStore.deleteItemAsync("access_token");
           await SecureStore.deleteItemAsync("refresh_token");
           await AsyncStorage.setItem("app_version", currentVersion);
+          console.log("✅ Data cleared and version updated");
+          
+          // Force restart flow
+          console.log("➡️ Force going to introduction after clear");
+          setInitialRoute("introduction");
+          return;
         }
         
         const hasSeen = await AsyncStorage.getItem("hasSeenIntroduction");
+        console.log("🔍 hasSeenIntroduction:", hasSeen);
         if (!hasSeen) {
+          console.log("➡️ Going to introduction");
           setInitialRoute("introduction");
           return;
         }
 
         const storedAccess = await SecureStore.getItemAsync("access_token");
         const storedRefresh = await SecureStore.getItemAsync("refresh_token");
-        console.log("token", storedAccess);
+        console.log("🔍 Access token:", storedAccess ? "EXISTS" : "NULL");
+        console.log("🔍 Refresh token:", storedRefresh ? "EXISTS" : "NULL");
         
         await loadStoredAuth();
         if (storedRefresh && storedAccess) {
+          console.log("➡️ Going to (tabs) - user is logged in");
           await checkAndRefreshToken(storedAccess, storedRefresh);
           setInitialRoute("(tabs)");
           //setInitialRoute("water/index");
@@ -68,9 +80,11 @@ export default function RootLayout() {
             5 * 60 * 1000
           );
         } else {
+          console.log("➡️ Going to auth/signin - no tokens");
           setInitialRoute("auth/signin");
         }
       } catch (e) {
+        console.log("❌ Error in init:", e);
         setInitialRoute("auth/signin");
       }
     };
