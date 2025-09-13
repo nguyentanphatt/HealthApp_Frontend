@@ -59,3 +59,22 @@ export interface WaterWeeklyResponse {
     dailyIntake: DailyIntake[]
   }
 }
+
+export interface WaterReminder {
+  id: string;
+  type: string;
+  message: string;
+  expiresIn: number;
+  enabled: boolean;
+}
+
+export interface WaterReminderResponse {
+  success: boolean;
+  message?:string;
+  data: WaterReminder[];
+}
+
+export interface UpdateWaterReminderResponse {
+  success:boolean;
+  data: WaterReminder
+}

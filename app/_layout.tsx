@@ -1,4 +1,6 @@
 import useAuthStorage from "@/hooks/useAuthStorage";
+import { useNotifications } from "@/hooks/useNotification";
+import { registerForPushNotificationsAsync } from "@/utils/notificationsHelper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Font from "expo-font";
@@ -12,6 +14,7 @@ import Toast from "react-native-toast-message";
 import "../global.css";
 
 export default function RootLayout() {
+  useNotifications()
   const [loaded] = Font.useFonts({
     "Lato-Regular": require("../assets/fonts/Lato-Regular.ttf"),
     "Lato-Bold": require("../assets/fonts/Lato-Bold.ttf"),
@@ -65,6 +68,15 @@ export default function RootLayout() {
     return () => {
       if (interval) clearInterval(interval);
     };
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const granted = await registerForPushNotificationsAsync();
+      if (!granted) {
+        console.log("Permission denied for notifications");
+      }
+    })();
   }, []);
 
   if (!loaded || !initialRoute) {

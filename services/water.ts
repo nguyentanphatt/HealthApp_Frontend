@@ -1,4 +1,13 @@
-import { SaveWaterRecordsResponse, UpdateWaterDailyGoalResponse, UpdateWaterRecordResponse, WaterStatusResponse, WaterWeeklyResponse, WeatherResponse } from "@/constants/type";
+import {
+  SaveWaterRecordsResponse,
+  UpdateWaterDailyGoalResponse,
+  UpdateWaterRecordResponse,
+  UpdateWaterReminderResponse,
+  WaterReminderResponse,
+  WaterStatusResponse,
+  WaterWeeklyResponse,
+  WeatherResponse,
+} from "@/constants/type";
 import { privateClient, publicClient } from "./client";
 
 export const getWaterStatus = async (options?: {
@@ -31,53 +40,61 @@ export const saveWaterRecord = async (
   }
 };
 
-export const updateWaterRecord = async (amount: number, oldTime:string, time: string,): Promise<UpdateWaterRecordResponse> => {
+export const updateWaterRecord = async (
+  amount: number,
+  oldTime: string,
+  time: string
+): Promise<UpdateWaterRecordResponse> => {
   try {
     console.log("old", oldTime);
-    
+
     const response = await privateClient.put("/api/water/record", {
       amount,
       oldTime,
       time,
     });
-    return response.data
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
 };
 
-export const updateWaterDailyGoal = async (amount: number, time: string): Promise<UpdateWaterDailyGoalResponse> => {
+export const updateWaterDailyGoal = async (
+  amount: number,
+  time: string
+): Promise<UpdateWaterDailyGoalResponse> => {
   try {
-    const response = await privateClient.post('/api/water/daily-goal', {
-      amount, date: time
-    })
-    return response.data
+    const response = await privateClient.post("/api/water/daily-goal", {
+      amount,
+      date: time,
+    });
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 export const getIp = async () => {
   try {
     const response = await publicClient.get("http://ipv4.icanhazip.com/");
-    return response.data
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
-export const WeatherSuggest = async (ip:string): Promise<WeatherResponse> => {
+export const WeatherSuggest = async (ip: string): Promise<WeatherResponse> => {
   try {
-    const response = await publicClient.get('/api/water/weatherai', {
+    const response = await publicClient.get("/api/water/weatherai", {
       params: {
-        ip
-      }
-    })
-    return response.data
+        ip,
+      },
+    });
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 export const WaterWeekly = async (options?: {
   date?: string;
@@ -88,8 +105,53 @@ export const WaterWeekly = async (options?: {
         date: options?.date,
       },
     });
-    return response.data
+    return response.data;
   } catch (error) {
-    throw error
+    throw error;
+  }
+};
+
+export const getWaterReminder = async (): Promise<WaterReminderResponse> => {
+  try {
+    const response = await privateClient.get("/api/water/reminders");
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createWaterReminder = async (
+  message: string,
+  expiresIn: string,
+  enabled: true,
+): Promise<WaterReminderResponse> => {
+  try {
+    const response = await privateClient.post("/api/water/reminders", {
+      message,
+      expiresIn,
+      enabled,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateWaterReminder = async (
+  reminderId: string,
+  message: string,
+  expiresIn: string,
+  enabled: boolean
+): Promise<UpdateWaterReminderResponse> => {
+  try {
+    const response = await privateClient.put("/api/water/reminders", {
+      reminderId,
+      message,
+      expiresIn,
+      enabled,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
   }
 };

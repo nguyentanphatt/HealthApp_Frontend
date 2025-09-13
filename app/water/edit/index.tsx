@@ -12,15 +12,15 @@ const Page = () => {
   const { amount, time, type } = useLocalSearchParams<{
     amount: string;
     time: string;
-    type:string;
+    type: string;
   }>();
 
   console.log("type", type);
-  
+
   const router = useRouter();
   const queryClient = useQueryClient();
   const initAmount = Number(amount) || 250;
-  const dateTimestamp = convertISOToTimestamp(time) 
+  const dateTimestamp = convertISOToTimestamp(time)
   const date = new Date(time);
   const initHour = date.getUTCHours();
   const initMinute = date.getUTCMinutes();
@@ -40,14 +40,14 @@ const Page = () => {
     value: i,
   }));
 
-  const times = 9; 
+  const times = 9;
   const repeatedHours = Array.from({ length: times }).flatMap(() => hours);
   const middleHoursIndex = Math.floor(times / 2) * hours.length;
 
   const repeatedMinutes = Array.from({ length: times }).flatMap(() => minutes);
   const middleMinutesIndex = Math.floor(times / 2) * minutes.length;
-  
-  const handleSave = async (amount: number, hour: number, minute: number, date: string,  type:string) => {
+
+  const handleSave = async (amount: number, hour: number, minute: number, date: string, type: string) => {
     const newTime = new Date(time);
     newTime.setUTCHours(hour);
     newTime.setUTCMinutes(minute);
@@ -62,7 +62,7 @@ const Page = () => {
     });
 
     try {
-      if(type === 'history'){
+      if (type === 'history') {
         const response = await updateWaterRecord(
           amount,
           date,

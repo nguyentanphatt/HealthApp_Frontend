@@ -1,10 +1,12 @@
 import CalendarSwiper from "@/components/CalendarSwiper";
 import InfoCard from "@/components/InfoCard";
+import ReminderList from "@/components/ReminderList";
 import WaterVector from "@/components/vector/WaterVector";
 import WaterHistory from "@/components/WaterHistory";
 import Weather from "@/components/Weather";
 import {
   getIp,
+  getWaterReminder,
   getWaterStatus,
   saveWaterRecord,
   updateWaterDailyGoal,
@@ -12,23 +14,24 @@ import {
   WeatherSuggest,
 } from "@/services/water";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Href, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
   ScrollView,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
 const Page = () => {
   const router = useRouter();
+  const queryClient = useQueryClient()
   const [visible, setVisible] = useState(false);
   const [amount, setAmount] = useState(360);
   const [selectedDate, setSelectedDate] = useState(0);
@@ -37,7 +40,7 @@ const Page = () => {
     const amount = (i + 1) * 10;
     return { label: `${amount}`, amount };
   });
-  
+
   const {
     data: waterStatus,
     isLoading: loadingWaterStatus,
@@ -51,7 +54,7 @@ const Page = () => {
           : undefined
       ),
     staleTime: 1000 * 60 * 5,
-    select: (res) => res.data
+    select: (res) => res.data,
   });
 
   const {
@@ -78,12 +81,69 @@ const Page = () => {
           ? { date: (selectedDate * 1000).toString() }
           : undefined
       ),
-      staleTime: 1000 * 60 * 5,
-      select: (res) => res.data.dailyIntake
-  }
-  );
+    staleTime: 1000 * 60 * 5,
+    select: (res) => res.data.dailyIntake,
+  });
 
-  const loading = loadingWaterStatus || loadingWeather || loadingWeekly;
+  const {
+    data: waterReminderData,
+    isLoading: loadingReminder,
+    refetch: refetchReminder,
+  } = useQuery({
+    queryKey: ["waterReminder"],
+    queryFn: () =>
+      getWaterReminder(),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    select: (res) => res.data,
+  });
+
+  useEffect(() => {
+  
+    const currentTimestamp = selectedDate || Math.floor(Date.now() / 1000);
+    const prevTimestamp = currentTimestamp - 86400;
+    const nextTimestamp = currentTimestamp + 86400;
+
+    queryClient.prefetchQuery({
+      queryKey: ["waterStatus", prevTimestamp],
+      queryFn: () => getWaterStatus({ date: (prevTimestamp * 1000).toString() }),
+      staleTime: 1000 * 60 * 5,
+    });
+    queryClient.prefetchQuery({
+      queryKey: ["waterStatus", nextTimestamp],
+      queryFn: () => getWaterStatus({ date: (nextTimestamp * 1000).toString() }),
+      staleTime: 1000 * 60 * 5,
+    });
+
+    queryClient.prefetchQuery({
+      queryKey: ["waterWeekly", prevTimestamp],
+      queryFn: () => WaterWeekly({ date: (prevTimestamp * 1000).toString() }),
+      staleTime: 1000 * 60 * 5,
+    });
+    queryClient.prefetchQuery({
+      queryKey: ["waterWeekly", nextTimestamp],
+      queryFn: () => WaterWeekly({ date: (nextTimestamp * 1000).toString() }),
+      staleTime: 1000 * 60 * 5,
+    });
+
+    if (selectedDate === 0) {
+      const todayTimestamp = Math.floor(Date.now() / 1000);
+      queryClient.prefetchQuery({
+        queryKey: ["waterWeekly", todayTimestamp],
+        queryFn: () => WaterWeekly({ date: (todayTimestamp * 1000).toString() }),
+        staleTime: 1000 * 60 * 5,
+      });
+    }
+
+    queryClient.prefetchQuery({
+      queryKey: ["waterReminder"],
+      queryFn: () => getWaterReminder(),
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 10,
+    });
+  }, [selectedDate, queryClient]);
+
+  const loading = loadingWaterStatus || loadingWeather || loadingWeekly || loadingReminder;
 
   const handleConfirm = async (amount: number, time: string) => {
     try {
@@ -110,7 +170,7 @@ const Page = () => {
     }
   };
 
-  if (loading || !waterStatus || !weatherReport || !waterWeeklyData) {
+  if (loading || !waterStatus || !weatherReport || !waterWeeklyData || !waterReminderData) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator size="large" color="#000" />
@@ -157,8 +217,12 @@ const Page = () => {
       </View>
       <View className="flex-row">
         <View className="relative flex-1 items-center justify-center bg-white rounded-md shadow-md mr-1">
-          <WaterVector 
-            progress={waterStatus ? (waterStatus.currentIntake / waterStatus.dailyGoal) * 100 : 0}
+          <WaterVector
+            progress={
+              waterStatus
+                ? (waterStatus.currentIntake / waterStatus.dailyGoal) * 100
+                : 0
+            }
             animated={true}
           />
           <Text className="absolute top-2 right-2 text-black text-lg">
@@ -253,6 +317,21 @@ const Page = () => {
           </View>
         </View>
       </Modal>
+
+      {waterReminderData && (() => {
+        const currentDate = selectedDate || Math.floor(Date.now() / 1000);
+        const currentDateStr = dayjs.unix(currentDate).format("YYYY-MM-DD");
+        
+        // Filter reminders that match the selected date (only compare date, not time)
+        const filteredReminders = waterReminderData.filter(reminder => {
+          const reminderDateStr = dayjs(reminder.expiresIn).format("YYYY-MM-DD");
+          return reminderDateStr === currentDateStr;
+        });
+        
+        return filteredReminders.length > 0 ? (
+          <ReminderList data={filteredReminders} />
+        ) : null;
+      })()}
       <WaterHistory filtered={filtered} percent={percent} />
 
       <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4 mt-4">

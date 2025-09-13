@@ -1,17 +1,20 @@
+import { createWaterReminder } from "@/services/water";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
+import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
 
 const Page = () => {
   const router = useRouter();
-
+  const queryClient = useQueryClient();
   const [selectedAmount, setSelectedAmount] = useState("250");
   const [selectedHour, setSelectedHour] = useState(6);
   const [selectedMinute, setSelectedMinute] = useState(30);
@@ -39,7 +42,7 @@ const Page = () => {
     minute: number,
   ) => {
     const newTime = new Date();
-    newTime.setUTCHours(hour);
+    newTime.setUTCHours(hour+1);
     newTime.setUTCMinutes(minute);
     newTime.setUTCSeconds(0);
     newTime.setUTCMilliseconds(0);
@@ -48,24 +51,27 @@ const Page = () => {
     console.log("Saved:", {
       amount,
       time: timestamp,
+      hour,
+      minute,
     });
 
-    /* try {
-      const response = await updateWaterRecord(
-        amount,
-        date,
-        timestamp.toString()
+    try {
+      const response = await createWaterReminder (
+        amount.toString(),
+        timestamp.toString(),
+        true
       );
       if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ["waterReminder"] });
         Toast.show({
           type: "success",
-          text1: response.message,
+          text1: "Thêm nhắc nhở thành công",
         });
         router.push("/water");
       }
     } catch (error) {
       console.error(error);
-    } */
+    }
   };
 
   return (
@@ -94,7 +100,7 @@ const Page = () => {
         <WheelPickerExpo
           height={240}
           width={150}
-          initialSelectedIndex={selectedHour-1}
+          initialSelectedIndex={selectedHour}
           items={repeatedHours}
           selectedStyle={{
             borderColor: "gray",
