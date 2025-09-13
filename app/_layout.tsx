@@ -4,24 +4,25 @@ import { registerForPushNotificationsAsync } from "@/utils/notificationsHelper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Font from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
-import "react-native-reanimated";
+import { useEffect } from "react";
 import Toast from "react-native-toast-message";
 import "../global.css";
 
+SplashScreen.preventAutoHideAsync(); // ✅ keep splash until we say so
+
 export default function RootLayout() {
-  useNotifications()
+  useNotifications();
+  const router = useRouter();
   const [loaded] = Font.useFonts({
     "Lato-Regular": require("../assets/fonts/Lato-Regular.ttf"),
     "Lato-Bold": require("../assets/fonts/Lato-Bold.ttf"),
   });
 
-  const { checkAndRefreshToken, loadStoredAuth, refreshToken } = useAuthStorage();
-  const [initialRoute, setInitialRoute] = useState<string | null>(null);
+  const { checkAndRefreshToken, loadStoredAuth } = useAuthStorage();
   const queryClient = new QueryClient();
 
   useEffect(() => {
@@ -29,12 +30,12 @@ export default function RootLayout() {
 
     const init = async () => {
       try {
-        
         const hasSeen = await AsyncStorage.getItem("hasSeenIntroduction");
         console.log("🔍 hasSeenIntroduction:", hasSeen);
+
         if (!hasSeen) {
           console.log("➡️ Going to introduction");
-          setInitialRoute("introduction");
+          router.replace("/introduction");
           return;
         }
 
@@ -42,30 +43,32 @@ export default function RootLayout() {
         const storedRefresh = await SecureStore.getItemAsync("refresh_token");
         console.log("🔍 Access token:", storedAccess ? "EXISTS" : "NULL");
         console.log("🔍 Refresh token:", storedRefresh ? "EXISTS" : "NULL");
-        
-        await loadStoredAuth();
-        if (storedRefresh && storedAccess) {
-          console.log("➡️ Going to (tabs) - user is logged in");
-          await checkAndRefreshToken(storedAccess, storedRefresh);
-          setInitialRoute("(tabs)");
 
-          interval = setInterval(
-            async () => {
-              const a = await SecureStore.getItemAsync("access_token");
-              const r = await SecureStore.getItemAsync("refresh_token");
-              if (a && r) {
-                await checkAndRefreshToken(a, r);
-              }
-            },
-            5 * 60 * 1000
-          );
+        await loadStoredAuth();
+        if (storedAccess && storedRefresh) {
+          console.log("➡️ Going to tabs");
+          await checkAndRefreshToken(storedAccess, storedRefresh);
+          router.replace("/(tabs)");
+
+          interval = setInterval(async () => {
+            const a = await SecureStore.getItemAsync("access_token");
+            const r = await SecureStore.getItemAsync("refresh_token");
+            if (a && r) {
+              await checkAndRefreshToken(a, r);
+            }
+          }, 5 * 60 * 1000);
         } else {
-          console.log("➡️ Going to auth/signin - no tokens");
-          setInitialRoute("auth/signin");
+          console.log("➡️ Going to auth/signin");
+          router.replace("/auth/signin");
         }
       } catch (e) {
         console.log("❌ Error in init:", e);
-        setInitialRoute("auth/signin");
+        router.replace("/auth/signin");
+      } finally {
+        // ✅ Hide splash after everything is ready
+        setTimeout(() => {
+          SplashScreen.hideAsync();
+        }, 300); // small delay for smooth transition
       }
     };
 
@@ -79,19 +82,11 @@ export default function RootLayout() {
   useEffect(() => {
     (async () => {
       const granted = await registerForPushNotificationsAsync();
-      if (!granted) {
-        console.log("Permission denied for notifications");
-      }
+      if (!granted) console.log("Permission denied for notifications");
     })();
   }, []);
 
-  if (!loaded || !initialRoute) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#000" />
-      </View>
-    );
-  }
+  if (!loaded) return null; // Splash stays while loading fonts
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -101,7 +96,6 @@ export default function RootLayout() {
           headerShown: false,
           contentStyle: { backgroundColor: "#f6f6f6" },
         }}
-        initialRouteName={initialRoute}
       >
         <Stack.Screen name="introduction" />
         <Stack.Screen name="(tabs)" />
