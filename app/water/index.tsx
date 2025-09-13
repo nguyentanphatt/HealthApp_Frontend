@@ -150,6 +150,7 @@ const Page = () => {
       await saveWaterRecord(amount, time);
       refetchWaterStatus();
       refetchWeekly();
+      refetchReminder();
     } catch (error) {
       console.error("Save error:", error);
     }
@@ -189,6 +190,7 @@ const Page = () => {
     value: item.totalMl,
     label: item.dayOfWeek,
   }));
+  console.log(waterStatus);
   return (
     <ScrollView
       className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"

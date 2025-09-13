@@ -26,6 +26,9 @@ const Signin = () => {
       }
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
+      console.log("err", err);
+      console.log("err.response?.data.message", err.response?.data.message);
+      alert(err.response?.data.message);
       Toast.show({
         type: "error",
         text1: err.response?.data.message,
