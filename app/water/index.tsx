@@ -16,7 +16,7 @@ import {
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { Href, useRouter } from "expo-router";
+import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -31,10 +31,13 @@ import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
 const Page = () => {
   const router = useRouter();
-  const queryClient = useQueryClient()
+  const params = useLocalSearchParams();
+  const queryClient = useQueryClient();
   const [visible, setVisible] = useState(false);
   const [amount, setAmount] = useState(360);
-  const [selectedDate, setSelectedDate] = useState(0);
+  const [selectedDate, setSelectedDate] = useState(
+    params.selectedDate ? Number(params.selectedDate) : 0
+  );
   const currentDate = Date.now();
   const items = Array.from({ length: 100 }, (_, i) => {
     const amount = (i + 1) * 10;
@@ -91,27 +94,27 @@ const Page = () => {
     refetch: refetchReminder,
   } = useQuery({
     queryKey: ["waterReminder"],
-    queryFn: () =>
-      getWaterReminder(),
+    queryFn: () => getWaterReminder(),
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
     select: (res) => res.data,
   });
 
   useEffect(() => {
-  
     const currentTimestamp = selectedDate || Math.floor(Date.now() / 1000);
     const prevTimestamp = currentTimestamp - 86400;
     const nextTimestamp = currentTimestamp + 86400;
 
     queryClient.prefetchQuery({
       queryKey: ["waterStatus", prevTimestamp],
-      queryFn: () => getWaterStatus({ date: (prevTimestamp * 1000).toString() }),
+      queryFn: () =>
+        getWaterStatus({ date: (prevTimestamp * 1000).toString() }),
       staleTime: 1000 * 60 * 5,
     });
     queryClient.prefetchQuery({
       queryKey: ["waterStatus", nextTimestamp],
-      queryFn: () => getWaterStatus({ date: (nextTimestamp * 1000).toString() }),
+      queryFn: () =>
+        getWaterStatus({ date: (nextTimestamp * 1000).toString() }),
       staleTime: 1000 * 60 * 5,
     });
 
@@ -130,7 +133,8 @@ const Page = () => {
       const todayTimestamp = Math.floor(Date.now() / 1000);
       queryClient.prefetchQuery({
         queryKey: ["waterWeekly", todayTimestamp],
-        queryFn: () => WaterWeekly({ date: (todayTimestamp * 1000).toString() }),
+        queryFn: () =>
+          WaterWeekly({ date: (todayTimestamp * 1000).toString() }),
         staleTime: 1000 * 60 * 5,
       });
     }
@@ -143,7 +147,8 @@ const Page = () => {
     });
   }, [selectedDate, queryClient]);
 
-  const loading = loadingWaterStatus || loadingWeather || loadingWeekly || loadingReminder;
+  const loading =
+    loadingWaterStatus || loadingWeather || loadingWeekly || loadingReminder;
 
   const handleConfirm = async (amount: number, time: string) => {
     try {
@@ -171,7 +176,13 @@ const Page = () => {
     }
   };
 
-  if (loading || !waterStatus || !weatherReport || !waterWeeklyData || !waterReminderData) {
+  if (
+    loading ||
+    !waterStatus ||
+    !weatherReport ||
+    !waterWeeklyData ||
+    !waterReminderData
+  ) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator size="large" color="#000" />
@@ -190,7 +201,7 @@ const Page = () => {
     value: item.totalMl,
     label: item.dayOfWeek,
   }));
-  console.log(waterStatus);
+
   return (
     <ScrollView
       className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
@@ -320,21 +331,32 @@ const Page = () => {
         </View>
       </Modal>
 
-      {waterReminderData && (() => {
-        const currentDate = selectedDate || Math.floor(Date.now() / 1000);
-        const currentDateStr = dayjs.unix(currentDate).format("YYYY-MM-DD");
-        
-        // Filter reminders that match the selected date (only compare date, not time)
-        const filteredReminders = waterReminderData.filter(reminder => {
-          const reminderDateStr = dayjs(reminder.expiresIn).format("YYYY-MM-DD");
-          return reminderDateStr === currentDateStr;
-        });
-        
-        return filteredReminders.length > 0 ? (
-          <ReminderList data={filteredReminders} />
-        ) : null;
-      })()}
-      <WaterHistory filtered={filtered} percent={percent} />
+      {waterReminderData &&
+        (() => {
+          const currentDate = selectedDate || Math.floor(Date.now() / 1000);
+          const currentDateStr = dayjs.unix(currentDate).format("YYYY-MM-DD");
+          const filteredReminders = waterReminderData.filter((reminder) => {
+            const reminderDateStr = dayjs(reminder.expiresIn).format(
+              "YYYY-MM-DD"
+            );
+            return reminderDateStr === currentDateStr;
+          });
+          return filteredReminders.length > 0 ? (
+            <ReminderList data={filteredReminders} />
+          ) : null;
+        })()}
+      {percent >= 25 && (
+        <Text className="text-lg text-center text-black/60 py-2">
+          {" "}
+          Bạn đã hoàn thành {percent.toFixed(0)}% mục tiêu đề ra{" "}
+        </Text>
+      )}
+      {filtered.length > 0 && (
+        <Text className="font-bold text-lg text-black/60 pb-2">
+          Lịch sử hôm nay
+        </Text>
+      )}
+      <WaterHistory filtered={filtered} />
 
       <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4 mt-4">
         <View>

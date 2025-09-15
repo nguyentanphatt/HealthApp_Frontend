@@ -4,7 +4,7 @@ import { registerForPushNotificationsAsync } from "@/utils/notificationsHelper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Font from "expo-font";
-import { Stack, useRouter } from "expo-router";
+import { Href, Stack, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -48,7 +48,7 @@ export default function RootLayout() {
         if (storedAccess && storedRefresh) {
           console.log("➡️ Going to tabs");
           await checkAndRefreshToken(storedAccess, storedRefresh);
-          router.replace("/(tabs)");
+          router.replace("/food" as Href);
 
           interval = setInterval(async () => {
             const a = await SecureStore.getItemAsync("access_token");
@@ -102,6 +102,7 @@ export default function RootLayout() {
         <Stack.Screen name="auth/signin" />
         <Stack.Screen name="water/index" />
         <Stack.Screen name="water/edit/index" />
+        <Stack.Screen name="food/index" />
       </Stack>
       <Toast swipeable visibilityTime={3000} topOffset={50} />
     </QueryClientProvider>

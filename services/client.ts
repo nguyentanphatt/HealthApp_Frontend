@@ -2,8 +2,8 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { getNewToken } from "./user";
 
-//const BASE_URL = "http://168.138.168.177:25565/";
-const BASE_URL = "https://168.138.168.177:25566/";
+const BASE_URL = "http://168.138.168.177:25565/";
+//const BASE_URL = "https://168.138.168.177:25566/";
 
 export const publicClient = axios.create({
   baseURL: BASE_URL,
@@ -30,7 +30,7 @@ privateClient.interceptors.request.use(
 
 // Refresh token on 401 and retry once
 let isRefreshing = false;
-let pendingQueue: Array<(token: string | null) => void> = [];
+let pendingQueue: ((token: string | null) => void)[] = [];
 
 privateClient.interceptors.response.use(
   (response) => response,

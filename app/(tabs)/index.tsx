@@ -85,7 +85,7 @@ export default function HomeScreen() {
           style={[
             bgActive && { backgroundColor: "#f6f6f6" },
             { paddingTop: 40 },
-            { zIndex: 10 }
+            { zIndex: 10 },
           ]}
         >
           <CalendarSwiper
@@ -130,14 +130,21 @@ export default function HomeScreen() {
               classname={card({ type: "left" })}
               iconName="glass-water-droplet"
               title="Nước"
-              href="/water"
+              href={`/water?selectedDate=${selectedDate}`}
             >
-              <WaterVector 
-                progress={waterStatus ? (waterStatus.currentIntake / waterStatus.dailyGoal) * 100 : 0}
+              <WaterVector
+                progress={
+                  waterStatus
+                    ? (waterStatus.currentIntake / waterStatus.dailyGoal) * 100
+                    : 0
+                }
                 animated={true}
               />
               <Text className="text-black/60 text-xl">
-                <Text className="font-bold text-3xl text-black">{waterStatus?.currentIntake}</Text>/ {waterStatus?.dailyGoal}ml
+                <Text className="font-bold text-3xl text-black">
+                  {waterStatus?.currentIntake}
+                </Text>
+                / {waterStatus?.dailyGoal}ml
               </Text>
             </FunctionCard>
             <View className="flex-1 justify-between">

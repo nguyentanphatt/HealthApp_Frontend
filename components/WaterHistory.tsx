@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import InfoCard from "./InfoCard";
 
-const WaterHistory = ({ filtered, percent }: { filtered: WaterRecords[], percent:number }) => {
+const WaterHistory = ({ filtered }: { filtered: WaterRecords[] }) => {
   const router = useRouter();
   const [showAll, setShowAll] = useState(false);
   const displayedData = showAll ? filtered : filtered.slice(0, 3);
@@ -17,12 +17,6 @@ const WaterHistory = ({ filtered, percent }: { filtered: WaterRecords[], percent
 
   return (
     <View>
-      {percent >= 25 && (
-        <Text className="text-lg text-center text-black/60 mb-5">
-          {" "}
-          Bạn đã hoàn thành {percent.toFixed(0)}% mục tiêu đề ra{" "}
-        </Text>
-      )}
       {displayedData.map((item, index) => (
         <TouchableOpacity
           key={index}
