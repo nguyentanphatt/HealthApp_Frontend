@@ -1,6 +1,7 @@
 import { WaterReminder } from "@/constants/type";
 import { scheduleReminders } from "@/utils/notificationsHelper";
 import { Href, useRouter } from "expo-router";
+import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
 import React, { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import ReminderCard from "./ReminderCard";
@@ -14,13 +15,18 @@ const ReminderList = ({
   const [showAll, setShowAll] = useState(false);
   const displayedData = showAll ? data : data.slice(0, 3);
 
-  useEffect(() => {
-    const scheduleNotifications = async () => {
-        const enabledReminders = data.filter(reminder => reminder.enabled === true);
-        await scheduleReminders(enabledReminders);
-    }
-    scheduleNotifications()
-  },[data])
+	useEffect(() => {
+	  const scheduleNotifications = async () => {
+		const now = Date.now();
+		const validReminders = data.filter(reminder => {
+		  if (!reminder.enabled) return false; // skip disabled
+		  const ts = convertISOToTimestamp(reminder.expiresIn.toString());
+		  return ts > now; // only keep if time is in the future
+		});
+		await scheduleReminders(validReminders);
+	  };
+	  scheduleNotifications();
+	}, [data]);
   return (
     <View>
       {displayedData.map((item, index) => (

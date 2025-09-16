@@ -19,8 +19,8 @@ const Page = () => {
   const [selectedHour, setSelectedHour] = useState(6);
   const [selectedMinute, setSelectedMinute] = useState(30);
 
-  const hours = Array.from({ length: 24 }, (_, i) => ({
-    label: (i + 1).toString(),
+  const hours = Array.from({ length: 25 }, (_, i) => ({
+    label: (i).toString(),
     value: i,
   }));
 
@@ -41,20 +41,22 @@ const Page = () => {
     hour: number,
     minute: number,
   ) => {
-    const newTime = new Date();
-    newTime.setUTCHours(hour+1);
-    newTime.setUTCMinutes(minute);
-    newTime.setUTCSeconds(0);
-    newTime.setUTCMilliseconds(0);
-    const timestamp = newTime.getTime();
+  const newTime = new Date(); 
+  newTime.setUTCHours(hour); 
+  newTime.setUTCMinutes(minute); 
+  newTime.setUTCSeconds(0); 
+  newTime.setUTCMilliseconds(0); 
+  	 if (newTime.getUTCHours() >= 17) {
+	   newTime.setDate(newTime.getDate()+1);
+	 }
+  const timestamp = newTime.getTime();
 
-    console.log("Saved:", {
-      amount,
-      time: timestamp,
-      hour,
-      minute,
-    });
-
+	console.log("Saved:", {
+	  amount,
+	  time: newTime,
+	  hour,
+	  minute,
+	});
     try {
       const response = await createWaterReminder (
         amount.toString(),
@@ -151,7 +153,7 @@ const Page = () => {
       </View>
       <View className="flex flex-row items-center justify-center py-5">
         <TouchableOpacity
-          onPress={() => handleSave(Number(selectedAmount), selectedHour, selectedMinute)}
+          onPress={() => handleSave(Number(selectedAmount), selectedHour-7, selectedMinute)}
           className="flex-row items-center justify-center w-[50%] bg-cyan-blue py-3 rounded-md shadow-md"
         >
           <Text className="text-xl text-white font-bold ">Thêm nhắc nhở</Text>

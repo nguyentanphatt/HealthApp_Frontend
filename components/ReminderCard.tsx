@@ -11,8 +11,8 @@ const ReminderCard = ({ amount, time, id, enabled }: { amount: string; time: num
   const queryClient = useQueryClient();
   const [isChecked, setIsChecked] = useState(false);
   const timestamp = convertISOToTimestamp(time.toString());
-  const hour = String(new Date(timestamp).getUTCHours()).padStart(2, "0");
-  const minute = String(new Date(timestamp).getUTCMinutes()).padStart(2, "0");
+  const hour = String(new Date(timestamp).getHours()).padStart(2, "0");
+  const minute = String(new Date(timestamp).getMinutes()).padStart(2, "0");
   const handleCheckboxChange = async (checked: boolean) => {
     setIsChecked(checked);
     const response = await updateWaterReminder(id, amount, timestamp.toString(), !checked);

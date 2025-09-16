@@ -23,6 +23,14 @@ export async function registerForPushNotificationsAsync() {
       name: "default",
       importance: Notifications.AndroidImportance.HIGH,
     });
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowList: true,
+        shouldShowBanner: true
+      }),
+    });
   }
 
   if (Device.isDevice) {
@@ -33,28 +41,42 @@ export async function registerForPushNotificationsAsync() {
 }
 
 // Lên lịch nhắc nhở theo ReminderList
-export async function scheduleReminders(reminders: WaterReminder[]) {
+
+
+  export async function scheduleReminders(reminders: WaterReminder[]) {
+    //debug notification
+  /*  Notifications.addNotificationReceivedListener(notification => {
+    console.log("Notification received:", notification);
+  });*/
   await Notifications.cancelAllScheduledNotificationsAsync();
 
   for (const reminder of reminders) {
     if (!reminder.enabled) continue;
+	try {
     const timestamp = convertISOToTimestamp(reminder.expiresIn.toString());
-    const hour = String(new Date(timestamp).getUTCHours()).padStart(2, "0");
-    const minute = String(new Date(timestamp).getUTCMinutes()).padStart(2, "0");
+    const hour = String(new Date(timestamp).getHours()).padStart(2, "0");
+    const minute = String(new Date(timestamp).getMinutes()).padStart(2, "0");
+	  console.log("reminder "+hour+" "+minute+" "+reminder.expiresIn)
+    const now = Date.now();
+    let delaySeconds = Math.floor((timestamp - now) / 1000);
+    if (delaySeconds < 0) delaySeconds += 24 * 3600;
+    console.log("Scheduling in", delaySeconds, "seconds");
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "Đã tới giờ uống nước",
-        body: reminder.message,
+        body: "Bạn sẽ cần uống "+reminder.message+" vào lúc này !",
         categoryIdentifier: "water-reminder",
         data: { id: reminder.id, message: reminder.message, expiresIn: reminder.expiresIn },
       },
       trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-        hour: parseInt(hour),
-        minute: parseInt(minute),
-        repeats: true, // lặp hằng ngày
+		    type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: delaySeconds,
+		  channelId: "default",
       },
     });
+	} catch (e){
+	console.error("Error scheduling reminder:", e);
+	}
   }
 }
 

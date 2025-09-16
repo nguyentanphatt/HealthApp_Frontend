@@ -16,6 +16,8 @@ import {
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -29,6 +31,8 @@ import {
 import { BarChart } from "react-native-gifted-charts";
 import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 const Page = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -333,14 +337,13 @@ const Page = () => {
 
       {waterReminderData &&
         (() => {
-          const currentDate = selectedDate || Math.floor(Date.now() / 1000);
-          const currentDateStr = dayjs.unix(currentDate).format("YYYY-MM-DD");
-          const filteredReminders = waterReminderData.filter((reminder) => {
-            const reminderDateStr = dayjs(reminder.expiresIn).format(
-              "YYYY-MM-DD"
-            );
-            return reminderDateStr === currentDateStr;
-          });
+		const currentDate = selectedDate || Math.floor(Date.now() / 1000);
+		const currentDateStr = dayjs.unix(currentDate).format("YYYY-MM-DD");
+
+		const filteredReminders = waterReminderData.filter((reminder) => {
+		  const reminderDateStr = dayjs(reminder.expiresIn).format("YYYY-MM-DD");
+		  return reminderDateStr === currentDateStr;
+		});
           return filteredReminders.length > 0 ? (
             <ReminderList data={filteredReminders} />
           ) : null;
