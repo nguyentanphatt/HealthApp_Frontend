@@ -1,11 +1,14 @@
 import CalendarSwiper from "@/components/CalendarSwiper";
+import FoodBarChart from "@/components/chart/FoodBarChart";
+import FoodPieChart from "@/components/chart/FoodPieChart";
+import FoodDaily from "@/components/FoodDaily";
 import { images } from "@/constants/image";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
-import { FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 const Page = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -28,28 +31,29 @@ const Page = () => {
     );
   } */
 
-    const meals = [
-      {
-        image: images.food01,
-        name: "Steak",
-        nutrition: [
-          { label: "Protein", value: "500g" },
-          { label: "Chất xơ", value: "500g" },
-          { label: "Chất đạm", value: "500g" },
-        ],
-        total: "2000 kcal",
-      },
-      {
-        image: images.food01,
-        name: "Steak",
-        nutrition: [
-          { label: "Protein", value: "500g" },
-          { label: "Chất xơ", value: "500g" },
-          { label: "Chất đạm", value: "500g" },
-        ],
-        total: "2500 Kcal",
-      },
-    ];
+  const meals = [
+    {
+      image: images.food01,
+      name: "Steak",
+      nutrition: [
+        { label: "Protein", value: "500g" },
+        { label: "Chất xơ", value: "500g" },
+        { label: "Chất đạm", value: "500g" },
+      ],
+      total: "2000 kcal",
+    },
+    {
+      image: images.food01,
+      name: "Steak",
+      nutrition: [
+        { label: "Protein", value: "500g" },
+        { label: "Chất xơ", value: "500g" },
+        { label: "Chất đạm", value: "500g" },
+      ],
+      total: "2500 Kcal",
+    },
+  ];
+
   return (
     <ScrollView
       className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
@@ -96,52 +100,14 @@ const Page = () => {
           </TouchableOpacity>
         </View>
       </View>
-      <View className="bg-white rounded-md shadow-md flex items-center justify-center w-full h-auto p-4 gap-5">
-        <Text className="self-start text-xl font-bold">Bữa sáng</Text>
-        <FlatList
-          data={meals}
-          keyExtractor={(_, idx) => idx.toString()}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View
-              className="w-[340px] items-center justify-center pr-4"
-            >
-              <Image
-                source={item.image}
-                width={300}
-                height={300}
-                className="w-[300px] h-[250px] rounded-lg"
-              />
-              <Text className="text-2xl text-center font-bold">
-                {item.name}
-              </Text>
-              <View className="flex gap-3 w-full">
-                {item.nutrition.map((nutri, idx) => (
-                  <View
-                    key={idx}
-                    className="flex-row items-center justify-between"
-                  >
-                    <Text>{nutri.label}</Text>
-                    <View className="border border-dashed border-black flex-1 mx-2" />
-                    <Text>{nutri.value}</Text>
-                  </View>
-                ))}
-                <View className="self-end w-[160px]">
-                  <View className="border border-black w-full" />
-                  <View className="flex-row items-center justify-between gap-2 mt-2">
-                    <Text className="text-black text-xl text-right">Tổng:</Text>
-                    <Text className="text-black text-2xl font-bold text-right">
-                      {item.total}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          )}
-        />
+      <View className="flex gap-5">
+        <FoodDaily title="Bữa sáng" data={meals} />
+        <FoodDaily title="Bữa trưa" data={meals} />
+        <FoodDaily title="Bữa tối" data={meals} />
       </View>
+      <FoodPieChart />
+      <FoodBarChart />
+
     </ScrollView>
   );
 };
