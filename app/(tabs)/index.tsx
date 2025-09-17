@@ -3,6 +3,7 @@ import Card from "@/components/Card";
 import FunctionCard from "@/components/FunctionCard";
 import ProgressItem from "@/components/ProgressItem";
 import WaterVector from "@/components/vector/WaterVector";
+import { getFoodStatus } from "@/services/food";
 import { getWaterStatus } from "@/services/water";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,6 +24,12 @@ export default function HomeScreen() {
     queryClient.prefetchQuery({
       queryKey: ["waterStatus", 0],
       queryFn: () => getWaterStatus(),
+      staleTime: 1000 * 60 * 5,
+    });
+
+  queryClient.prefetchQuery({
+      queryKey: ["foodStatus", 0],
+      queryFn: () => getFoodStatus(),
       staleTime: 1000 * 60 * 5,
     });
   }, []);
@@ -161,6 +168,7 @@ export default function HomeScreen() {
                 classname={card({ type: "right-bottom" })}
                 iconName="bowl-food"
                 title="Thức ăn"
+                href={`/food?selectedDate=${selectedDate}`}
               >
                 <TouchableOpacity className="self-center flex-row items-center justify-center px-6 py-3 bg-cyan-blue rounded-full">
                   <Text className="text-white">Nhập số liệu</Text>

@@ -1,9 +1,11 @@
+import { submitFoodRecord } from "@/services/food";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import Toast from "react-native-toast-message";
 const Page = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -11,23 +13,20 @@ const Page = () => {
   const [selectedDate, setSelectedDate] = useState(
     params.selectedDate ? Number(params.selectedDate) : 0
   );
-  const [selected, setSelected] = useState("");
+  const [selectedTag, setSelectedTag] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
-
+  const options = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       quality: 1,
       allowsMultipleSelection: true,
-      selectionLimit: 3 - images.length, // chỉ cho chọn số lượng còn lại
+      selectionLimit: 3 - images.length,
     });
     if (!result.canceled) {
-      // Nếu chọn nhiều ảnh
       const newUris = result.assets.map((asset) => asset.uri);
       setImages((prev) => [...prev, ...newUris].slice(0, 3));
-      // Gửi từng ảnh lên backend nếu muốn
-      // newUris.forEach(uri => sendToBackend(uri));
     }
   };
 
@@ -37,36 +36,55 @@ const Page = () => {
     });
     if (!result.canceled) {
       setImages((prev) => [...prev, result.assets[0].uri].slice(0, 3));
-      // sendToBackend(result.assets[0].uri);
     }
   };
 
-  const sendToBackend = async (uri: string) => {
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+  const sendToBackend = async (uris: string[], tag: string) => {
     try {
-      // upload ảnh lên backend
-      let formData = new FormData();
-      formData.append("file", {
-        uri,
-        type: "image/jpeg",
-        name: "meal.jpg",
-      } as any);
+      console.log("Sending to backend:", uris, tag);
 
-      const res = await fetch("http://your-backend/api/analyze", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      for (let i = 0; i < uris.length; i++) {
+        try {
+          const res = await submitFoodRecord(uris[i], tag);
+          console.log(`Upload ảnh ${i + 1} thành công:`, res);
+          if (res.success) {
+            if (res.name === "Invalid") {
+              Toast.show({
+                type: "error",
+                text1: `Ảnh ${i + 1} sai`,
+                text2: "Vui lòng chọn ảnh về bữa ăn",
+              });
+            } else {
+              Toast.show({
+                type: "success",
+                text1: `Ảnh ${i + 1} thành công`,
+              });
+            }
+            queryClient.invalidateQueries({ queryKey: ["foodStatus"] });
+          }
+        } catch (err) {
+          console.log(`Upload ảnh ${i + 1} thất bại:`, err);
+          Toast.show({
+            type: "error",
+            text1: `Ảnh ${i + 1} lỗi`,
+            text2: "Không thể upload ảnh này",
+          });
+        }
 
-      const data = await res.json();
-      //setResult(data);
+        // Rate limit: chờ 500ms giữa các request
+        if (i < uris.length - 1) {
+          await delay(300);
+        }
+      }
+
+      // Sau khi upload xong hết thì redirect
+      router.push("/food");
     } catch (err) {
-      console.error(err);
+      console.error("Lỗi chung khi upload:", err);
     }
   };
-
-  const options = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
   return (
     <View className="flex-1 relative">
       <ScrollView
@@ -87,23 +105,30 @@ const Page = () => {
         <View className="flex gap-5">
           <View>
             <Text className="font-bold text-xl pt-5 pb-2">Loại bữa ăn</Text>
-            <View style={{ flexDirection: "row", gap: 12 }}>
-              {options.map((item) => {
-                const isSelected = selected === item;
-                return (
-                  <TouchableOpacity
-                    key={item}
-                    onPress={() => setSelected(item)}
-                    className={`px-4 py-2 rounded-full ${isSelected ? "bg-cyan-blue" : "bg-white"}`}
-                  >
-                    <Text
-                      className={`text-lg  ${isSelected ? "text-white" : "text-black"}`}
+            <View className="flex-row gap-3">
+              <FlatList
+                data={options}
+                keyExtractor={(item) => item}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 12 }}
+                renderItem={({ item }) => {
+                  const isSelectedTag = selectedTag === item;
+                  return (
+                    <TouchableOpacity
+                      onPress={() => setSelectedTag(item)}
+                      className={`px-4 py-2 rounded-full ${isSelectedTag ? "bg-cyan-blue" : "bg-white"}`}
+                      style={{ marginRight: 0 }}
                     >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+                      <Text
+                        className={`text-lg ${isSelectedTag ? "text-white" : "text-black"}`}
+                      >
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
             </View>
           </View>
           <View className="w-full h-64 bg-white rounded-md shadow-md flex items-center justify-center border-dashed border-2 border-black/20">
@@ -172,14 +197,18 @@ const Page = () => {
           />
         </View>
       )}
-      <View className="absolute bottom-10 left-0 right-0 p-4 bg-[#f6f6f6]">
-        <TouchableOpacity
-          onPress={() => {}}
-          className="self-center flex-row items-center justify-center w-[45%] bg-cyan-blue py-3 rounded-md shadow-md"
-        >
-          <Text className="text-xl text-white font-bold ">Tải ảnh lên</Text>
-        </TouchableOpacity>
-      </View>
+      {images.length > 0 && (
+        <View className="absolute bottom-10 left-0 right-0 p-4 bg-[#f6f6f6]">
+          <TouchableOpacity
+            onPress={() => {
+              sendToBackend(images, selectedTag);
+            }}
+            className="self-center flex-row items-center justify-center w-[45%] bg-cyan-blue py-3 rounded-md shadow-md"
+          >
+            <Text className="text-xl text-white font-bold ">Tải ảnh lên</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };

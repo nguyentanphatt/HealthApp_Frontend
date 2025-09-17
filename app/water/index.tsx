@@ -16,8 +16,8 @@ import {
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -213,7 +213,7 @@ const Page = () => {
       contentContainerStyle={{ paddingBottom: 50 }}
       showsVerticalScrollIndicator={false}
     >
-      <View className="flex bg-[#f6f6f6] pt-10">
+      <View className="flex bg-[#f6f6f6] pt-16">
         <View className="flex flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.push("/(tabs)")}>
             <FontAwesome6 name="chevron-left" size={24} color="black" />
@@ -337,13 +337,15 @@ const Page = () => {
 
       {waterReminderData &&
         (() => {
-		const currentDate = selectedDate || Math.floor(Date.now() / 1000);
-		const currentDateStr = dayjs.unix(currentDate).format("YYYY-MM-DD");
+          const currentDate = selectedDate || Math.floor(Date.now() / 1000);
+          const currentDateStr = dayjs.unix(currentDate).format("YYYY-MM-DD");
 
-		const filteredReminders = waterReminderData.filter((reminder) => {
-		  const reminderDateStr = dayjs(reminder.expiresIn).format("YYYY-MM-DD");
-		  return reminderDateStr === currentDateStr;
-		});
+          const filteredReminders = waterReminderData.filter((reminder) => {
+            const reminderDateStr = dayjs(reminder.expiresIn).format(
+              "YYYY-MM-DD"
+            );
+            return reminderDateStr === currentDateStr;
+          });
           return filteredReminders.length > 0 ? (
             <ReminderList data={filteredReminders} />
           ) : null;

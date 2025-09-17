@@ -43,12 +43,13 @@ export default function RootLayout() {
         const storedRefresh = await SecureStore.getItemAsync("refresh_token");
         console.log("🔍 Access token:", storedAccess ? "EXISTS" : "NULL");
         console.log("🔍 Refresh token:", storedRefresh ? "EXISTS" : "NULL");
-
+        console.log("Access token", storedAccess);
+        
         await loadStoredAuth();
         if (storedAccess && storedRefresh) {
           console.log("➡️ Going to tabs");
           await checkAndRefreshToken(storedAccess, storedRefresh);
-          router.replace("/(tabs)/profile" as Href);
+          router.replace("/food" as Href);
 
           interval = setInterval(async () => {
             const a = await SecureStore.getItemAsync("access_token");

@@ -3,16 +3,9 @@ import { ScrollView, Text, View } from "react-native";
 
 import { BarChart } from "react-native-gifted-charts";
 
-const FoodBarChart = () => {
-  const data = [
-    { value: 800, label: "Mon" },
-    { value: 1200, label: "Tue" },
-    { value: 900, label: "Wed" },
-    { value: 1500, label: "Thu" },
-    { value: 2000, label: "Fri" },
-    { value: 1700, label: "Sat" },
-    { value: 1300, label: "Sun" },
-  ];
+const FoodBarChart = ({data}: {
+  data: { value: number; label: string }[];
+}) => {
   return (
     <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4 mt-4">
       <View>

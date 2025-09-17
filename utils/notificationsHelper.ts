@@ -43,40 +43,48 @@ export async function registerForPushNotificationsAsync() {
 // Lên lịch nhắc nhở theo ReminderList
 
 
-  export async function scheduleReminders(reminders: WaterReminder[]) {
-    //debug notification
-  /*  Notifications.addNotificationReceivedListener(notification => {
-    console.log("Notification received:", notification);
-  });*/
+export async function scheduleReminders(reminders: WaterReminder[]) {
+  // Debug: kiểm tra số lượng notification trước khi huỷ
+  const before = await Notifications.getAllScheduledNotificationsAsync();
+  console.log("Scheduled notifications before:", before.length);
+
   await Notifications.cancelAllScheduledNotificationsAsync();
+
+  // Debug: kiểm tra số lượng notification sau khi huỷ
+  const afterCancel = await Notifications.getAllScheduledNotificationsAsync();
+  console.log("Scheduled notifications after cancel:", afterCancel.length);
 
   for (const reminder of reminders) {
     if (!reminder.enabled) continue;
-	try {
-    const timestamp = convertISOToTimestamp(reminder.expiresIn.toString());
-    const hour = String(new Date(timestamp).getHours()).padStart(2, "0");
-    const minute = String(new Date(timestamp).getMinutes()).padStart(2, "0");
-	  console.log("reminder "+hour+" "+minute+" "+reminder.expiresIn)
-    const now = Date.now();
-    let delaySeconds = Math.floor((timestamp - now) / 1000);
-    if (delaySeconds < 0) delaySeconds += 24 * 3600;
-    console.log("Scheduling in", delaySeconds, "seconds");
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Đã tới giờ uống nước",
-        body: "Bạn sẽ cần uống "+reminder.message+" vào lúc này !",
-        categoryIdentifier: "water-reminder",
-        data: { id: reminder.id, message: reminder.message, expiresIn: reminder.expiresIn },
-      },
-      trigger: {
-		    type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: delaySeconds,
-		  channelId: "default",
-      },
-    });
-	} catch (e){
-	console.error("Error scheduling reminder:", e);
-	}
+    try {
+      const timestamp = convertISOToTimestamp(reminder.expiresIn.toString());
+      const hour = String(new Date(timestamp).getHours()).padStart(2, "0");
+      const minute = String(new Date(timestamp).getMinutes()).padStart(2, "0");
+      console.log("reminder " + hour + " " + minute + " " + reminder.expiresIn);
+      const now = Date.now();
+      let delaySeconds = Math.floor((timestamp - now) / 1000);
+      if (delaySeconds < 0) delaySeconds += 24 * 3600;
+      console.log("Scheduling in", delaySeconds, "seconds");
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Đã tới giờ uống nước",
+          body: "Bạn sẽ cần uống " + reminder.message + " vào lúc này !",
+          categoryIdentifier: "water-reminder",
+          data: { id: reminder.id, message: reminder.message, expiresIn: reminder.expiresIn },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: delaySeconds,
+          channelId: "default",
+        },
+      });
+    } catch (e) {
+      console.error("Error scheduling reminder:", e);
+    }
   }
+
+  // Debug: kiểm tra số lượng notification sau khi lên lịch lại
+  const after = await Notifications.getAllScheduledNotificationsAsync();
+  console.log("Scheduled notifications after:", after.length);
 }
 
