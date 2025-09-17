@@ -9,7 +9,7 @@ export function useNotifications() {
         {
           identifier: "ADD_WATER",
           buttonTitle: "+ Thêm",
-          options: { opensAppToForeground: false },
+          options: { opensAppToForeground: true },
         },
       ]);
     };

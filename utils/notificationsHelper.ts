@@ -44,15 +44,13 @@ export async function registerForPushNotificationsAsync() {
 
 
 export async function scheduleReminders(reminders: WaterReminder[]) {
-  // Debug: kiểm tra số lượng notification trước khi huỷ
-  const before = await Notifications.getAllScheduledNotificationsAsync();
-  console.log("Scheduled notifications before:", before.length);
+  console.log("Gọi scheduleReminders với reminders:", reminders);
+  // XÓA DÒNG NÀY (KHÔNG ĐĂNG KÝ LISTENER Ở ĐÂY)
+  // Notifications.addNotificationReceivedListener(notification => {
+  //   console.log("Notification received:", notification);
+  // });
 
   await Notifications.cancelAllScheduledNotificationsAsync();
-
-  // Debug: kiểm tra số lượng notification sau khi huỷ
-  const afterCancel = await Notifications.getAllScheduledNotificationsAsync();
-  console.log("Scheduled notifications after cancel:", afterCancel.length);
 
   for (const reminder of reminders) {
     if (!reminder.enabled) continue;
@@ -68,7 +66,7 @@ export async function scheduleReminders(reminders: WaterReminder[]) {
       await Notifications.scheduleNotificationAsync({
         content: {
           title: "Đã tới giờ uống nước",
-          body: "Bạn sẽ cần uống " + reminder.message + " vào lúc này !",
+          body: "Bạn sẽ cần uống " + reminder.message + "ml vào lúc này !",
           categoryIdentifier: "water-reminder",
           data: { id: reminder.id, message: reminder.message, expiresIn: reminder.expiresIn },
         },
@@ -82,9 +80,5 @@ export async function scheduleReminders(reminders: WaterReminder[]) {
       console.error("Error scheduling reminder:", e);
     }
   }
-
-  // Debug: kiểm tra số lượng notification sau khi lên lịch lại
-  const after = await Notifications.getAllScheduledNotificationsAsync();
-  console.log("Scheduled notifications after:", after.length);
 }
 
