@@ -159,6 +159,7 @@ export default function HomeScreen() {
                 classname={card({ type: "right-top" })}
                 iconName="bed"
                 title="Giấc ngủ"
+                href={`/sleep?selectedDate=${selectedDate}`}
               >
                 <TouchableOpacity className="self-center flex-row items-center justify-center px-6 py-3 bg-cyan-blue rounded-full">
                   <Text className="text-white">Chọn thời gian</Text>
