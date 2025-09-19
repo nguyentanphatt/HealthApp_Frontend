@@ -1,4 +1,6 @@
+import { useUnits } from "@/context/unitContext";
 import { createWaterReminder } from "@/services/water";
+import { convertWater, toBaseWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -14,8 +16,15 @@ import WheelPickerExpo from "react-native-wheel-picker-expo";
 
 const Page = () => {
   const router = useRouter();
+  const {units} = useUnits()
   const queryClient = useQueryClient();
-  const [selectedAmount, setSelectedAmount] = useState("250");
+
+  const initialValue =
+      units.water === "ml"
+        ? 360
+        : Number(convertWater(250, units.water).toFixed(2));
+
+  const [selectedAmount, setSelectedAmount] = useState(initialValue);
   const [selectedHour, setSelectedHour] = useState(6);
   const [selectedMinute, setSelectedMinute] = useState(30);
 
@@ -50,16 +59,16 @@ const Page = () => {
 	   newTime.setDate(newTime.getDate()+1);
 	 }
   const timestamp = newTime.getTime();
-
+  const valueInMl = units.water === "ml" ? amount : toBaseWater(amount, units.water); 
 	console.log("Saved:", {
-	  amount,
-	  time: newTime,
-	  hour,
-	  minute,
-	});
+    amount: valueInMl,
+    time: newTime,
+    hour,
+    minute,
+  });
     try {
-      const response = await createWaterReminder (
-        amount.toString(),
+      const response = await createWaterReminder(
+        valueInMl.toString(),
         timestamp.toString(),
         true
       );
@@ -86,13 +95,13 @@ const Page = () => {
         <View style={{ width: 24 }} />
       </View>
       <View className="flex items-center justify-center bg-white p-2 rounded-md shadow-md mb-1">
-        <Text className="text-xl font-bold">Lượng nước (ml)</Text>
+        <Text className="text-xl font-bold">Lượng nước ({units.water})</Text>
         <View className="border-b-2 border-black max-w-[200px] h-[50px]">
           <TextInput
             className="text-2xl font-bold"
-            defaultValue={selectedAmount}
+            defaultValue={selectedAmount.toString()}
             keyboardType="numeric"
-            onChangeText={(text) => setSelectedAmount(text)}
+            onChangeText={(text) => setSelectedAmount(Number(text))}
           />
         </View>
       </View>

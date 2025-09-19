@@ -1,5 +1,7 @@
+import { useUnits } from "@/context/unitContext";
 import { updateWaterDailyGoal } from "@/services/water";
 import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
+import { convertWater, toBaseWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -14,20 +16,32 @@ const Page = () => {
     amount: string;
     time: string;
   }>();
-  
+
+  const {units} = useUnits()
   const initAmount = Number(amount);
+
+  const initialValue =
+    units.water === "ml" ? initAmount : Number(convertWater(initAmount, units.water).toFixed(2));
+
   const queryClient = useQueryClient()
-  const [selectedAmount, setSelectedAmount] = useState<number>(initAmount);
+  const [selectedAmount, setSelectedAmount] = useState<number>(initialValue);
   const timestamp = convertISOToTimestamp(time);
 
-  const items = Array.from({ length: (5000 - 50) / 50 + 1 }, (_, i) => {
-    const amount = 50 + i * 50;
-    return { label: `${amount}`, amount };
-  });
+  const items =
+    units.water === "ml"
+      ? Array.from({ length: (5000 - 50) / 50 + 1 }, (_, i) => {
+          const amount = 50 + i * 50;
+          return { label: `${amount}`, value: amount };
+        })
+      : Array.from({ length: (170 - 2) / 2 + 1 }, (_, i) => {
+          const amount = 2 + i * 2;
+          return { label: `${amount}`, value: amount };
+        });
 
   const handleGoBack = async (amount: number, time: string) => {
+    const valueInMl = units.water === "ml" ? amount : toBaseWater(amount, units.water);
     try {
-      const response = await updateWaterDailyGoal(amount, time);
+      const response = await updateWaterDailyGoal(valueInMl, time);
       if (response.success) {
         queryClient.invalidateQueries({ queryKey: ["waterStatus"] });
         Toast.show({
@@ -59,15 +73,15 @@ const Page = () => {
 
       <View className="flex items-center justify-center p-4 bg-white rounded-md">
         <Text className="text-2xl font-bold mb-4">
-          Mục tiêu lượng nước (ml)
+          Mục tiêu lượng nước ({units.water})
         </Text>
         <WheelPickerExpo
           height={240}
           width={250}
-          initialSelectedIndex={items.findIndex((i) => i.amount === initAmount)}
+          initialSelectedIndex={items.findIndex((i) => i.value === initAmount)}
           items={items.map((item) => ({
             label: item.label,
-            value: item.amount,
+            value: item.value,
           }))}
           selectedStyle={{
             borderColor: "gray",

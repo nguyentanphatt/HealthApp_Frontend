@@ -1,5 +1,6 @@
 import ScheduleItem from "@/components/ScheduleItem";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { Href, router } from "expo-router";
 import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -13,12 +14,11 @@ const Profile = () => {
       showsVerticalScrollIndicator={false}
     >
       <View className="flex flex-row items-center justify-between px-4">
-        <View style={{ width: 24 }} />
-
+        <View className="size-[24px]" />
         <Text className="text-3xl font-bold text-center py-5">
           Thông tin của bạn
         </Text>
-        <TouchableOpacity onPress={() => ({})}>
+        <TouchableOpacity onPress={() => (router.push('/user/setting' as Href))}>
           <FontAwesome6 name="ellipsis-vertical" size={24} color="black" />
         </TouchableOpacity>
       </View>

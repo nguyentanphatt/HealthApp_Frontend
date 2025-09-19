@@ -1,3 +1,4 @@
+import { UnitProvider } from "@/context/unitContext";
 import useAuthStorage from "@/hooks/useAuthStorage";
 import { useNotifications } from "@/hooks/useNotification";
 import { registerForPushNotificationsAsync } from "@/utils/notificationsHelper";
@@ -49,7 +50,7 @@ export default function RootLayout() {
         if (storedAccess && storedRefresh) {
           console.log("➡️ Going to tabs");
           await checkAndRefreshToken(storedAccess, storedRefresh);
-          router.replace("/sleep" as Href);
+          router.replace("/water" as Href);
 
           interval = setInterval(async () => {
             const a = await SecureStore.getItemAsync("access_token");
@@ -91,21 +92,23 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <StatusBar hidden />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: "#f6f6f6" },
-        }}
-      >
-        <Stack.Screen name="introduction" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="auth/signin" />
-        <Stack.Screen name="water/index" />
-        <Stack.Screen name="water/edit/index" />
-        <Stack.Screen name="food/index" />
-      </Stack>
-      <Toast swipeable visibilityTime={3000} topOffset={50} />
+      <UnitProvider>
+        <StatusBar hidden />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: "#f6f6f6" },
+          }}
+        >
+          <Stack.Screen name="introduction" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="auth/signin" />
+          <Stack.Screen name="water/index" />
+          <Stack.Screen name="water/edit/index" />
+          <Stack.Screen name="food/index" />
+        </Stack>
+        <Toast swipeable visibilityTime={3000} topOffset={50} />
+      </UnitProvider>
     </QueryClientProvider>
   );
 }

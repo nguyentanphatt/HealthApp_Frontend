@@ -82,14 +82,6 @@ const Page = () => {
 
     const utcISOString = date.toISOString();
     const timestamp = new Date(utcISOString).getTime();
-    console.log("timestamp", timestamp);
-    
-    console.log("UTC ISO String:", utcISOString);
-    console.log("id", id);
-    console.log("tag", tag);
-    
-    
-    
     try {
       const res = await updateFoodRecord(id, timestamp.toString(), tag);
       if (res.success) {

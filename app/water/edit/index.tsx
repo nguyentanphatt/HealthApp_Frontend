@@ -1,10 +1,19 @@
+import { useUnits } from "@/context/unitContext";
 import { updateWaterRecord } from "@/services/water";
 import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
+import { convertWater, toBaseWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { BackHandler, Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  BackHandler,
+  Modal,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
 
@@ -15,17 +24,21 @@ const Page = () => {
     type: string;
   }>();
 
-  console.log("type", type);
-
+  const { units } = useUnits();
+  const initAmount = Number(amount) || 250;
+  const initialValue =
+    units.water === "ml"
+      ? initAmount
+      : Number(convertWater(initAmount, units.water).toFixed(2));
   const router = useRouter();
   const queryClient = useQueryClient();
-  const initAmount = Number(amount) || 250;
-  const dateTimestamp = convertISOToTimestamp(time)
+
+  const dateTimestamp = convertISOToTimestamp(time);
   const date = new Date(time);
   const initHour = date.getUTCHours();
   const initMinute = date.getUTCMinutes();
 
-  const [selectedAmount, setSelectedAmount] = useState(initAmount);
+  const [selectedAmount, setSelectedAmount] = useState(initialValue);
   const [selectedHour, setSelectedHour] = useState(initHour);
   const [selectedMinute, setSelectedMinute] = useState(initMinute);
   const [visible, setVisible] = useState(false);
@@ -47,24 +60,30 @@ const Page = () => {
   const repeatedMinutes = Array.from({ length: times }).flatMap(() => minutes);
   const middleMinutesIndex = Math.floor(times / 2) * minutes.length;
 
-  const handleSave = async (amount: number, hour: number, minute: number, date: string, type: string) => {
+  const handleSave = async (
+    amount: number,
+    hour: number,
+    minute: number,
+    date: string,
+    type: string
+  ) => {
     const newTime = new Date(time);
     newTime.setUTCHours(hour);
     newTime.setUTCMinutes(minute);
     newTime.setUTCSeconds(0);
     newTime.setUTCMilliseconds(0);
     const timestamp = newTime.getTime();
-
+    const valueInMl = units.water === "ml" ? amount : toBaseWater(amount, units.water);
     console.log("Saved:", {
-      amount,
+      amount: valueInMl,
       time: timestamp,
-      oldTime: date
+      oldTime: date,
     });
 
     try {
-      if (type === 'history') {
+      if (type === "history") {
         const response = await updateWaterRecord(
-          amount,
+          valueInMl,
           date,
           timestamp.toString()
         );
@@ -78,11 +97,14 @@ const Page = () => {
         }
       }
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
   };
 
-  const isChanged = (initAmount !== selectedAmount) && (initHour !== selectedHour) && (initMinute !== selectedMinute);
+  const isChanged =
+    initAmount !== selectedAmount &&
+    initHour !== selectedHour &&
+    initMinute !== selectedMinute;
   useEffect(() => {
     const backAction = () => {
       if (isChanged) {
@@ -110,11 +132,11 @@ const Page = () => {
         <View style={{ width: 24 }} />
       </View>
       <View className="flex items-center justify-center bg-white p-2 rounded-md shadow-md mb-1">
-        <Text className="text-xl font-bold">Lượng nước (ml)</Text>
+        <Text className="text-xl font-bold">Lượng nước ({units.water})</Text>
         <View className="border-b-2 border-black max-w-[200px] h-[50px]">
           <TextInput
             className="text-2xl font-bold"
-            defaultValue={amount}
+            defaultValue={initialValue.toString()}
             keyboardType="numeric"
             onChangeText={(text) => setSelectedAmount(Number(text))}
           />

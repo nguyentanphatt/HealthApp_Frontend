@@ -3,8 +3,10 @@ import Card from "@/components/Card";
 import FunctionCard from "@/components/FunctionCard";
 import ProgressItem from "@/components/ProgressItem";
 import WaterVector from "@/components/vector/WaterVector";
+import { useUnits } from "@/context/unitContext";
 import { getFoodStatus } from "@/services/food";
 import { getWaterStatus } from "@/services/water";
+import { convertWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -19,7 +21,7 @@ export default function HomeScreen() {
   const [bgActive, setBgActive] = useState(false);
   const [selectedDate, setSelectedDate] = useState(0);
   const queryClient = useQueryClient();
-
+  const {units} = useUnits()
   useEffect(() => {
     queryClient.prefetchQuery({
       queryKey: ["waterStatus", 0],
@@ -151,7 +153,7 @@ export default function HomeScreen() {
                 <Text className="font-bold text-3xl text-black">
                   {waterStatus?.currentIntake}
                 </Text>
-                / {waterStatus?.dailyGoal}ml
+                / {convertWater(waterStatus?.dailyGoal ?? 0, units.water)} {units.water}
               </Text>
             </FunctionCard>
             <View className="flex-1 justify-between">

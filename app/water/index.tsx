@@ -4,6 +4,7 @@ import ReminderList from "@/components/ReminderList";
 import WaterVector from "@/components/vector/WaterVector";
 import WaterHistory from "@/components/WaterHistory";
 import Weather from "@/components/Weather";
+import { useUnits } from "@/context/unitContext";
 import {
   getIp,
   getWaterReminder,
@@ -13,6 +14,7 @@ import {
   WaterWeekly,
   WeatherSuggest,
 } from "@/services/water";
+import { convertWater, toBaseWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -36,17 +38,29 @@ dayjs.extend(timezone);
 const Page = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { units } = useUnits();
   const queryClient = useQueryClient();
   const [visible, setVisible] = useState(false);
-  const [amount, setAmount] = useState(360);
   const [selectedDate, setSelectedDate] = useState(
     params.selectedDate ? Number(params.selectedDate) : 0
   );
   const currentDate = Date.now();
-  const items = Array.from({ length: 100 }, (_, i) => {
-    const amount = (i + 1) * 10;
-    return { label: `${amount}`, amount };
-  });
+  const initialValue =
+    units.water === "ml"
+      ? 360
+      : Number(convertWater(360, units.water).toFixed(2));
+
+  const [amount, setAmount] = useState(initialValue);
+  const items =
+    units.water === "ml"
+      ? Array.from({ length: 100 }, (_, i) => {
+          const amount = (i + 1) * 10;
+          return { label: `${amount}`, amount };
+        })
+      : Array.from({ length: (170 - 1) / 1 + 1 }, (_, i) => {
+          const amount = 1 + i * 1;
+          return { label: `${amount}`, amount };
+        });
 
   const {
     data: waterStatus,
@@ -155,8 +169,9 @@ const Page = () => {
     loadingWaterStatus || loadingWeather || loadingWeekly || loadingReminder;
 
   const handleConfirm = async (amount: number, time: string) => {
+    const valueInMl = units.water === "ml" ? amount : toBaseWater(amount, units.water); 
     try {
-      await saveWaterRecord(amount, time);
+      await saveWaterRecord(valueInMl, time);
       refetchWaterStatus();
       refetchWeekly();
       refetchReminder();
@@ -202,9 +217,14 @@ const Page = () => {
     ((waterStatus.currentIntake ?? 0) / (waterStatus.dailyGoal ?? 1)) * 100;
 
   const data = waterWeeklyData.map((item) => ({
-    value: item.totalMl,
+    value: convertWater(item.totalMl, units.water),
     label: item.dayOfWeek,
   }));
+
+  const baseLabels = [0, 500, 1000, 1500, 2000];
+  const yAxisLabelTexts = baseLabels.map((val) =>
+    convertWater(val, units.water).toString()
+  );
 
   return (
     <ScrollView
@@ -243,8 +263,8 @@ const Page = () => {
             animated={true}
           />
           <Text className="absolute top-2 right-2 text-black text-lg">
-            - {waterStatus?.dailyGoal || 0}
-            {` ml`}
+            - {convertWater(waterStatus?.dailyGoal || 0, units.water)}{" "}
+            {units.water}
           </Text>
         </View>
         <View className="flex-1 justify-between ml-1">
@@ -257,14 +277,21 @@ const Page = () => {
           >
             <InfoCard
               title="Mục tiêu"
-              content={`${waterStatus?.dailyGoal?.toString()} ml` || "2000ml"}
+              content={
+                `${convertWater(waterStatus?.dailyGoal || 0, units.water)} ${units.water}` ||
+                `${convertWater(2000, units.water)} ${units.water}`
+              }
             />
           </TouchableOpacity>
           <InfoCard
             title="Tiến độ"
-            content={waterStatus?.currentIntake?.toString() || "0ml"}
+            content={
+              `${convertWater(waterStatus?.currentIntake || 0, units.water)} ` ||
+              `${convertWater(0, units.water)} ${units.water}`
+            }
             subcontent={
-              ` / ${waterStatus?.dailyGoal?.toString()} ml` || " / 2000ml"
+              ` / ${convertWater(waterStatus?.dailyGoal || 0, units.water)} ${units.water}` ||
+              `${convertWater(2000, units.water)} ${units.water}`
             }
           />
           <TouchableOpacity
@@ -289,16 +316,17 @@ const Page = () => {
         transparent
         animationType="fade"
         onRequestClose={() => setVisible(false)}
+        className="flex-1"
       >
         <View className="flex-1 items-center justify-center bg-black/30">
           <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
             <Text className="text-2xl font-bold mb-4">
-              Lượng nước uống (ml)
+              Lượng nước uống ({units.water})
             </Text>
             <WheelPickerExpo
               height={240}
               width={250}
-              initialSelectedIndex={items.findIndex((i) => i.amount === 360)}
+              initialSelectedIndex={items.findIndex((i) => i.amount === initialValue)}
               items={items.map((item) => ({
                 label: item.label,
                 value: item.amount,
@@ -378,8 +406,8 @@ const Page = () => {
             barWidth={24}
             frontColor="#00BFFF"
             noOfSections={3}
-            yAxisLabelTexts={["0", "500", "1000", "1500", "2000"]}
-            maxValue={2000}
+            yAxisLabelTexts={yAxisLabelTexts}
+            maxValue={convertWater(2000, units.water)}
             xAxisLabelTextStyle={{ color: "black" }}
             yAxisTextStyle={{ color: "black" }}
           />

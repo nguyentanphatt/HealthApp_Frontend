@@ -1,4 +1,6 @@
 import { WaterRecords } from "@/constants/type";
+import { useUnits } from "@/context/unitContext";
+import { convertWater } from "@/utils/convertMeasure";
 import { Href, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
@@ -6,6 +8,7 @@ import InfoCard from "./InfoCard";
 
 const WaterHistory = ({ filtered }: { filtered: WaterRecords[] }) => {
   const router = useRouter();
+  const {units} = useUnits()
   const [showAll, setShowAll] = useState(false);
   const displayedData = showAll ? filtered : filtered.slice(0, 3);
   const formatTime = (isoString: string) => {
@@ -29,7 +32,7 @@ const WaterHistory = ({ filtered }: { filtered: WaterRecords[] }) => {
         >
           <InfoCard
             title={formatTime(item.time)}
-            content={`${item.amount} ml`}
+            content={`${convertWater(item.amount, units.water)} ${units.water}`}
           />
         </TouchableOpacity>
       ))}

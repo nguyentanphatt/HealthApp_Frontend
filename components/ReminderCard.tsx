@@ -1,6 +1,8 @@
 // ReminderCard.tsx
+import { useUnits } from "@/context/unitContext";
 import { updateWaterReminder } from "@/services/water";
 import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
+import { convertWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import Checkbox from "expo-checkbox";
@@ -9,6 +11,7 @@ import { Text, View } from "react-native";
 
 const ReminderCard = ({ amount, time, id, enabled }: { amount: string; time: number; id: string; enabled: boolean }) => {
   const queryClient = useQueryClient();
+  const {units} = useUnits()
   const [isChecked, setIsChecked] = useState(false);
   const timestamp = convertISOToTimestamp(time.toString());
   const hour = String(new Date(timestamp).getHours()).padStart(2, "0");
@@ -32,7 +35,7 @@ const ReminderCard = ({ amount, time, id, enabled }: { amount: string; time: num
             className={`text-2xl font-bold ${isChecked ? "text-gray-400 line-through" : "text-black"
               }`}
           >
-            {amount} ml
+            {convertWater(Number(amount), units.water)} {units.water}
           </Text>
           <Checkbox
             value={isChecked}
