@@ -9,8 +9,12 @@ const Introduction = () => {
     const router = useRouter()
     const [selectedIndex, setSelectedIndex] = useState(0)
     const handleContinue = async () => {
+      console.log('handleContinue');
+      
         await AsyncStorage.setItem('hasSeenIntroduction', 'true');
         router.push("/auth/signin");
+      console.log('handleContinue done');
+      
     }
   return (
     <View className="font-lato-regular flex-1 items-center justify-center gap-20 py-16 w-full">

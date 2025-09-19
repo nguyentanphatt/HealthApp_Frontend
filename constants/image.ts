@@ -1,6 +1,7 @@
 import drink from '@/assets/images/drink.png';
 import fitness from '@/assets/images/fitness.png';
 import food from '@/assets/images/food.png';
+import food01 from '@/assets/images/food01.png';
 import sleep from '@/assets/images/sleep.png';
 
 import blur01 from '@/assets/images/blur01.png';
@@ -20,5 +21,6 @@ export const images = {
   blur03,
   blur04,
   star,
-  googleicon
+  googleicon,
+  food01
 };

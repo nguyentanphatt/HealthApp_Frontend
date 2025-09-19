@@ -59,3 +59,106 @@ export interface WaterWeeklyResponse {
     dailyIntake: DailyIntake[]
   }
 }
+
+export interface WaterReminder {
+  id: string;
+  type: string;
+  message: string;
+  expiresIn: number;
+  enabled: boolean;
+}
+
+export interface WaterReminderResponse {
+  success: boolean;
+  message?:string;
+  data: WaterReminder[];
+}
+
+export interface UpdateWaterReminderResponse {
+  success:boolean;
+  data: WaterReminder
+}
+
+export interface FoodDetail {
+  recordId: string;
+  name: string;
+  tag: string;
+  calories: number;
+  protein: number;
+  fat: number;
+  fiber: number;
+  starch: number;
+  imageUrl: string;
+  time: string;
+  loggedAt?:string
+}
+
+export interface FoodRecord {
+  currentCalories: number;
+  date: string;
+  history: FoodDetail[];
+}
+
+export interface FoodRecordResponse {
+  success: boolean;
+  data: FoodRecord;
+}
+
+export interface SaveFoodRecordResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  recordId: string;
+  imageUrl: string;
+  name: string;
+  tag: string;
+  protein: number;
+  fiber: number;
+  fat: number;
+  starch: number;
+  calories: number;
+}
+
+export interface UpdateFoodRecordResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  recordId: string;
+  imageUrl: string;
+  name: string;
+  tag: string;
+  protein: number;
+  fiber: number;
+  fat: number;
+  starch: number;
+  calories: number;
+}
+
+export interface DailyFoodIntake {
+  date: string;
+  dayOfWeek: string;
+  totalCalories: number;
+}
+
+export interface FoodStatistic {
+  success: boolean;
+  data: {
+    weekStart: string;
+    weekEnd: string;
+    dailyIntake: DailyFoodIntake[];
+  }
+}
+
+export interface FindFoodById {
+  success: boolean;
+  message?: string;
+  error?: string;
+  data: FoodDetail;
+}
+
+export interface DeleteFoodRecordResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  recordId?: string;
+}

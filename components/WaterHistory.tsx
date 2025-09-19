@@ -1,11 +1,14 @@
 import { WaterRecords } from "@/constants/type";
+import { useUnits } from "@/context/unitContext";
+import { convertWater } from "@/utils/convertMeasure";
 import { Href, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import InfoCard from "./InfoCard";
 
-const WaterHistory = ({ filtered, percent }: { filtered: WaterRecords[], percent:number }) => {
+const WaterHistory = ({ filtered }: { filtered: WaterRecords[] }) => {
   const router = useRouter();
+  const {units} = useUnits()
   const [showAll, setShowAll] = useState(false);
   const displayedData = showAll ? filtered : filtered.slice(0, 3);
   const formatTime = (isoString: string) => {
@@ -17,25 +20,19 @@ const WaterHistory = ({ filtered, percent }: { filtered: WaterRecords[], percent
 
   return (
     <View>
-      {percent >= 25 && (
-        <Text className="text-lg text-center text-black/60 mb-5">
-          {" "}
-          Bạn đã hoàn thành {percent.toFixed(0)}% mục tiêu đề ra{" "}
-        </Text>
-      )}
       {displayedData.map((item, index) => (
         <TouchableOpacity
           key={index}
           onPress={() =>
             router.push(
-              `/water/edit?amount=${item.amount}&time=${item.time}` as Href
+              `/water/edit?amount=${item.amount}&time=${item.time}&type=history` as Href
             )
           }
           className="mb-2.5"
         >
           <InfoCard
             title={formatTime(item.time)}
-            content={`${item.amount} ml`}
+            content={`${convertWater(item.amount, units.water)} ${units.water}`}
           />
         </TouchableOpacity>
       ))}

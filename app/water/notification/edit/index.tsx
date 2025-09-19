@@ -1,5 +1,5 @@
 import { useUnits } from "@/context/unitContext";
-import { updateWaterRecord } from "@/services/water";
+import { updateWaterReminder } from "@/services/water";
 import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
 import { convertWater, toBaseWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -7,34 +7,33 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  BackHandler,
-  Modal,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    BackHandler,
+    Modal,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
 
 const Page = () => {
-  const { amount, time, type } = useLocalSearchParams<{
-    amount: string;
-    time: string;
-    type: string;
+  const { id, message, expiresIn } = useLocalSearchParams<{
+    id: string;
+    message: string;
+    expiresIn: string;
   }>();
 
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { units } = useUnits();
-  const initAmount = Number(amount) || 250;
+  const initAmount = Number(message) || 250;
   const initialValue =
     units.water === "ml"
       ? initAmount
       : Number(convertWater(initAmount, units.water).toFixed(2));
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  const dateTimestamp = convertISOToTimestamp(time);
-  const date = new Date(time);
+  const dateTimestamp = convertISOToTimestamp(expiresIn);
+  const date = new Date(expiresIn);
   const initHour = date.getUTCHours();
   const initMinute = date.getUTCMinutes();
 
@@ -65,36 +64,39 @@ const Page = () => {
     hour: number,
     minute: number,
     date: string,
-    type: string
+    id: string
   ) => {
-    const newTime = new Date(time);
-    newTime.setUTCHours(hour);
+    const newTime = new Date(expiresIn);
+    newTime.setUTCHours(hour + 1);
     newTime.setUTCMinutes(minute);
     newTime.setUTCSeconds(0);
     newTime.setUTCMilliseconds(0);
     const timestamp = newTime.getTime();
-    const valueInMl = units.water === "ml" ? amount : toBaseWater(amount, units.water);
+    const valueInMl =
+      units.water === "ml" ? amount : toBaseWater(amount, units.water);
     console.log("Saved:", {
       amount: valueInMl,
       time: timestamp,
-      oldTime: date,
+      hour,
+      minute,
+      id,
     });
 
     try {
-      if (type === "history") {
-        const response = await updateWaterRecord(
-          valueInMl,
-          date,
-          timestamp.toString()
-        );
-        if (response.success) {
-          queryClient.invalidateQueries({ queryKey: ["waterStatus"] });
-          Toast.show({
-            type: "success",
-            text1: response.message,
-          });
-          router.push("/water");
-        }
+      const response = await updateWaterReminder(
+        id,
+        valueInMl.toString(),
+        timestamp.toString(),
+        true
+      );
+      if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ["waterStatus"] });
+        queryClient.invalidateQueries({ queryKey: ["waterReminder"] });
+        Toast.show({
+          type: "success",
+          text1: "Thành công",
+        });
+        router.push("/water");
       }
     } catch (error) {
       console.error(error);
@@ -132,7 +134,7 @@ const Page = () => {
         <View style={{ width: 24 }} />
       </View>
       <View className="flex items-center justify-center bg-white p-2 rounded-md shadow-md mb-1">
-        <Text className="text-xl font-bold">Lượng nước ({units.water})</Text>
+        <Text className="text-xl font-bold">Lượng nước (ml)</Text>
         <View className="border-b-2 border-black max-w-[200px] h-[50px]">
           <TextInput
             className="text-2xl font-bold"
@@ -211,7 +213,7 @@ const Page = () => {
               selectedHour,
               selectedMinute,
               dateTimestamp.toString(),
-              type
+              id
             );
           }}
           className="flex-row items-center justify-center w-[45%] bg-cyan-blue py-3 rounded-md shadow-md"
@@ -247,7 +249,7 @@ const Page = () => {
                     selectedHour,
                     selectedMinute,
                     dateTimestamp.toString(),
-                    type
+                    id
                   )
                 }
                 className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"

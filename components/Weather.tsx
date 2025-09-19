@@ -1,4 +1,6 @@
 import { WaterStatus, WeatherResponse } from '@/constants/type';
+import { useUnits } from '@/context/unitContext';
+import { convertWater } from '@/utils/convertMeasure';
 import { FontAwesome6 } from '@expo/vector-icons';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -12,6 +14,7 @@ const Weather = ({
   waterStatus: WaterStatus;
   handleUpdateGoal: (amount: number, time: string) => void;
 }) => {
+  const {units} = useUnits()
   return (
     <View className="flex flex-row items-center justify-between gap-5 bg-white rounded-md shadow-md p-4">
       <View className="flex flex-row items-center gap-2.5 max-w-[60%]">
@@ -47,7 +50,9 @@ const Weather = ({
           </Text>
           <Text className="text-lg text-black/60">
             Chúng tôi khuyến nghị bạn nên uống ít nhất{" "}
-            <Text className="font-bold text-black">{weatherReport.recommended}ml</Text>
+            <Text className="font-bold text-black">
+              {convertWater(weatherReport.recommended, units.water)} {units.water}
+            </Text>
           </Text>
         </View>
       </View>

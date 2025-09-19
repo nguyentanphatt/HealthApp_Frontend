@@ -1,23 +1,30 @@
+import { UnitProvider } from "@/context/unitContext";
 import useAuthStorage from "@/hooks/useAuthStorage";
+import { useNotifications } from "@/hooks/useNotification";
+import { registerForPushNotificationsAsync } from "@/utils/notificationsHelper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Font from "expo-font";
-import { Stack } from "expo-router";
+import { Href, Stack, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
-import "react-native-reanimated";
+import { useEffect } from "react";
 import Toast from "react-native-toast-message";
 import "../global.css";
 
+SplashScreen.preventAutoHideAsync(); // ✅ keep splash until we say so
+
 export default function RootLayout() {
+  useNotifications();
+  const router = useRouter();
   const [loaded] = Font.useFonts({
     "Lato-Regular": require("../assets/fonts/Lato-Regular.ttf"),
     "Lato-Bold": require("../assets/fonts/Lato-Bold.ttf"),
   });
 
-  const { checkAndRefreshToken, loadStoredAuth, refreshToken } = useAuthStorage();
-  const [initialRoute, setInitialRoute] = useState<string | null>(null);
+  const { checkAndRefreshToken, loadStoredAuth } = useAuthStorage();
+  const queryClient = new QueryClient();
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | undefined;
@@ -25,36 +32,45 @@ export default function RootLayout() {
     const init = async () => {
       try {
         const hasSeen = await AsyncStorage.getItem("hasSeenIntroduction");
+        console.log("🔍 hasSeenIntroduction:", hasSeen);
+
         if (!hasSeen) {
-          setInitialRoute("introduction");
+          console.log("➡️ Going to introduction");
+          router.replace("/introduction");
           return;
         }
 
         const storedAccess = await SecureStore.getItemAsync("access_token");
         const storedRefresh = await SecureStore.getItemAsync("refresh_token");
-        console.log("token", storedAccess);
+        console.log("🔍 Access token:", storedAccess ? "EXISTS" : "NULL");
+        console.log("🔍 Refresh token:", storedRefresh ? "EXISTS" : "NULL");
+        console.log("Access token", storedAccess);
         
         await loadStoredAuth();
-        if (storedRefresh && storedAccess) {
+        if (storedAccess && storedRefresh) {
+          console.log("➡️ Going to tabs");
           await checkAndRefreshToken(storedAccess, storedRefresh);
-          //setInitialRoute("(tabs)");
-          setInitialRoute("water/index");
+          router.replace("/water" as Href);
 
-          interval = setInterval(
-            async () => {
-              const a = await SecureStore.getItemAsync("access_token");
-              const r = await SecureStore.getItemAsync("refresh_token");
-              if (a && r) {
-                await checkAndRefreshToken(a, r);
-              }
-            },
-            5 * 60 * 1000
-          );
+          interval = setInterval(async () => {
+            const a = await SecureStore.getItemAsync("access_token");
+            const r = await SecureStore.getItemAsync("refresh_token");
+            if (a && r) {
+              await checkAndRefreshToken(a, r);
+            }
+          }, 5 * 60 * 1000);
         } else {
-          setInitialRoute("auth/signin");
+          console.log("➡️ Going to auth/signin");
+          router.replace("/auth/signin");
         }
       } catch (e) {
-        setInitialRoute("auth/signin");
+        console.log("❌ Error in init:", e);
+        router.replace("/auth/signin");
+      } finally {
+        // ✅ Hide splash after everything is ready
+        setTimeout(() => {
+          SplashScreen.hideAsync();
+        }, 300); // small delay for smooth transition
       }
     };
 
@@ -65,28 +81,34 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (!loaded || !initialRoute) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#000" />
-      </View>
-    );
-  }
+  useEffect(() => {
+    (async () => {
+      const granted = await registerForPushNotificationsAsync();
+      if (!granted) console.log("Permission denied for notifications");
+    })();
+  }, []);
+
+  if (!loaded) return null; // Splash stays while loading fonts
 
   return (
-    <>
-      <StatusBar hidden />
-      <Stack
-        screenOptions={{ headerShown: false, contentStyle: {backgroundColor: '#f6f6f6'} }}
-        initialRouteName={initialRoute}
-      >
-        <Stack.Screen name="introduction" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="auth/signin" />
-        <Stack.Screen name="water/index" />
-        <Stack.Screen name="water/edit/index" />
-      </Stack>
-      <Toast swipeable visibilityTime={3000} topOffset={50} />
-    </>
+    <QueryClientProvider client={queryClient}>
+      <UnitProvider>
+        <StatusBar hidden />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: "#f6f6f6" },
+          }}
+        >
+          <Stack.Screen name="introduction" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="auth/signin" />
+          <Stack.Screen name="water/index" />
+          <Stack.Screen name="water/edit/index" />
+          <Stack.Screen name="food/index" />
+        </Stack>
+        <Toast swipeable visibilityTime={3000} topOffset={50} />
+      </UnitProvider>
+    </QueryClientProvider>
   );
 }
