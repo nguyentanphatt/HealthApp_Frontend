@@ -1,11 +1,38 @@
 import ScheduleItem from "@/components/ScheduleItem";
+import { images } from "@/constants/image";
+import { getUserProfile } from "@/services/user";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import { Href, router } from "expo-router";
 import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 
 const Profile = () => {
+
+  const {
+    data: userProfileStatus,
+    isLoading: loadingUserProfileStatus,
+    refetch: refetchUserProfileStatus,
+  } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: () =>
+      getUserProfile(
+      ),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const loading = loadingUserProfileStatus;
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
+  }
+
+  console.log("userProfileStatus", userProfileStatus);
+  
   return (
     <ScrollView
       className="flex-1 gap-2.5 px-4 py-16 font-lato-regular bg-[#f6f6f6]"
@@ -24,12 +51,24 @@ const Profile = () => {
       </View>
 
       <View className="flex gap-6">
-        <View className="w-[100px] h-[100px] bg-black/20 rounded-full self-center flex items-center justify-center">
-          <FontAwesome6 name="user" color="black" size={24} />
+        <View className="w-[100px] h-[100px] bg-black/20 rounded-full self-center flex items-center justify-center overflow-hidden">
+          {userProfileStatus?.imageUrl ? (
+            <Image 
+              source={{ uri: userProfileStatus.imageUrl }} 
+              className="w-full h-full rounded-full"
+              resizeMode="cover"
+            />
+          ) : (
+            <Image 
+              source={images.noImg} 
+              className="w-full h-full rounded-full"
+              resizeMode="cover"
+            />
+          )}
         </View>
 
         <View className="flex items-center justify-center w-full p-4 bg-white rounded-md shadow-md">
-          <Text className="text-xl">User124</Text>
+          <Text className="text-xl">{userProfileStatus?.fullName}</Text>
         </View>
 
         <View className="bg-white rounded-md shadow-md p-4 flex gap-3">

@@ -5,6 +5,7 @@ import ProgressItem from "@/components/ProgressItem";
 import WaterVector from "@/components/vector/WaterVector";
 import { useUnits } from "@/context/unitContext";
 import { getFoodStatus } from "@/services/food";
+import { getSleepStatus } from "@/services/sleep";
 import { getWaterStatus } from "@/services/water";
 import { convertWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -21,7 +22,7 @@ export default function HomeScreen() {
   const [bgActive, setBgActive] = useState(false);
   const [selectedDate, setSelectedDate] = useState(0);
   const queryClient = useQueryClient();
-  const {units} = useUnits()
+  const { units } = useUnits()
   useEffect(() => {
     queryClient.prefetchQuery({
       queryKey: ["waterStatus", 0],
@@ -29,31 +30,37 @@ export default function HomeScreen() {
       staleTime: 1000 * 60 * 5,
     });
 
-  queryClient.prefetchQuery({
+    queryClient.prefetchQuery({
       queryKey: ["foodStatus", 0],
       queryFn: () => getFoodStatus(),
+      staleTime: 1000 * 60 * 5,
+    });
+
+    queryClient.prefetchQuery({
+      queryKey: ["sleepStatus", 0],
+      queryFn: () => getSleepStatus(),
       staleTime: 1000 * 60 * 5,
     });
   }, []);
 
   const {
-      data: waterStatus,
-      isLoading: loadingWaterStatus,
-      refetch: refetchWaterStatus,
-    } = useQuery({
-      queryKey: ["waterStatus", selectedDate],
-      queryFn: () =>
-        getWaterStatus(
-          selectedDate !== 0
-            ? { date: (selectedDate * 1000).toString() }
-            : undefined
-        ),
-      staleTime: 1000 * 60 * 5,
-      select: (res) => res.data
-    });
+    data: waterStatus,
+    isLoading: loadingWaterStatus,
+    refetch: refetchWaterStatus,
+  } = useQuery({
+    queryKey: ["waterStatus", selectedDate],
+    queryFn: () =>
+      getWaterStatus(
+        selectedDate !== 0
+          ? { date: (selectedDate * 1000).toString() }
+          : undefined
+      ),
+    staleTime: 1000 * 60 * 5,
+    select: (res) => res.data
+  });
 
   const currentDate = Date.now();
-  
+
   useEffect(() => {
     const listenerId = scrollY.addListener(({ value }) => {
       if (value >= 20 && !bgActive) setBgActive(true);

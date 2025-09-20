@@ -4,7 +4,7 @@ import ReminderList from "@/components/ReminderList";
 import WaterVector from "@/components/vector/WaterVector";
 import WaterHistory from "@/components/WaterHistory";
 import Weather from "@/components/Weather";
-import { useUnits } from "@/context/unitContext";
+import { useUnits } from "@/hooks/useUnits";
 import {
   getIp,
   getWaterReminder,
@@ -14,7 +14,6 @@ import {
   WaterWeekly,
   WeatherSuggest,
 } from "@/services/water";
-import { convertWater, toBaseWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -38,7 +37,7 @@ dayjs.extend(timezone);
 const Page = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { units } = useUnits();
+  const { units, displayWater, inputToBaseWater } = useUnits();
   const queryClient = useQueryClient();
   const [visible, setVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(
@@ -48,7 +47,7 @@ const Page = () => {
   const initialValue =
     units.water === "ml"
       ? 360
-      : Number(convertWater(360, units.water).toFixed(2));
+      : Number(displayWater(360).value.toFixed(2));
 
   const [amount, setAmount] = useState(initialValue);
   const items =
@@ -169,7 +168,7 @@ const Page = () => {
     loadingWaterStatus || loadingWeather || loadingWeekly || loadingReminder;
 
   const handleConfirm = async (amount: number, time: string) => {
-    const valueInMl = units.water === "ml" ? amount : toBaseWater(amount, units.water); 
+    const valueInMl = inputToBaseWater(amount); 
     try {
       await saveWaterRecord(valueInMl, time);
       refetchWaterStatus();
@@ -217,13 +216,13 @@ const Page = () => {
     ((waterStatus.currentIntake ?? 0) / (waterStatus.dailyGoal ?? 1)) * 100;
 
   const data = waterWeeklyData.map((item) => ({
-    value: convertWater(item.totalMl, units.water),
+    value: displayWater(item.totalMl).value,
     label: item.dayOfWeek,
   }));
 
   const baseLabels = [0, 500, 1000, 1500, 2000];
   const yAxisLabelTexts = baseLabels.map((val) =>
-    convertWater(val, units.water).toString()
+    displayWater(val).value.toString()
   );
 
   return (
@@ -263,8 +262,7 @@ const Page = () => {
             animated={true}
           />
           <Text className="absolute top-2 right-2 text-black text-lg">
-            - {convertWater(waterStatus?.dailyGoal || 0, units.water)}{" "}
-            {units.water}
+            - {displayWater(waterStatus?.dailyGoal || 0).formatted}
           </Text>
         </View>
         <View className="flex-1 justify-between ml-1">
@@ -278,20 +276,20 @@ const Page = () => {
             <InfoCard
               title="Mục tiêu"
               content={
-                `${convertWater(waterStatus?.dailyGoal || 0, units.water)} ${units.water}` ||
-                `${convertWater(2000, units.water)} ${units.water}`
+                displayWater(waterStatus?.dailyGoal || 0).formatted ||
+                displayWater(2000).formatted
               }
             />
           </TouchableOpacity>
           <InfoCard
             title="Tiến độ"
             content={
-              `${convertWater(waterStatus?.currentIntake || 0, units.water)} ` ||
-              `${convertWater(0, units.water)} ${units.water}`
+              displayWater(waterStatus?.currentIntake || 0).formatted ||
+              displayWater(0).formatted
             }
             subcontent={
-              ` / ${convertWater(waterStatus?.dailyGoal || 0, units.water)} ${units.water}` ||
-              `${convertWater(2000, units.water)} ${units.water}`
+              ` / ${displayWater(waterStatus?.dailyGoal || 0).formatted}` ||
+              displayWater(2000).formatted
             }
           />
           <TouchableOpacity
@@ -407,7 +405,7 @@ const Page = () => {
             frontColor="#00BFFF"
             noOfSections={3}
             yAxisLabelTexts={yAxisLabelTexts}
-            maxValue={convertWater(2000, units.water)}
+            maxValue={displayWater(2000).value}
             xAxisLabelTextStyle={{ color: "black" }}
             yAxisTextStyle={{ color: "black" }}
           />

@@ -162,3 +162,70 @@ export interface DeleteFoodRecordResponse {
   error?: string;
   recordId?: string;
 }
+
+export interface SleepHistory {
+  recordId:string,
+  startAt:string,
+  endedAt:string,
+  duration:number,
+  qualityScore:string,
+  attribute: string | null
+}
+
+export interface SleepStatus {
+  totalHours:number,
+  date:string,
+  history:SleepHistory[]
+}
+
+export interface SleepStatusResponse {
+  success:boolean,
+  data: SleepStatus
+}
+
+export interface CreateSleepRecord {
+  recordsCreated: number,
+  mainRecord: {
+    id:string,
+    startAt:string,
+    endedAt:string
+  }
+}
+
+export interface CreateSleepRecordResponse {
+  success:boolean,
+  message:string,
+  data:CreateSleepRecord
+}
+
+export interface UpdateSleepRecord {
+  id:string,
+  startAt:string,
+  endedAt:string,
+  qualityScore:number,
+  attribute:string
+}
+
+export interface UpdateSleepRecordResponse {
+  success:boolean,
+  message:string,
+  data: UpdateSleepRecord
+}
+
+export interface UserSetting {
+  userId:string,
+  height:string
+  weight:string,
+  water:string,
+  temp:string,
+}
+
+export interface UserProfile {
+  userId:string,
+  fullName:string,
+  dob:string,
+  gender:string,
+  height:number,
+  weight:number,
+  imageUrl:string
+}

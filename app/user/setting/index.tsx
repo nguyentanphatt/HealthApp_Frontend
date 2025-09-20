@@ -37,6 +37,11 @@ const Page = () => {
       isSwitch: false,
     },
     {
+      settingName: "Cập nhật thông tin cá nhân",
+      isSwitch: false,
+      href: '/user/setting/info'
+    },
+    {
       settingName: "Xóa dữ liệu cá nhân",
       isSwitch: false,
     },
@@ -91,7 +96,7 @@ const Page = () => {
         <View className="flex w-full gap-4 bg-white rounded-md shadow-md p-4">
           {privateData.map((item, idx) => (
             <View key={idx} className="flex gap-4">
-              <View className="flex-row items-center justify-between">
+              <TouchableOpacity onPress={() => router.push(item.href as Href)} className="flex-row items-center justify-between">
                 <Text className="text-xl">{item.settingName}</Text>
                 {item.isSwitch && (
                   <Switch
@@ -103,7 +108,7 @@ const Page = () => {
                     className="scale-125"
                   />
                 )}
-              </View>
+              </TouchableOpacity>
               {idx === privateData.length - 1 ? null : (
                 <View className="w-full h-0.5 bg-black/40" />
               )}

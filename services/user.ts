@@ -1,4 +1,4 @@
-import { publicClient } from "./client";
+import { privateClient, publicClient } from "./client";
 
 export const signup = async (email: string, password:string) => {
     try {
@@ -52,6 +52,31 @@ export const getNewToken = async (refreshToken: string) => {
         const response = await publicClient.post("/api/auth/refresh", {
           refreshToken,
         });
+        return response.data
+    } catch (error) {
+        throw error
+    }
+}
+
+export const updateUserInfo = async (fullName: string, dob:string, gender:string, height:number, weight:number, imageUrl:string) => {
+    try {
+        const response = await privateClient.put("/api/user/profile", {
+        fullName,
+        dob,
+        gender,
+        height,
+        weight,
+        imageUrl
+        });
+        return response.data
+    } catch (error) {
+        throw error
+    }
+}
+
+export const getUserProfile = async () => {
+    try {
+        const response = await privateClient.get("/api/user/profile");
         return response.data
     } catch (error) {
         throw error
