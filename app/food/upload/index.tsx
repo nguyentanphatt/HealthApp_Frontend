@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
-import { FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 const Page = () => {
   const router = useRouter();
@@ -16,6 +16,7 @@ const Page = () => {
   const [selectedTag, setSelectedTag] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const options = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -43,6 +44,7 @@ const Page = () => {
 
   const sendToBackend = async (uris: string[], tag: string) => {
     try {
+      setIsUploading(true);
       console.log("Sending to backend:", uris, tag);
 
       for (let i = 0; i < uris.length; i++) {
@@ -73,16 +75,15 @@ const Page = () => {
           });
         }
 
-        // Rate limit: chờ 500ms giữa các request
         if (i < uris.length - 1) {
           await delay(300);
         }
       }
-
-      // Sau khi upload xong hết thì redirect
       router.push("/food");
     } catch (err) {
       console.error("Lỗi chung khi upload:", err);
+    } finally {
+      setIsUploading(false);
     }
   };
   return (
@@ -207,6 +208,21 @@ const Page = () => {
           >
             <Text className="text-xl text-white font-bold ">Tải ảnh lên</Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Loading Overlay */}
+      {isUploading && (
+        <View className="absolute inset-0 bg-black/50 justify-center items-center z-50">
+          <View className="bg-white rounded-lg p-6 flex items-center justify-center w-[90%] h-[300px]">
+            <ActivityIndicator size="large" color="#19B1FF" />
+            <Text className="text-2xl font-bold mt-4 text-center">
+              AI đang phân tích...
+            </Text>
+            <Text className="text-lg text-gray-600 mt-2 text-center">
+              Vui lòng chờ trong giây lát
+            </Text>
+          </View>
         </View>
       )}
     </View>

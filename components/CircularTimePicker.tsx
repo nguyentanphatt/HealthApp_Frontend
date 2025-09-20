@@ -29,12 +29,11 @@ export default function CircularTimePicker({
   const [endAngle, setEndAngle] = useState(initialEndAngle); 
   const [activeHandle, setActiveHandle] = useState<"start" | "end" | null>(null);
 
-  // Tính giờ từ góc theo format 12h (0° = 12h, 30° = 1h, 60° = 2h, ..., 330° = 11h)
+  // Tính giờ từ góc theo format 24h (0° = 0h, 90° = 6h, 180° = 12h, 270° = 18h)
   const getTimeFromAngle = (deg: number) => {
-    const totalHours = (deg / 360) * 12;
+    const totalHours = (deg / 360) * 24;
     let hours = Math.floor(totalHours);
     const minutes = Math.floor((totalHours % 1) * 60);
-    if (hours === 0) hours = 12;
     
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   };
@@ -253,13 +252,13 @@ export default function CircularTimePicker({
           </SvgText>
         </G>
 
-        {/* Các text 12, 3, 6, 9 - bên trong vòng tròn */}
+        {/* Các text 0, 6, 12, 18 - bên trong vòng tròn */}
         <G>
           {[
-            { angle: 0, text: "12" },
-            { angle: 90, text: "3" },
-            { angle: 180, text: "6" },
-            { angle: 270, text: "9" },
+            { angle: 0, text: "0" },
+            { angle: 90, text: "6" },
+            { angle: 180, text: "12" },
+            { angle: 270, text: "18" },
           ].map((marker, index) => {
             const pos = polarToCartesian(
               RADIUS + STROKE_WIDTH,

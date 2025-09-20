@@ -19,7 +19,7 @@ export const privateClient = axios.create({
 
 export const uploadClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000, // 30 seconds for file uploads
+  timeout: 30000,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -47,7 +47,6 @@ uploadClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Refresh token on 401 and retry once
 let isRefreshing = false;
 let pendingQueue: ((token: string | null) => void)[] = [];
 
@@ -60,7 +59,6 @@ privateClient.interceptors.response.use(
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        // Queue the request until refresh completes
         return new Promise((resolve) => {
           pendingQueue.push((token) => {
             if (token) originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -78,11 +76,8 @@ privateClient.interceptors.response.use(
         const newRefresh = data.data?.refreshToken ?? data.refreshToken;
         if (newAccess) await SecureStore.setItemAsync("access_token", newAccess);
         if (newRefresh) await SecureStore.setItemAsync("refresh_token", newRefresh);
-
-        // Update header and retry
         originalRequest.headers.Authorization = `Bearer ${newAccess}`;
 
-        // flush queue
         pendingQueue.forEach((cb) => cb(newAccess));
         pendingQueue = [];
 
@@ -108,7 +103,6 @@ uploadClient.interceptors.response.use(
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        // Queue the request until refresh completes
         return new Promise((resolve) => {
           pendingQueue.push((token) => {
             if (token) originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -127,10 +121,7 @@ uploadClient.interceptors.response.use(
         if (newAccess) await SecureStore.setItemAsync("access_token", newAccess);
         if (newRefresh) await SecureStore.setItemAsync("refresh_token", newRefresh);
 
-        // Update header and retry
         originalRequest.headers.Authorization = `Bearer ${newAccess}`;
-
-        // flush queue
         pendingQueue.forEach((cb) => cb(newAccess));
         pendingQueue = [];
 

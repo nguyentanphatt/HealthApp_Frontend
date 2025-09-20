@@ -159,12 +159,16 @@ const Page = () => {
     const endTimeHour = Number(endTime.split(":")[0]);
     const endTimeMinute = Number(endTime.split(":")[1]);
 
-    const isStartTimeNextDay = startTimeHour >= 12 || startTimeHour < 6;
+    // Với format 24h: từ 0:00 trở đi là ngày hôm sau, còn lại là ngày hôm nay
+    const isStartTimeNextDay = startTimeHour >= 0;
     const isEndTimeNextDay = true;
 
     const startTimeTimestamp = vnTimeToUtcTimestamp(startTimeHour, startTimeMinute, isStartTimeNextDay);
     const endTimeTimestamp = vnTimeToUtcTimestamp(endTimeHour, endTimeMinute, isEndTimeNextDay);
 
+    console.log("startTimeTimestamp", startTimeTimestamp);
+    console.log("endTimeTimestamp", endTimeTimestamp);
+    
     try {
       const response = await CreateSleepRecord(startTimeTimestamp.toString(), endTimeTimestamp.toString(), isAllWeek);
       if (response.success) {

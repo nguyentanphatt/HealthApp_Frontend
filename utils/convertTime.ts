@@ -1,17 +1,12 @@
-// Convert time from VN to UTC timestamp (12-hour format)
+// Convert time from VN to UTC timestamp (24-hour format)
 export function vnTimeToUtcTimestamp(hours: number, minutes: number, isNextDay: boolean = false): number {
     const now = new Date();
     const vnOffset = 7 * 60 * 60 * 1000;
     const vnNow = new Date(now.getTime() + vnOffset);
     
-    // For 12-hour format: convert to 24-hour format
-    // 12:00 -> 0:00, 1:25 -> 1:25, 6:00 -> 6:00, 11:59 -> 11:59
-    let actualHours = hours;
-    if (hours >= 12) {
-        actualHours = hours - 12; // 12:00 -> 0:00, 12:40 -> 0:40
-    }
-    
-    vnNow.setUTCHours(actualHours, minutes, 0, 0);
+    // For 24-hour format: use hours directly (no conversion needed)
+    // 20:36 -> 20:36, 0:00 -> 0:00, 23:59 -> 23:59
+    vnNow.setUTCHours(hours, minutes, 0, 0);
     
     // If it's next day, add 24 hours
     if (isNextDay) {
