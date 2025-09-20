@@ -4,7 +4,6 @@ import { convertHeight, convertTemperature, convertWater, convertWeight, toBaseH
 export const useUnits = () => {
   const { units, setUnit } = useUnitsContext();
 
-  // Helper functions to convert values based on current units
   const displayHeight = (valueCm: number) => {
     const converted = convertHeight(valueCm, units.height);
     return {
@@ -41,7 +40,6 @@ export const useUnits = () => {
     };
   };
 
-  // Helper functions to convert input values to base units for storage
   const inputToBaseHeight = (value: number) => toBaseHeight(value, units.height);
   const inputToBaseWeight = (value: number) => toBaseWeight(value, units.weight);
   const inputToBaseWater = (value: number) => toBaseWater(value, units.water);

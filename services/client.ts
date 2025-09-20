@@ -17,7 +17,26 @@ export const privateClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+export const uploadClient = axios.create({
+  baseURL: BASE_URL,
+  timeout: 30000, // 30 seconds for file uploads
+  headers: { "Content-Type": "application/json" },
+});
+
+// Request interceptor for privateClient
 privateClient.interceptors.request.use(
+  async (config) => {
+    const storedAccess = await SecureStore.getItemAsync("access_token");
+    if (storedAccess) {
+      config.headers.Authorization = `Bearer ${storedAccess}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Request interceptor for uploadClient
+uploadClient.interceptors.request.use(
   async (config) => {
     const storedAccess = await SecureStore.getItemAsync("access_token");
     if (storedAccess) {
@@ -32,6 +51,7 @@ privateClient.interceptors.request.use(
 let isRefreshing = false;
 let pendingQueue: ((token: string | null) => void)[] = [];
 
+// Response interceptor for privateClient
 privateClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -67,6 +87,54 @@ privateClient.interceptors.response.use(
         pendingQueue = [];
 
         return privateClient(originalRequest);
+      } catch (refreshErr) {
+        pendingQueue.forEach((cb) => cb(null));
+        pendingQueue = [];
+        return Promise.reject(refreshErr);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for uploadClient
+uploadClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      if (isRefreshing) {
+        // Queue the request until refresh completes
+        return new Promise((resolve) => {
+          pendingQueue.push((token) => {
+            if (token) originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(uploadClient(originalRequest));
+          });
+        });
+      }
+
+      isRefreshing = true;
+      try {
+        const refreshToken = await SecureStore.getItemAsync("refresh_token");
+        if (!refreshToken) throw error;
+        const data = await getNewToken(refreshToken);
+        const newAccess = data.data?.accessToken ?? data.accessToken;
+        const newRefresh = data.data?.refreshToken ?? data.refreshToken;
+        if (newAccess) await SecureStore.setItemAsync("access_token", newAccess);
+        if (newRefresh) await SecureStore.setItemAsync("refresh_token", newRefresh);
+
+        // Update header and retry
+        originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+
+        // flush queue
+        pendingQueue.forEach((cb) => cb(newAccess));
+        pendingQueue = [];
+
+        return uploadClient(originalRequest);
       } catch (refreshErr) {
         pendingQueue.forEach((cb) => cb(null));
         pendingQueue = [];

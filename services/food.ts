@@ -1,5 +1,5 @@
 import { DeleteFoodRecordResponse, FindFoodById, FoodRecordResponse, FoodStatistic, SaveFoodRecordResponse, UpdateFoodRecordResponse } from "@/constants/type";
-import { privateClient } from "./client";
+import { privateClient, uploadClient } from "./client";
 
 export const getFoodStatus = async (option?: {
   date?: string;
@@ -19,11 +19,14 @@ export const submitFoodRecord = async (
   tag?: string
 ): Promise<SaveFoodRecordResponse> => {
   try {
+    console.log("Uploading file:", fileUri);
+    console.log("Tag:", tag);
+    
     const formData = new FormData();
 
     const filename = fileUri.split("/").pop() || `photo.jpg`;
     const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : `image`;
+    const type = match ? `image/${match[1]}` : `image/jpeg`;
 
     const file: any = {
       uri: fileUri,
@@ -31,16 +34,31 @@ export const submitFoodRecord = async (
       type,
     };
 
+    console.log("File object:", file);
+
     formData.append("file", file);
     if (tag) formData.append("tag", tag);
 
-    const response = await privateClient.post("/api/food/submit", formData, {
+    console.log("FormData prepared, sending request...");
+
+    const response = await uploadClient.post("/api/food/submit", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
+    
+    console.log("Upload response:", response.data);
     return response.data;
   } catch (error) {
+    console.error("Upload error details:", error);
+    if (error.response) {
+      console.error("Response status:", error.response.status);
+      console.error("Response data:", error.response.data);
+    } else if (error.request) {
+      console.error("Request error:", error.request);
+    } else {
+      console.error("Error message:", error.message);
+    }
     throw error;
   }
 };

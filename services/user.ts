@@ -82,3 +82,17 @@ export const getUserProfile = async () => {
         throw error
     }
 }
+
+export const updateUserSetting = async (option?:{
+    height?: string;
+    weight?: string;
+    water?: string;
+    temp?: string;
+}) => {
+    try {
+        const response = await privateClient.put("/api/user/settings", option || {});
+        return response.data
+    } catch (error) {
+        throw error
+    }
+}

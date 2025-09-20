@@ -11,6 +11,7 @@ import { convertWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
 import { tv } from "tailwind-variants";
@@ -170,7 +171,7 @@ export default function HomeScreen() {
                 title="Giấc ngủ"
                 href={`/sleep?selectedDate=${selectedDate}`}
               >
-                <TouchableOpacity className="self-center flex-row items-center justify-center px-6 py-3 bg-cyan-blue rounded-full">
+                <TouchableOpacity onPress={() => router.push(`/sleep?selectedDate=${selectedDate}`)} className="self-center flex-row items-center justify-center px-6 py-3 bg-cyan-blue rounded-full">
                   <Text className="text-white">Chọn thời gian</Text>
                 </TouchableOpacity>
               </FunctionCard>
@@ -180,7 +181,7 @@ export default function HomeScreen() {
                 title="Thức ăn"
                 href={`/food?selectedDate=${selectedDate}`}
               >
-                <TouchableOpacity className="self-center flex-row items-center justify-center px-6 py-3 bg-cyan-blue rounded-full">
+                <TouchableOpacity onPress={() => router.push(`/food?selectedDate=${selectedDate}`)} className="self-center flex-row items-center justify-center px-6 py-3 bg-cyan-blue rounded-full">
                   <Text className="text-white">Nhập số liệu</Text>
                 </TouchableOpacity>
               </FunctionCard>

@@ -1,18 +1,18 @@
-import { useUnits } from "@/context/unitContext";
+import { useUnits } from "@/hooks/useUnits";
 import { updateWaterReminder } from "@/services/water";
 import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
-import { convertWater, toBaseWater } from "@/utils/convertMeasure";
+import { convertWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    BackHandler,
-    Modal,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  BackHandler,
+  Modal,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
@@ -26,7 +26,7 @@ const Page = () => {
 
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { units } = useUnits();
+  const { units, inputToBaseWater } = useUnits();
   const initAmount = Number(message) || 250;
   const initialValue =
     units.water === "ml"
@@ -73,7 +73,7 @@ const Page = () => {
     newTime.setUTCMilliseconds(0);
     const timestamp = newTime.getTime();
     const valueInMl =
-      units.water === "ml" ? amount : toBaseWater(amount, units.water);
+      inputToBaseWater(amount);
     console.log("Saved:", {
       amount: valueInMl,
       time: timestamp,

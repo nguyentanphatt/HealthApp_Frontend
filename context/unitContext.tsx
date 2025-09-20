@@ -1,3 +1,4 @@
+import { updateUserSetting } from "@/services/user";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
@@ -54,6 +55,7 @@ export const UnitProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newUnits = { ...units, [key]: value };
     setUnits(newUnits);
     saveUnitsToStorage(newUnits);
+    updateUnitsToAPI(newUnits);
   };
 
   const saveUnitsToStorage = async (unitsToSave: Units) => {
@@ -61,6 +63,19 @@ export const UnitProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await AsyncStorage.setItem(UNITS_STORAGE_KEY, JSON.stringify(unitsToSave));
     } catch (error) {
       console.error('Error saving units to storage:', error);
+    }
+  };
+
+  const updateUnitsToAPI = async (unitsToSave: Units) => {
+    try {
+      await updateUserSetting({
+        height: unitsToSave.height,
+        weight: unitsToSave.weight,
+        water: unitsToSave.water,
+        temp: unitsToSave.temperature
+      });
+    } catch (error) {
+      console.error('Error updating units to API:', error);
     }
   };
 

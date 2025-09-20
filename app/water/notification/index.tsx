@@ -1,6 +1,6 @@
-import { useUnits } from "@/context/unitContext";
+import { useUnits } from "@/hooks/useUnits";
 import { createWaterReminder } from "@/services/water";
-import { convertWater, toBaseWater } from "@/utils/convertMeasure";
+import { convertWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -16,7 +16,7 @@ import WheelPickerExpo from "react-native-wheel-picker-expo";
 
 const Page = () => {
   const router = useRouter();
-  const {units} = useUnits()
+  const {units, inputToBaseWater} = useUnits()
   const queryClient = useQueryClient();
 
   const initialValue =
@@ -40,10 +40,10 @@ const Page = () => {
 
   const times = 9;
   const repeatedHours = Array.from({ length: times }).flatMap(() => hours);
-  const middleHoursIndex = Math.floor(times / 2) * hours.length;
+  //const middleHoursIndex = Math.floor(times / 2) * hours.length;
 
   const repeatedMinutes = Array.from({ length: times }).flatMap(() => minutes);
-  const middleMinutesIndex = Math.floor(times / 2) * minutes.length;
+  //const middleMinutesIndex = Math.floor(times / 2) * minutes.length;
 
   const handleSave = async (
     amount: number,
@@ -59,8 +59,8 @@ const Page = () => {
 	   newTime.setDate(newTime.getDate()+1);
 	 }
   const timestamp = newTime.getTime();
-  const valueInMl = units.water === "ml" ? amount : toBaseWater(amount, units.water); 
-	console.log("Saved:", {
+    const valueInMl = inputToBaseWater(amount); 
+    console.log("Saved:", {
     amount: valueInMl,
     time: newTime,
     hour,

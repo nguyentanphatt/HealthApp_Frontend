@@ -1,7 +1,7 @@
-import { useUnits } from "@/context/unitContext";
+import { useUnits } from "@/hooks/useUnits";
 import { updateWaterRecord } from "@/services/water";
 import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
-import { convertWater, toBaseWater } from "@/utils/convertMeasure";
+import { convertWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -24,7 +24,7 @@ const Page = () => {
     type: string;
   }>();
 
-  const { units } = useUnits();
+  const { units, displayWater, inputToBaseWater } = useUnits();
   const initAmount = Number(amount) || 250;
   const initialValue =
     units.water === "ml"
@@ -73,7 +73,7 @@ const Page = () => {
     newTime.setUTCSeconds(0);
     newTime.setUTCMilliseconds(0);
     const timestamp = newTime.getTime();
-    const valueInMl = units.water === "ml" ? amount : toBaseWater(amount, units.water);
+    const valueInMl = inputToBaseWater(amount);
     console.log("Saved:", {
       amount: valueInMl,
       time: timestamp,

@@ -153,9 +153,6 @@ const Page = () => {
     { label: "Tệ", emoji: "😡", color: "#C0392B", value: 20 },
   ];
 
-  console.log("sleepStatus", sleepStatus);
-
-
   const handleSetSleepTime = async (startTime: string, endTime: string, isAllWeek: boolean) => {
     const startTimeHour = Number(startTime.split(":")[0]);
     const startTimeMinute = Number(startTime.split(":")[1]);
@@ -191,10 +188,6 @@ const Page = () => {
   };
 
   const handleUpdateMood = async (recordId: string, qualityScore: string) => {
-
-    console.log("recordId", recordId);
-    
-
     try {
       const response = await UpdateSleepRecord(recordId, { qualityScore: qualityScore });
       if (response.success) {

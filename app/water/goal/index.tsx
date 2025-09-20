@@ -1,7 +1,7 @@
-import { useUnits } from "@/context/unitContext";
+import { useUnits } from "@/hooks/useUnits";
 import { updateWaterDailyGoal } from "@/services/water";
 import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
-import { convertWater, toBaseWater } from "@/utils/convertMeasure";
+import { convertWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -17,7 +17,7 @@ const Page = () => {
     time: string;
   }>();
 
-  const {units} = useUnits()
+  const {units, inputToBaseWater} = useUnits()
   const initAmount = Number(amount);
 
   const initialValue =
@@ -39,7 +39,7 @@ const Page = () => {
         });
 
   const handleGoBack = async (amount: number, time: string) => {
-    const valueInMl = units.water === "ml" ? amount : toBaseWater(amount, units.water);
+    const valueInMl = inputToBaseWater(amount);
     try {
       const response = await updateWaterDailyGoal(valueInMl, time);
       if (response.success) {
