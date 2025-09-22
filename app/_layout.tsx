@@ -5,11 +5,11 @@ import { registerForPushNotificationsAsync } from "@/utils/notificationsHelper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Font from "expo-font";
-import { Href, Stack, useRouter } from "expo-router";
+import { Href, Stack, usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Toast from "react-native-toast-message";
 import "../global.css";
 
@@ -18,6 +18,8 @@ SplashScreen.preventAutoHideAsync(); // ✅ keep splash until we say so
 export default function RootLayout() {
   useNotifications();
   const router = useRouter();
+  const pathname = usePathname();
+  const didInit = useRef(false);
   const [loaded] = Font.useFonts({
     "Lato-Regular": require("../assets/fonts/Lato-Regular.ttf"),
     "Lato-Bold": require("../assets/fonts/Lato-Bold.ttf"),
@@ -27,6 +29,8 @@ export default function RootLayout() {
   const queryClient = new QueryClient();
 
   useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
     let interval: ReturnType<typeof setInterval> | undefined;
 
     const init = async () => {
@@ -36,7 +40,10 @@ export default function RootLayout() {
 
         if (!hasSeen) {
           console.log("➡️ Going to introduction");
-          router.replace("/introduction");
+          // Avoid redirect loop if we're already on introduction
+          if (pathname !== "/introduction") {
+            router.replace("/introduction");
+          }
           return;
         }
 
