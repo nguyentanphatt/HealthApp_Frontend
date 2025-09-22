@@ -11,13 +11,6 @@ import { ActivityIndicator, ScrollView, Switch, Text, TouchableOpacity, View } f
 import { BarChart, LineChart } from "react-native-gifted-charts";
 import Toast from "react-native-toast-message";
 
-//const SleepModule = requireNativeModule("SleepModule");
-
-/* function msOfToday(h: number, m: number) {
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  return d.getTime();
-} */
 const Page = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -393,34 +386,7 @@ const Page = () => {
               })}
             </ScrollView>
           </View>
-          {/* <View className="flex-row items-center justify-center gap-4 mt-4">
-            <TouchableOpacity
-              onPress={async () => {
-                const plannedStart = msOfToday(9, 0);
-                const targetEnd = msOfToday(9, 15);
-                try {
-                  await SleepModule.startTracking(plannedStart, targetEnd);
-                } catch (e) {
-                  console.warn("startTracking error", e);
-                }
-              }}
-              className="px-4 py-3 rounded-md bg-cyan-blue"
-            >
-              <Text className="text-white font-bold">Start 9:00 → 9:15</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={async () => {
-                try {
-                  await SleepModule.stopTracking();
-                } catch (e) {
-                  console.warn("stopTracking error", e);
-                }
-              }}
-              className="px-4 py-3 rounded-md bg-black"
-            >
-              <Text className="text-white font-bold">Stop</Text>
-            </TouchableOpacity>
-          </View> */}
+          
         </View>
       )}
     </ScrollView>

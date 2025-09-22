@@ -43,16 +43,9 @@ class MainApplication : Application(), ReactApplication {
   override fun onCreate() {
     super.onCreate()
     SoLoader.init(this, OpenSourceMergedSoMapping)
-    if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) { load() }
-    // Channel cho startForeground
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-      val nm = getSystemService(android.app.NotificationManager::class.java)
-      val ch = android.app.NotificationChannel(
-        "sleep_channel",
-        "Sleep Tracking",
-        android.app.NotificationManager.IMPORTANCE_LOW
-      )
-      nm.createNotificationChannel(ch)
+    if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
+      // If you opted-in for the New Architecture, we load the native entry point for this app.
+      load()
     }
     ApplicationLifecycleDispatcher.onApplicationCreate(this)
   }
