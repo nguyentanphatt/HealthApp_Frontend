@@ -11,7 +11,7 @@ import { convertWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { router } from "expo-router";
+import { Href, router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
 import { tv } from "tailwind-variants";
@@ -188,7 +188,7 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <View className="flex-1 flex-row p-4 items-center justify-between bg-white shadow-md rounded-md">
+          <TouchableOpacity onPress={() => router.push('/activity' as Href)} className="flex-1 flex-row p-4 items-center justify-between bg-white shadow-md rounded-md">
             <View className="size-20 rounded-full bg-black/20 flex items-center justify-center">
               <FontAwesome6 name="person-running" size={28} color="black" />
             </View>
@@ -196,7 +196,7 @@ export default function HomeScreen() {
             <View className="size-20 rounded-full bg-black/20 flex items-center justify-center">
               <FontAwesome6 name="angles-right" size={28} color="black" />
             </View>
-          </View>
+          </TouchableOpacity>
 
           <View className="flex-1 flex-row p-4 items-center justify-between bg-white shadow-md rounded-md">
             <View className="size-20 rounded-full bg-black/20 flex items-center justify-center">
