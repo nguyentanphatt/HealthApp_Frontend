@@ -192,21 +192,11 @@ export default function HomeScreen() {
             <View className="size-20 rounded-full bg-black/20 flex items-center justify-center">
               <FontAwesome6 name="person-running" size={28} color="black" />
             </View>
-            <Text className="text-2xl font-bold">Đi bộ</Text>
+            <Text className="text-2xl font-bold">Vận động</Text>
             <View className="size-20 rounded-full bg-black/20 flex items-center justify-center">
               <FontAwesome6 name="angles-right" size={28} color="black" />
             </View>
           </TouchableOpacity>
-
-          <View className="flex-1 flex-row p-4 items-center justify-between bg-white shadow-md rounded-md">
-            <View className="size-20 rounded-full bg-black/20 flex items-center justify-center">
-              <FontAwesome6 name="person-walking" size={28} color="black" />
-            </View>
-            <Text className="text-2xl font-bold">Chạy bộ</Text>
-            <View className="size-20 rounded-full bg-black/20 flex items-center justify-center">
-              <FontAwesome6 name="angles-right" size={28} color="black" />
-            </View>
-          </View>
         </View>
       </Animated.ScrollView>
 

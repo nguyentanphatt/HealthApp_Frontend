@@ -57,7 +57,7 @@ export default function RootLayout() {
         if (storedAccess && storedRefresh) {
           console.log("➡️ Going to tabs");
           await checkAndRefreshToken(storedAccess, storedRefresh);
-          router.replace("/(tabs)" as Href);
+          router.replace("/activity" as Href);
 
           interval = setInterval(async () => {
             const a = await SecureStore.getItemAsync("access_token");

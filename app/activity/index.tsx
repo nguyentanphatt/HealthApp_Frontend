@@ -1,14 +1,26 @@
 import LockScreen from '@/components/LockScreen';
+import {
+    LatLng,
+    calculateActiveTime,
+    calculateAverageSpeed,
+    calculateCaloriesFromMV,
+    calculateTotalDistance,
+    checkLocationPermission,
+    distanceBetween,
+    formatDistance,
+    formatSpeed,
+    formatTime,
+    requestActivityRecognitionPermission,
+    saveActivityData
+} from '@/utils/activityHelper';
 import { FontAwesome6 } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import * as Location from "expo-location";
-import { useRouter } from 'expo-router';
+import { Href, useRouter } from 'expo-router';
 import { Accelerometer, Pedometer } from 'expo-sensors';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, PermissionsAndroid, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, Region } from "react-native-maps";
-
-type LatLng = { latitude: number; longitude: number };
 
 const Page = () => {
     const router = useRouter();
@@ -23,11 +35,21 @@ const Page = () => {
     const [isLocked, setIsLocked] = useState(false);
     const [avgSpeed, setAvgSpeed] = useState(0);
     const [currentSpeed, setCurrentSpeed] = useState(0);
+    const [maxSpeed, setMaxSpeed] = useState(0);
     const [startTime, setStartTime] = useState<number | null>(null);
     const [elapsed, setElapsed] = useState(0);
     const [pauseStartTime, setPauseStartTime] = useState<number | null>(null);
     const [totalPauseTime, setTotalPauseTime] = useState(0);
     const [activeTime, setActiveTime] = useState(0);
+    const [caloriesBurned, setCaloriesBurned] = useState<number>(0);
+    const [currentMV, setCurrentMV] = useState(0);
+    
+    //Refs
+    const startTimeRef = useRef<number | null>(null);
+    const pauseStartTimeRef = useRef<number | null>(null);
+    const totalPauseTimeRef = useRef<number>(0);
+    const mvSumRef = useRef<number>(0);
+    const mvCountRef = useRef<number>(0);
     const [stepCount, setStepCount] = useState(0);
     const mapRef = useRef<MapView | null>(null);
     const subscriptionRef = useRef<Location.LocationSubscription | null>(null);
@@ -35,6 +57,7 @@ const Page = () => {
     const lastPositionRef = useRef<LatLng | null>(null);
     const lastPositionTimeRef = useRef<number | null>(null);
     const totalDistanceRef = useRef<number>(0);
+
     // Accelerometer (fallback)
     const accelSubRef = useRef<any>(null);
     const emaMagRef = useRef<number>(0);
@@ -42,9 +65,10 @@ const Page = () => {
     const risingRef = useRef<boolean>(false);
     const candidatePeakRef = useRef<{ value: number; time: number } | null>(null);
     const lastStepTimeRef = useRef<number>(0);
-    const thresholdRef = useRef<number>(0.02); // higher base floor to reduce sensitivity
+    const thresholdRef = useRef<number>(0.02);
     const warmupCountRef = useRef<number>(0);
-    const absNetEmaRef = useRef<number>(0); // adaptive motion level
+    const absNetEmaRef = useRef<number>(0);
+
     // Pedometer
     const pedometerSubRef = useRef<any>(null);
     const pedometerEventSeenRef = useRef<boolean>(false);
@@ -119,7 +143,6 @@ const Page = () => {
         };
     }, [isStart, isPause, startTime, pauseStartTime, totalPauseTime]);
 
-    // Reset all state when starting new tracking
     const resetAllState = () => {
         setStartTime(null);
         setElapsed(0);
@@ -127,10 +150,16 @@ const Page = () => {
         setActiveTime(0);
         setAvgSpeed(0);
         setCurrentSpeed(0);
+        setMaxSpeed(0);
         setPauseStartTime(null);
+        pauseStartTimeRef.current = null;
         setIsPause(false);
         setStepCount(0);
+        setCaloriesBurned(0);
+        setCurrentMV(0);
         // reset refs
+        startTimeRef.current = null;
+        totalPauseTimeRef.current = 0;
         lastPositionRef.current = null;
         lastPositionTimeRef.current = null;
         totalDistanceRef.current = 0;
@@ -141,6 +170,8 @@ const Page = () => {
         lastStepTimeRef.current = 0;
         warmupCountRef.current = 0;
         absNetEmaRef.current = 0;
+        mvSumRef.current = 0;
+        mvCountRef.current = 0;
         if (timerRef.current) {
             clearInterval(timerRef.current);
             timerRef.current = null;
@@ -167,52 +198,15 @@ const Page = () => {
     // Đảm bảo có quyền: nếu chưa, yêu cầu tại trang này
     const ensurePermission = async (): Promise<boolean> => {
         if (hasPermission) return true;
-        const current = await Location.getForegroundPermissionsAsync();
-        if (current.status === "granted") {
-            setHasPermission(true);
-            // Request Activity Recognition on Android for step counting
-            if (Platform.OS === 'android') {
-                try {
-                    const result = await PermissionsAndroid.request(
-                        // @ts-ignore - string literal for Android permission
-                        'android.permission.ACTIVITY_RECOGNITION' as any,
-                        {
-                            title: 'Quyền nhận diện hoạt động',
-                            message: 'Ứng dụng cần quyền nhận diện hoạt động để đếm bước chân.',
-                            buttonPositive: 'Cho phép',
-                            buttonNegative: 'Từ chối',
-                        }
-                    );
-                    console.log('ACTIVITY_RECOGNITION request result:', result);
-                } catch (e) {
-                    console.warn('Request ACTIVITY_RECOGNITION failed:', e);
-                }
-            }
-            return true;
+        
+        const granted = await checkLocationPermission();
+        setHasPermission(granted);
+        
+        if (granted) {
+            await requestActivityRecognitionPermission();
         }
-        if (current.canAskAgain) {
-            const req = await Location.requestForegroundPermissionsAsync();
-            const granted = req.status === "granted";
-            setHasPermission(granted);
-            if (granted && Platform.OS === 'android') {
-                try {
-                    const result = await PermissionsAndroid.request(
-                        'android.permission.ACTIVITY_RECOGNITION' as any,
-                        {
-                            title: 'Quyền nhận diện hoạt động',
-                            message: 'Ứng dụng cần quyền nhận diện hoạt động để đếm bước chân.',
-                            buttonPositive: 'Cho phép',
-                            buttonNegative: 'Từ chối',
-                        }
-                    );
-                    console.log('ACTIVITY_RECOGNITION request result:', result);
-                } catch (e) {
-                    console.warn('Request ACTIVITY_RECOGNITION failed:', e);
-                }
-            }
-            return granted;
-        }
-        return false;
+        
+        return granted;
     };
 
     const startAccelerometer = async () => {
@@ -221,8 +215,17 @@ const Page = () => {
         Accelerometer.setUpdateInterval(30);
         accelSubRef.current = Accelerometer.addListener(({ x, y, z }) => {
             const mag = Math.sqrt(x * x + y * y + z * z);
+    
+            if (isStartRef.current && !isPauseRef.current) {
+                mvSumRef.current += mag;
+                mvCountRef.current += 1;
+                setCurrentMV(mag);
+                
+                // Tính calo sử dụng helper function
+                const caloriesPerInterval = calculateCaloriesFromMV(mag, 30);
+                setCaloriesBurned(prev => prev + caloriesPerInterval);
+            }
             
-            // EMA baseline (dynamic gravity filter)
             const alpha = 0.1;
             emaMagRef.current = emaMagRef.current === 0 
               ? mag 
@@ -232,24 +235,20 @@ const Page = () => {
             const absNet = Math.abs(net);
             const now = Date.now();
 
-            // Motion level EMA (used for adaptive threshold & gating)
             const beta = 0.1;
             absNetEmaRef.current = absNetEmaRef.current === 0 ? absNet : beta * absNet + (1 - beta) * absNetEmaRef.current;
-            // Gate: if overall motion level is too low, ignore to avoid micro shakes
             if (absNetEmaRef.current < 0.02) {
                 lastNetRef.current = net;
                 return;
             }
 
-            // Hysteresis thresholds
-            const upTh = Math.max(thresholdRef.current, absNetEmaRef.current * 0.8, 0.02);
-            const downTh = -upTh * 0.5; // require a small dip below zero before confirming
 
-            // Rising through upTh → potential peak start/update
+            const upTh = Math.max(thresholdRef.current, absNetEmaRef.current * 0.8, 0.02);
+            const downTh = -upTh * 0.5;
             if (net > upTh && lastNetRef.current <= upTh) {
                 candidatePeakRef.current = { value: net, time: now };
             } else if (net > upTh && candidatePeakRef.current && net > candidatePeakRef.current.value) {
-                candidatePeakRef.current.value = net; // track max while above upTh
+                candidatePeakRef.current.value = net;
             }
 
             if (net < downTh && lastNetRef.current >= downTh) {
@@ -276,13 +275,11 @@ const Page = () => {
         console.log("Pedometer available:", available);
         if (!available) {
             console.log("Pedometer not available, falling back to accelerometer");
-            // fallback to accelerometer
             await startAccelerometer();
             return;
         }
         pedometerEventSeenRef.current = false;
         pedometerBaseTimeRef.current = Date.now();
-        // Pedometer returns steps since subscription started
         pedometerSubRef.current = Pedometer.watchStepCount(({ steps }) => {
             console.log("Pedometer watchStepCount steps:", steps, "isStart:", isStart, "isPause:", isPause);
             pedometerEventSeenRef.current = true;
@@ -301,7 +298,6 @@ const Page = () => {
                     await startAccelerometer();
                 }
             }, 8000);
-            // Additionally poll Pedometer.getStepCountAsync every 2s
             if (pedometerPollTimerRef.current) {
                 clearInterval(pedometerPollTimerRef.current);
             }
@@ -330,7 +326,9 @@ const Page = () => {
         try {
             setPositions([]);
             resetAllState();
-            setStartTime(Date.now());
+            const now = Date.now();
+            setStartTime(now);
+            startTimeRef.current = now;
             // Prefer accelerometer in Expo Go for easier testing
             if (Constants.appOwnership === 'expo') {
                 console.log('Expo Go detected; starting accelerometer');
@@ -343,7 +341,7 @@ const Page = () => {
             subscriptionRef.current = await Location.watchPositionAsync(
                 {
                     accuracy: Location.Accuracy.BestForNavigation,
-                    timeInterval: 2000, // ms - thời gian giữa các lần cập nhật
+                    timeInterval: 2000,
                     distanceInterval: 0, // update when move >= 0m
                 },
                 (loc) => {
@@ -361,12 +359,15 @@ const Page = () => {
                         if (timeDiff > 0 && distance > 0) {
                             const speed = distance / timeDiff;
                             setCurrentSpeed(speed);
+                            setMaxSpeed(prev => Math.max(prev, speed));
                             totalDistanceRef.current += distance;
-                            const totalTime = activeTime / 1000;
-                            if (totalTime > 0) {
-                                const avgSpeed = totalDistanceRef.current / totalTime;
-                                setAvgSpeed(avgSpeed);
-                            }
+                            const currentActiveTime = calculateActiveTime(
+                                startTimeRef.current,
+                                pauseStartTimeRef.current,
+                                totalPauseTimeRef.current
+                            );
+                            const avgSpeed = calculateAverageSpeed(totalDistanceRef.current, currentActiveTime);
+                            setAvgSpeed(avgSpeed);
                         }
                     }
 
@@ -386,8 +387,21 @@ const Page = () => {
         }
     };
 
-    const stopTracking = () => {
-        console.log("stopTracking called. stepCount:", stepCount);
+    const stopTracking = () => {      
+        saveActivityData({
+            distance: totalDistanceMeters,
+            stepCount,
+            positions,
+            avgSpeed,
+            currentSpeed,
+            maxSpeed,
+            caloriesBurned,
+            currentMV,
+            startTime: startTimeRef.current,
+            elapsed,
+            activeTime
+        });
+
         subscriptionRef.current?.remove();
         subscriptionRef.current = null;
         if (accelSubRef.current) {
@@ -416,48 +430,23 @@ const Page = () => {
             if (pauseStartTime) {
                 const pauseDuration = Date.now() - pauseStartTime;
                 setTotalPauseTime(prev => prev + pauseDuration);
+                totalPauseTimeRef.current += pauseDuration;
                 setPauseStartTime(null);
+                pauseStartTimeRef.current = null;
             }
         } else {
-            setPauseStartTime(Date.now());
+            const now = Date.now();
+            setPauseStartTime(now);
+            pauseStartTimeRef.current = now;
         }
         setIsPause(!isPause);
     };
 
-    // helper: tính khoảng cách giữa 2 điểm (meters)
-    const distanceBetween = (a: LatLng, b: LatLng) => {
-        const toRad = (x: number) => (x * Math.PI) / 180;
-        const R = 6371000;
-        const dLat = toRad(b.latitude - a.latitude);
-        const dLon = toRad(b.longitude - a.longitude);
-        const lat1 = toRad(a.latitude);
-        const lat2 = toRad(b.latitude);
-        const sinDLat = Math.sin(dLat / 2);
-        const sinDLon = Math.sin(dLon / 2);
-        const aa = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
-        const c = 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
-        return R * c;
-    };
 
-    const totalDistanceMeters = positions.reduce((acc, _, i, arr) => {
-        if (i === 0) return 0;
-        return acc + distanceBetween(arr[i - 1], arr[i]);
-    }, 0);
+    const totalDistanceMeters = calculateTotalDistance(positions);
 
     const polygonCoords = showPolygon && positions.length >= 3 ? [...positions, positions[0]] : undefined;
 
-    const formatTime = (milliseconds: number) => {
-        const totalSeconds = Math.floor(milliseconds / 1000);
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    };
-
-    const formatSpeed = (speedMs: number) => {
-        const speedKmh = (speedMs * 3.6).toFixed(1);
-        return `${speedKmh} km/h`;
-    };
 
     // keep refs in sync to avoid stale closures inside sensor callbacks
     useEffect(() => { isStartRef.current = isStart; }, [isStart]);
@@ -480,7 +469,7 @@ const Page = () => {
                     <View className='flex flex-row items-center justify-center gap-5'>
                         <View className='flex items-center justify-center bg-white rounded-md shadow-md p-2 w-[45%]'>
                             <Text className='text-lg text-black/60'>Khoảng cách</Text>
-                            <Text className='text-xl text-black font-bold'>{(totalDistanceMeters / 1000).toFixed(2)} km</Text>
+                            <Text className='text-xl text-black font-bold'>{formatDistance(totalDistanceMeters)}</Text>
                         </View>
                         <View className='flex items-center justify-center bg-white rounded-md shadow-md p-2 w-[45%]'>
                             <Text className='text-lg text-black/60'>Bước đi</Text>
@@ -549,7 +538,7 @@ const Page = () => {
                             <TouchableOpacity onPress={handlePause} className='size-[90px] rounded-full flex items-center justify-center bg-black/10'>
                                 <FontAwesome6 name={isPause ? "play" : "pause"} size={36} color="black" />
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={() => { setIsStart(!isStart), stopTracking() }} className='size-[60px] rounded-full flex items-center justify-center bg-black/10'>
+                            <TouchableOpacity onPress={() => { setIsStart(!isStart), stopTracking(), router.push("/activity/statistics" as Href) }} className='size-[60px] rounded-full flex items-center justify-center bg-black/10'>
                                 <FontAwesome6 name="xmark" size={20} color="black" />
                             </TouchableOpacity>
 
