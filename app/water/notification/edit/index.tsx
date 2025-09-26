@@ -1,7 +1,7 @@
 import { useUnits } from "@/hooks/useUnits";
 import { updateWaterReminder } from "@/services/water";
-import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
 import { convertWater } from "@/utils/convertMeasure";
+import { convertISOToTimestamp } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";

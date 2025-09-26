@@ -19,11 +19,13 @@ const defaultUnits: Units = {
 type UnitContextType = {
   units: Units;
   setUnit: <K extends keyof Units>(key: K, value: Units[K]) => void;
+  isLoaded: boolean;
 };
 
 const UnitContext = createContext<UnitContextType>({
   units: defaultUnits,
   setUnit: () => {},
+  isLoaded: false,
 });
 
 const UNITS_STORAGE_KEY = '@health_app_units';
@@ -79,13 +81,8 @@ export const UnitProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Don't render until units are loaded
-  if (!isLoaded) {
-    return null;
-  }
-
   return (
-    <UnitContext.Provider value={{ units, setUnit }}>
+    <UnitContext.Provider value={{ units, setUnit, isLoaded }}>
       {children}
     </UnitContext.Provider>
   );

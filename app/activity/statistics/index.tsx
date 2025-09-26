@@ -1,5 +1,6 @@
 import ActivityResult from '@/components/ActivityResult'
 import { LatLng, formatDistance, formatTime } from '@/utils/activityHelper'
+import { formatDateTimeRange } from '@/utils/convertTime'
 import { FontAwesome6 } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useLocalSearchParams, useRouter } from 'expo-router/build/hooks'
@@ -27,6 +28,8 @@ const Page = () => {
   const router = useRouter()
   const mapRef = useRef<MapView | null>(null);
   const [data, setData] = useState<Data>();
+
+  
 
   useEffect(() => {
     const getData = async () => {
@@ -70,6 +73,33 @@ const Page = () => {
             });
           }, 1000);
         }
+
+        // Ensure startTime is a number, fallback to 0 if null
+        /* const safeStartTime = activityData.startTime !== null ? activityData.startTime : 0;
+        // Ensure endTime is a string that can be parsed to a number, fallback to 0 if invalid
+        const safeEndTime = typeof activityData.endTime === 'string' && activityData.endTime !== '' ? parseInt(activityData.endTime) : 0;
+
+        try {
+          console.log('Attempting to save activity data...');
+          await saveActivityData(
+            "run",
+            0,
+            convertTimestampVNtoTimestamp(safeStartTime),
+            convertTimestampVNtoTimestamp(safeEndTime),
+            activityData.distance,
+            activityData.stepCount,
+            activityData.avgSpeed,
+            activityData.maxSpeed,
+            activityData.caloriesBurned,
+            activityData.elapsed,
+            activityData.activeTime,
+            activityData.positions
+          );
+          console.log('Activity data saved successfully!');
+        } catch (saveError) {
+          console.error('Failed to save activity data:', saveError);
+        } */
+        
       } catch (error) {
         console.error('Error loading activity data:', error);
       }
@@ -96,7 +126,7 @@ const Page = () => {
       </View>
 
       <View className="bg-white rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4">
-        <Text className="text-lg text-black/60">{data?.Date || 'Chưa có dữ liệu'}</Text>
+        <Text className="text-lg text-black/60">{formatDateTimeRange(data?.startTime || null, data?.endTime || '')}</Text>
         <View className="flex-row items-center justify-center mt-3 ">
           <View className='border-4 border-[#19B1FF] w-[70px] h-[70px] rounded-full p-2 items-center justify-center'>
             <FontAwesome6 name="person-running" size={28} color="#19B1FF" />

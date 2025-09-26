@@ -4,6 +4,7 @@ import ReminderList from "@/components/ReminderList";
 import WaterVector from "@/components/vector/WaterVector";
 import WaterHistory from "@/components/WaterHistory";
 import Weather from "@/components/Weather";
+import { WaterStatus, WeatherResponse } from "@/constants/type";
 import { useUnits } from "@/hooks/useUnits";
 import {
   getIp,
@@ -15,7 +16,7 @@ import {
   WeatherSuggest,
 } from "@/services/water";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
@@ -53,20 +54,21 @@ const Page = () => {
   const items =
     units.water === "ml"
       ? Array.from({ length: 100 }, (_, i) => {
-          const amount = (i + 1) * 10;
-          return { label: `${amount}`, amount };
-        })
+        const amount = (i + 1) * 10;
+        return { label: `${amount}`, amount };
+      })
       : Array.from({ length: (170 - 1) / 1 + 1 }, (_, i) => {
-          const amount = 1 + i * 1;
-          return { label: `${amount}`, amount };
-        });
+        const amount = 1 + i * 1;
+        return { label: `${amount}`, amount };
+      });
 
   const {
     data: waterStatus,
     isLoading: loadingWaterStatus,
+    isFetching: fetchingWaterStatus,
     refetch: refetchWaterStatus,
   } = useQuery({
-    queryKey: ["waterStatus", selectedDate],
+    queryKey: ["waterStatus", { date: selectedDate }],
     queryFn: () =>
       getWaterStatus(
         selectedDate !== 0
@@ -74,12 +76,14 @@ const Page = () => {
           : undefined
       ),
     staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
     select: (res) => res.data,
   });
 
   const {
     data: weatherReport,
     isLoading: loadingWeather,
+    isFetching: fetchingWeather,
     refetch: refetchWeather,
   } = useQuery({
     queryKey: ["weatherReport"],
@@ -92,9 +96,10 @@ const Page = () => {
   const {
     data: waterWeeklyData,
     isLoading: loadingWeekly,
+    isFetching: fetchingWeekly,
     refetch: refetchWeekly,
   } = useQuery({
-    queryKey: ["waterWeekly", selectedDate],
+    queryKey: ["waterWeekly", { date: selectedDate }],
     queryFn: () =>
       WaterWeekly(
         selectedDate !== 0
@@ -102,18 +107,21 @@ const Page = () => {
           : undefined
       ),
     staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
     select: (res) => res.data.dailyIntake,
   });
 
   const {
     data: waterReminderData,
     isLoading: loadingReminder,
+    isFetching: fetchingReminder,
     refetch: refetchReminder,
   } = useQuery({
     queryKey: ["waterReminder"],
     queryFn: () => getWaterReminder(),
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    placeholderData: keepPreviousData,
     select: (res) => res.data,
   });
 
@@ -122,53 +130,52 @@ const Page = () => {
     const prevTimestamp = currentTimestamp - 86400;
     const nextTimestamp = currentTimestamp + 86400;
 
-    queryClient.prefetchQuery({
-      queryKey: ["waterStatus", prevTimestamp],
-      queryFn: () =>
-        getWaterStatus({ date: (prevTimestamp * 1000).toString() }),
-      staleTime: 1000 * 60 * 5,
+    queryClient.invalidateQueries({
+      queryKey: ["waterStatus", { date: currentTimestamp }],
     });
-    queryClient.prefetchQuery({
-      queryKey: ["waterStatus", nextTimestamp],
-      queryFn: () =>
-        getWaterStatus({ date: (nextTimestamp * 1000).toString() }),
-      staleTime: 1000 * 60 * 5,
+    queryClient.invalidateQueries({
+      queryKey: ["waterWeekly", { date: currentTimestamp }],
     });
 
     queryClient.prefetchQuery({
-      queryKey: ["waterWeekly", prevTimestamp],
-      queryFn: () => WaterWeekly({ date: (prevTimestamp * 1000).toString() }),
-      staleTime: 1000 * 60 * 5,
+      queryKey: ["waterStatus", { date: prevTimestamp }],
+      queryFn: () =>
+        getWaterStatus({ date: (prevTimestamp * 1000).toString() }),
     });
     queryClient.prefetchQuery({
-      queryKey: ["waterWeekly", nextTimestamp],
-      queryFn: () => WaterWeekly({ date: (nextTimestamp * 1000).toString() }),
-      staleTime: 1000 * 60 * 5,
+      queryKey: ["waterStatus", { date: nextTimestamp }],
+      queryFn: () =>
+        getWaterStatus({ date: (nextTimestamp * 1000).toString() }),
+    });
+
+    queryClient.prefetchQuery({
+      queryKey: ["waterWeekly", { date: prevTimestamp }],
+      queryFn: () =>
+        WaterWeekly({ date: (prevTimestamp * 1000).toString() }),
+    });
+    queryClient.prefetchQuery({
+      queryKey: ["waterWeekly", { date: nextTimestamp }],
+      queryFn: () =>
+        WaterWeekly({ date: (nextTimestamp * 1000).toString() }),
     });
 
     if (selectedDate === 0) {
       const todayTimestamp = Math.floor(Date.now() / 1000);
       queryClient.prefetchQuery({
-        queryKey: ["waterWeekly", todayTimestamp],
+        queryKey: ["waterWeekly", { date: todayTimestamp }],
         queryFn: () =>
           WaterWeekly({ date: (todayTimestamp * 1000).toString() }),
-        staleTime: 1000 * 60 * 5,
       });
     }
 
     queryClient.prefetchQuery({
       queryKey: ["waterReminder"],
       queryFn: () => getWaterReminder(),
-      staleTime: 1000 * 60 * 5,
-      gcTime: 1000 * 60 * 10,
     });
   }, [selectedDate, queryClient]);
 
-  const loading =
-    loadingWaterStatus || loadingWeather || loadingWeekly || loadingReminder;
-
   const handleConfirm = async (amount: number, time: string) => {
-    const valueInMl = inputToBaseWater(amount); 
+    const valueInMl = inputToBaseWater(amount);
     try {
       await saveWaterRecord(valueInMl, time);
       refetchWaterStatus();
@@ -194,13 +201,13 @@ const Page = () => {
     }
   };
 
-  if (
-    loading ||
-    !waterStatus ||
-    !weatherReport ||
-    !waterWeeklyData ||
-    !waterReminderData
-  ) {
+  const isInitialLoading =
+    (loadingWaterStatus && !waterStatus) ||
+    (loadingWeather && !weatherReport) ||
+    (loadingWeekly && !waterWeeklyData) ||
+    (loadingReminder && !waterReminderData);
+
+  if (isInitialLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator size="large" color="#000" />
@@ -208,14 +215,14 @@ const Page = () => {
     );
   }
 
-  const filtered = waterStatus.history.sort(
+  const filtered = waterStatus?.history.sort(
     (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
   );
 
   const percent =
-    ((waterStatus.currentIntake ?? 0) / (waterStatus.dailyGoal ?? 1)) * 100;
+    ((waterStatus?.currentIntake ?? 0) / (waterStatus?.dailyGoal ?? 1)) * 100;
 
-  const data = waterWeeklyData.map((item) => ({
+  const data = waterWeeklyData?.map((item) => ({
     value: displayWater(item.totalMl).value,
     label: item.dayOfWeek,
   }));
@@ -262,7 +269,7 @@ const Page = () => {
             animated={true}
           />
           <Text className="absolute top-2 right-2 text-black text-lg">
-            - {displayWater(waterStatus?.dailyGoal || 0).formatted}
+            - {displayWater(waterStatus?.dailyGoal ?? 0).formatted}
           </Text>
         </View>
         <View className="flex-1 justify-between ml-1">
@@ -276,7 +283,7 @@ const Page = () => {
             <InfoCard
               title="Mục tiêu"
               content={
-                displayWater(waterStatus?.dailyGoal || 0).formatted ||
+                displayWater(waterStatus?.dailyGoal ?? 0).formatted ||
                 displayWater(2000).formatted
               }
             />
@@ -378,16 +385,15 @@ const Page = () => {
         })()}
       {percent >= 25 && (
         <Text className="text-lg text-center text-black/60 py-2">
-          {" "}
-          Bạn đã hoàn thành {percent.toFixed(0)}% mục tiêu đề ra{" "}
+          Bạn đã hoàn thành {percent.toFixed(0)}% mục tiêu đề ra
         </Text>
       )}
-      {filtered.length > 0 && (
+      {filtered && filtered.length > 0 && (
         <Text className="font-bold text-lg text-black/60 pb-2">
           Lịch sử hôm nay
         </Text>
       )}
-      <WaterHistory filtered={filtered} />
+      <WaterHistory filtered={filtered ?? []} />
 
       <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4 mt-4">
         <View>
@@ -414,10 +420,10 @@ const Page = () => {
 
       <Weather
         handleUpdateGoal={() =>
-          handleUpdateGoal(weatherReport.recommended, Date.now().toString())
+          handleUpdateGoal(weatherReport?.recommended ?? 0, Date.now().toString())
         }
-        weatherReport={weatherReport}
-        waterStatus={waterStatus}
+        weatherReport={weatherReport as WeatherResponse}
+        waterStatus={waterStatus as WaterStatus}
       />
     </ScrollView>
   );

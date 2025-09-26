@@ -1,7 +1,7 @@
 // ReminderCard.tsx
 import { useUnits } from "@/hooks/useUnits";
 import { updateWaterReminder } from "@/services/water";
-import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
+import { convertISOToTimestamp } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import Checkbox from "expo-checkbox";

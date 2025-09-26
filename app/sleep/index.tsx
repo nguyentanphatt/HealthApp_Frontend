@@ -3,7 +3,7 @@ import CircularTimePicker from "@/components/CircularTimePicker";
 import { CreateSleepRecord, getSleepStatus, UpdateSleepRecord } from "@/services/sleep";
 import { formatTimeForDisplay, utcTimeToVnTime, vnTimeToUtcTimestamp } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -29,7 +29,7 @@ const Page = () => {
     isLoading: loadingSleepStatus,
     refetch: refetchSleepStatus,
   } = useQuery({
-    queryKey: ["sleepStatus", selectedDate],
+    queryKey: ["sleepStatus", {date:selectedDate}],
     queryFn: () =>
       getSleepStatus(
         selectedDate !== 0
@@ -37,11 +37,11 @@ const Page = () => {
           : undefined
       ),
     staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
     select: (res) => res.data,
   });
 
   const [selectedMood, setSelectedMood] = useState<string | null>(sleepStatus?.history[0]?.qualityScore || null);
-  console.log("selectedMood", selectedMood);
 
   useEffect(() => {
     const currentTimestamp = selectedDate || Math.floor(Date.now() / 1000);
@@ -49,13 +49,13 @@ const Page = () => {
     const nextTimestamp = currentTimestamp + 86400;
 
     queryClient.prefetchQuery({
-      queryKey: ["sleepStatus", prevTimestamp],
+      queryKey: ["sleepStatus", {date:prevTimestamp}],
       queryFn: () =>
         getSleepStatus({ date: (prevTimestamp * 1000).toString() }),
       staleTime: 1000 * 60 * 5,
     });
     queryClient.prefetchQuery({
-      queryKey: ["sleepStatus", nextTimestamp],
+      queryKey: ["sleepStatus", {date:nextTimestamp}],
       queryFn: () =>
         getSleepStatus({ date: (nextTimestamp * 1000).toString() }),
       staleTime: 1000 * 60 * 5,
@@ -63,7 +63,6 @@ const Page = () => {
 
   }, [selectedDate, queryClient]);
 
-  // Kiểm tra xem đã có dữ liệu giấc ngủ chưa
   const hasSleepData = sleepStatus?.history && (sleepStatus.history as any[]).length > 0;
 
   const stackData = [
@@ -152,15 +151,11 @@ const Page = () => {
     const endTimeHour = Number(endTime.split(":")[0]);
     const endTimeMinute = Number(endTime.split(":")[1]);
 
-    // Với format 24h: từ 0:00 trở đi là ngày hôm sau, còn lại là ngày hôm nay
     const isStartTimeNextDay = startTimeHour >= 0;
     const isEndTimeNextDay = true;
 
     const startTimeTimestamp = vnTimeToUtcTimestamp(startTimeHour, startTimeMinute, isStartTimeNextDay);
     const endTimeTimestamp = vnTimeToUtcTimestamp(endTimeHour, endTimeMinute, isEndTimeNextDay);
-
-    console.log("startTimeTimestamp", startTimeTimestamp);
-    console.log("endTimeTimestamp", endTimeTimestamp);
     
     try {
       const response = await CreateSleepRecord(startTimeTimestamp.toString(), endTimeTimestamp.toString(), isAllWeek);

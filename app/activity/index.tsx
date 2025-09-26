@@ -3,7 +3,6 @@ import {
     LatLng,
     calculateActiveTime,
     calculateAverageSpeed,
-    calculateCaloriesFromMV,
     calculateTotalDistance,
     checkLocationPermission,
     distanceBetween,
@@ -19,7 +18,7 @@ import * as Location from "expo-location";
 import { Href, useRouter } from 'expo-router';
 import { Accelerometer, Pedometer } from 'expo-sensors';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, Region } from "react-native-maps";
 
 const Page = () => {
@@ -41,9 +40,11 @@ const Page = () => {
     const [pauseStartTime, setPauseStartTime] = useState<number | null>(null);
     const [totalPauseTime, setTotalPauseTime] = useState(0);
     const [activeTime, setActiveTime] = useState(0);
-    const [caloriesBurned, setCaloriesBurned] = useState<number>(0);
     const [currentMV, setCurrentMV] = useState(0);
-    
+    const [showCountdown, setShowCountdown] = useState(false);
+    const [countdown, setCountdown] = useState(3);
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
     //Refs
     const startTimeRef = useRef<number | null>(null);
     const pauseStartTimeRef = useRef<number | null>(null);
@@ -155,7 +156,6 @@ const Page = () => {
         pauseStartTimeRef.current = null;
         setIsPause(false);
         setStepCount(0);
-        setCaloriesBurned(0);
         setCurrentMV(0);
         // reset refs
         startTimeRef.current = null;
@@ -198,14 +198,14 @@ const Page = () => {
     // Đảm bảo có quyền: nếu chưa, yêu cầu tại trang này
     const ensurePermission = async (): Promise<boolean> => {
         if (hasPermission) return true;
-        
+
         const granted = await checkLocationPermission();
         setHasPermission(granted);
-        
+
         if (granted) {
             await requestActivityRecognitionPermission();
         }
-        
+
         return granted;
     };
 
@@ -215,22 +215,18 @@ const Page = () => {
         Accelerometer.setUpdateInterval(30);
         accelSubRef.current = Accelerometer.addListener(({ x, y, z }) => {
             const mag = Math.sqrt(x * x + y * y + z * z);
-    
+
             if (isStartRef.current && !isPauseRef.current) {
                 mvSumRef.current += mag;
                 mvCountRef.current += 1;
                 setCurrentMV(mag);
-                
-                // Tính calo sử dụng helper function
-                const caloriesPerInterval = calculateCaloriesFromMV(mag, 30);
-                setCaloriesBurned(prev => prev + caloriesPerInterval);
             }
-            
+
             const alpha = 0.1;
-            emaMagRef.current = emaMagRef.current === 0 
-              ? mag 
-              : alpha * mag + (1 - alpha) * emaMagRef.current;
-    
+            emaMagRef.current = emaMagRef.current === 0
+                ? mag
+                : alpha * mag + (1 - alpha) * emaMagRef.current;
+
             const net = mag - emaMagRef.current;
             const absNet = Math.abs(net);
             const now = Date.now();
@@ -252,12 +248,12 @@ const Page = () => {
             }
 
             if (net < downTh && lastNetRef.current >= downTh) {
-                const minInterval = 400; 
+                const minInterval = 400;
                 const peak = candidatePeakRef.current;
                 if (
                     peak &&
                     now - lastStepTimeRef.current >= minInterval &&
-                    peak.value >= upTh * 1.4 && 
+                    peak.value >= upTh * 1.4 &&
                     isStartRef.current && !isPauseRef.current
                 ) {
                     setStepCount((c) => c + 1);
@@ -314,6 +310,49 @@ const Page = () => {
                 }
             }, 2000);
         }
+    };
+
+    const startCountdown = () => {
+        setShowCountdown(true);
+        setCountdown(3);
+        fadeAnim.setValue(0);
+
+        const animateCountdown = (number: number) => {
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+            }).start(() => {
+                setTimeout(() => {
+                    Animated.timing(fadeAnim, {
+                        toValue: 0,
+                        duration: 300,
+                        useNativeDriver: true,
+                    }).start();
+                }, 400);
+            });
+        };
+
+        animateCountdown(3);
+
+        const countdownInterval = setInterval(() => {
+            setCountdown((prev) => {
+                if (prev <= 1) {
+                    clearInterval(countdownInterval);
+                    Animated.timing(fadeAnim, {
+                        toValue: 0,
+                        duration: 300,
+                        useNativeDriver: true,
+                    }).start(() => {
+                        setShowCountdown(false);
+                        startTracking();
+                    });
+                    return 3;
+                }
+                animateCountdown(prev - 1);
+                return prev - 1;
+            });
+        }, 1000);
     };
 
     const startTracking = async () => {
@@ -387,7 +426,19 @@ const Page = () => {
         }
     };
 
-    const stopTracking = () => {      
+    const stopTracking = () => {
+
+        let finalCalories = 0;
+        if (mvCountRef.current > 0) {
+            const avgMV = mvSumRef.current / mvCountRef.current;
+            const totalTimeSeconds = activeTime / 1000;
+            if (totalTimeSeconds > 0) {
+                const eePerHour = 4.83 * avgMV + 122.02;
+                const eePerSecond = eePerHour / 3600;
+                finalCalories = eePerSecond * totalTimeSeconds;
+            }
+        }
+
         saveActivityData({
             distance: totalDistanceMeters,
             stepCount,
@@ -395,7 +446,7 @@ const Page = () => {
             avgSpeed,
             currentSpeed,
             maxSpeed,
-            caloriesBurned,
+            caloriesBurned: finalCalories,
             currentMV,
             startTime: startTimeRef.current,
             elapsed,
@@ -479,7 +530,7 @@ const Page = () => {
                 </View>
             ) : (
                 <View className="flex flex-row items-center justify-between px-4 pt-10">
-                    <TouchableOpacity onPress={() => router.push("/(tabs)")}>
+                    <TouchableOpacity onPress={() => router.push("/(tabs)")} className='w-[30px]'>
                         <FontAwesome6 name="chevron-left" size={24} color="black" />
                     </TouchableOpacity>
                     <Text className="text-2xl font-bold  self-center">Vận động</Text>
@@ -544,11 +595,30 @@ const Page = () => {
 
                         </View>
                     ) : (
-                        <TouchableOpacity onPress={() => { setIsStart(!isStart), startTracking() }} className='size-[90px] rounded-full flex items-center justify-center bg-black/10'>
+                        <TouchableOpacity onPress={() => { setIsStart(!isStart), startCountdown() }} className='size-[90px] rounded-full flex items-center justify-center bg-black/10'>
                             <FontAwesome6 name="person-walking" size={36} color="black" />
                         </TouchableOpacity>
                     )}
 
+                </View>
+            )}
+
+            {showCountdown && (
+                <View className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <Animated.Text
+                        className="text-[200px] font-bold text-white"
+                        style={{
+                            opacity: fadeAnim,
+                            transform: [{
+                                scale: fadeAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0.5, 1],
+                                })
+                            }]
+                        }}
+                    >
+                        {countdown}
+                    </Animated.Text>
                 </View>
             )}
 

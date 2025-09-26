@@ -4,7 +4,7 @@ import FoodPieChart from "@/components/chart/FoodPieChart";
 import FoodDaily from "@/components/FoodDaily";
 import { foodWeekly, getFoodStatus } from "@/services/food";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -28,7 +28,7 @@ const Page = () => {
     isLoading: loadingFoodStatus,
     refetch: refetchFoodStatus,
   } = useQuery({
-    queryKey: ["foodStatus", selectedDate],
+    queryKey: ["foodStatus", {date:selectedDate}],
     queryFn: () =>
       getFoodStatus(
         selectedDate !== 0
@@ -36,6 +36,7 @@ const Page = () => {
           : undefined
       ),
     staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
     select: (res) => res.data,
   });
 
@@ -44,7 +45,7 @@ const Page = () => {
     isLoading: loadingWeekly,
     refetch: refetchWeekly,
   } = useQuery({
-    queryKey: ["foodWeekly", selectedDate],
+    queryKey: ["foodWeekly", {date:selectedDate}],
     queryFn: () =>
       foodWeekly(
         selectedDate !== 0
@@ -52,6 +53,7 @@ const Page = () => {
           : undefined
       ),
     staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
     select: (res) => res.data.dailyIntake,
   });
 
@@ -61,24 +63,24 @@ const Page = () => {
     const nextTimestamp = currentTimestamp + 86400;
 
     queryClient.prefetchQuery({
-      queryKey: ["foodStatus", prevTimestamp],
+      queryKey: ["foodStatus", {date:prevTimestamp}],
       queryFn: () =>
         getFoodStatus({ date: (prevTimestamp * 1000).toString() }),
       staleTime: 1000 * 60 * 5,
     });
     queryClient.prefetchQuery({
-      queryKey: ["foodStatus", nextTimestamp],
+      queryKey: ["foodStatus", {date:nextTimestamp}],
       queryFn: () => getFoodStatus({ date: (nextTimestamp * 1000).toString() }),
       staleTime: 1000 * 60 * 5,
     });
 
     queryClient.prefetchQuery({
-      queryKey: ["foodWeekly", prevTimestamp],
+      queryKey: ["foodWeekly", {date:prevTimestamp}],
       queryFn: () => foodWeekly({ date: (prevTimestamp * 1000).toString() }),
       staleTime: 1000 * 60 * 5,
     });
     queryClient.prefetchQuery({
-      queryKey: ["foodWeekly", nextTimestamp],
+      queryKey: ["foodWeekly", {date:nextTimestamp}],
       queryFn: () => foodWeekly({ date: (nextTimestamp * 1000).toString() }),
       staleTime: 1000 * 60 * 5,
     });
@@ -86,7 +88,7 @@ const Page = () => {
     if (selectedDate === 0) {
       const todayTimestamp = Math.floor(Date.now() / 1000);
       queryClient.prefetchQuery({
-        queryKey: ["foodWeekly", todayTimestamp],
+        queryKey: ["foodWeekly", {date:todayTimestamp}],
         queryFn: () => foodWeekly({ date: (todayTimestamp * 1000).toString() }),
         staleTime: 1000 * 60 * 5,
       });
@@ -104,9 +106,9 @@ const Page = () => {
 
   const order = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
 
-  const loading = loadingFoodStatus || loadingWeekly;
+  const loading = loadingFoodStatus || loadingWeekly || loadingFoodStatus || loadingWeekly;
 
-  if (loading || !foodStatus || !foodWeeklyData) {
+  if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator size="large" color="#000" />
@@ -114,7 +116,7 @@ const Page = () => {
     );
   }
 
-  const data = foodWeeklyData.map((item) => ({
+  const data = foodWeeklyData?.map((item) => ({
     value: item.totalCalories,
     label: item.dayOfWeek,
   }));  
@@ -150,7 +152,7 @@ const Page = () => {
           <Text className="font-bold text-xl">Lượng thức ăn</Text>
           <Text className="text-black/60 text-xl text-center">
             <Text className="font-bold text-3xl text-black">
-              {foodStatus?.currentCalories}
+              {foodStatus?.currentCalories ?? 0}
             </Text>
             / 2000 kcal
           </Text>
@@ -176,8 +178,8 @@ const Page = () => {
           return null;
         })}
       </View>
-      <FoodPieChart data={foodStatus?.history} />
-      <FoodBarChart data={data}/>
+      <FoodPieChart data={foodStatus?.history ?? []} />
+      <FoodBarChart data={data ?? []}/>
     </ScrollView>
   );
 };

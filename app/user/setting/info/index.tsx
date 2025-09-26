@@ -92,7 +92,7 @@ const Page = () => {
             console.error(error);
         }
     }
-    // Cập nhật state khi userProfileStatus thay đổi
+
     useEffect(() => {
         if (userProfileStatus) {
             setUserName(userProfileStatus.fullName || "");

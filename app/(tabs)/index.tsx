@@ -157,7 +157,7 @@ export default function HomeScreen() {
                 }
                 animated={true}
               />
-              <Text className="text-black/60 text-xl">
+              <Text className="text-black/60 text-xl h-[30px]">
                 <Text className="font-bold text-3xl text-black">
                   {waterStatus?.currentIntake}
                 </Text>

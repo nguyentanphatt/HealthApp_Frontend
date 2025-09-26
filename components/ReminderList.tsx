@@ -1,5 +1,5 @@
 import { WaterReminder } from "@/constants/type";
-import { convertISOToTimestamp } from "@/utils/convertISOtoTimestamp";
+import { convertISOToTimestamp } from "@/utils/convertTime";
 import { scheduleReminders } from "@/utils/notificationsHelper";
 import { Href, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";

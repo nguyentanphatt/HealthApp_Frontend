@@ -2,11 +2,11 @@ import { useUnits } from "@/context/unitContext";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 const Page = () => {
   const router = useRouter();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const { units, setUnit } = useUnits();
+  const { units, setUnit, isLoaded } = useUnits();
 
   const measureData = [
     { key: "height", label: "Chiều cao", options: ["cm", "ft"] },
@@ -14,6 +14,15 @@ const Page = () => {
     { key: "water", label: "Lượng nước", options: ["ml", "fl oz"] },
     { key: "temperature", label: "Nhiệt độ", options: ["C", "F"] },
   ] as const;
+
+  if (!isLoaded) {
+    return (
+      <View className="flex-1 bg-[#f6f6f6] items-center justify-center">
+        <ActivityIndicator size="large" color="#19B1FF" />
+        <Text className="text-lg text-gray-600 mt-4">Loading</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView

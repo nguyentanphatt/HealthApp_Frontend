@@ -70,7 +70,7 @@ const Page = () => {
           {overallData.map((item, idx) => (
             <View key={idx} className="flex gap-4">
               <TouchableOpacity
-                className="flex-row items-center justify-between"
+                className="flex-row items-center justify-between h-[30px]"
                 onPress={() => router.push(item.href as Href)}
               >
                 <Text className="text-xl">{item.settingName}</Text>
@@ -96,7 +96,7 @@ const Page = () => {
         <View className="flex w-full gap-4 bg-white rounded-md shadow-md p-4">
           {privateData.map((item, idx) => (
             <View key={idx} className="flex gap-4">
-              <TouchableOpacity onPress={() => router.push(item.href as Href)} className="flex-row items-center justify-between">
+              <TouchableOpacity onPress={() => router.push(item.href as Href)} className="flex-row items-center justify-between h-[30px]">
                 <Text className="text-xl">{item.settingName}</Text>
                 {item.isSwitch && (
                   <Switch
