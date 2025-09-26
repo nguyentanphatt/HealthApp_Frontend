@@ -32,7 +32,7 @@ export const formatSpeed = (speedMs: number) => {
     return `${speedKmh} km/h`;
 };
 
-// Format distance thông minh: hiển thị m nếu < 1000m, km nếu >= 1000m
+// Format distance
 export const formatDistance = (distanceMeters: number): string => {
     if (distanceMeters >= 1000) {
         return `${(distanceMeters / 1000).toFixed(2)} km`;

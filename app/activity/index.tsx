@@ -1,5 +1,5 @@
 import LockScreen from '@/components/LockScreen';
-import { getActivityById, saveActivityData, saveLocation, updateActivityData } from '@/services/activity';
+import { getActivityById, getAllLocations, saveActivityData, saveLocation, updateActivityData } from '@/services/activity';
 import {
     LatLng,
     calculateActiveTime,
@@ -81,15 +81,20 @@ const Page = () => {
                 if (wasActive && storedId) {
                     const sid = Number(storedId);
                     if (Number.isFinite(sid)) {
-                        // fetch latest server snapshot
                         const data = await getActivityById(sid);
-                        console.log("data", data);
+                        const locations = await getAllLocations(sid);
 
-                        // Prime refs/state to resume
+                        if (locations?.data && Array.isArray(locations.data)) {
+                            const convertedPositions: TrackedPoint[] = locations.data.map((loc: any) => ({
+                                latitude: loc.lat,
+                                longitude: loc.lng,
+                                time: new Date(loc.time).getTime()
+                            }));
+                            setPositions(convertedPositions);
+                        }
                         sessionIdRef.current = sid;
                         setSessionId(String(sid));
                         hasCreatedFirstSnapshotRef.current = true;
-                        // Rehydrate some metrics if available
                         try {
                             const server = (data as any)?.data ?? data;
                             if (server?.startTime) {
@@ -97,14 +102,14 @@ const Page = () => {
                                 setStartTime(start);
                                 startTimeRef.current = start;
                             }
-                            // Coerce numeric strings to numbers
+
                             const totalTimeNum = Number(server?.totalTime ?? 0) || 0;
                             const activeTimeNum = Number(server?.activeTime ?? 0) || 0;
                             const avgSpeedNum = Number(server?.avgSpeed ?? 0) || 0;
                             const maxSpeedNum = Number(server?.maxSpeed ?? 0) || 0;
                             const stepCountNum = Number(server?.stepCount ?? 0) || 0;
-                            // Prefer meters if backend provides, else convert from km
                             const distanceMNum = Number(server?.distanceM ?? (Number(server?.distanceKm ?? 0) * 1000)) || 0;
+                            
                             setElapsed(totalTimeNum);
                             setActiveTime(activeTimeNum);
                             setAvgSpeed(avgSpeedNum);

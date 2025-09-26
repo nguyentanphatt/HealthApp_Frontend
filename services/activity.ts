@@ -98,3 +98,13 @@ export const saveLocation = async (
     throw error
   }
 }
+
+export const getAllLocations = async (sessionId: string | number) => {
+  try {
+    const response = await privateClient.get(`/api/run/location`, { params: { sessionId } })
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
