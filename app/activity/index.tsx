@@ -1,4 +1,5 @@
 import LockScreen from '@/components/LockScreen';
+import { getActivityById, saveActivityData, saveLocation, updateActivityData } from '@/services/activity';
 import {
     LatLng,
     calculateActiveTime,
@@ -10,13 +11,13 @@ import {
     formatSpeed,
     formatTime,
     requestActivityRecognitionPermission,
-    saveActivityData
+    saveActivityDataToStorage
 } from '@/utils/activityHelper';
 import { FontAwesome6 } from '@expo/vector-icons';
-import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from "expo-location";
 import { Href, useRouter } from 'expo-router';
-import { Accelerometer, Pedometer } from 'expo-sensors';
+import { Accelerometer } from 'expo-sensors';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, Region } from "react-native-maps";
@@ -24,7 +25,8 @@ import MapView, { Marker, Polygon, Polyline, Region } from "react-native-maps";
 const Page = () => {
     const router = useRouter();
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-    const [positions, setPositions] = useState<LatLng[]>([]);
+    type TrackedPoint = LatLng & { time: number };
+    const [positions, setPositions] = useState<TrackedPoint[]>([]);
     const [current, setCurrent] = useState<LatLng | null>(null);
     const [showPolygon, setShowPolygon] = useState(false);
     const [isStart, setIsStart] = useState(false);
@@ -70,15 +72,106 @@ const Page = () => {
     const warmupCountRef = useRef<number>(0);
     const absNetEmaRef = useRef<number>(0);
 
-    // Pedometer
-    const pedometerSubRef = useRef<any>(null);
-    const pedometerEventSeenRef = useRef<boolean>(false);
-    const pedometerFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const pedometerPollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const pedometerBaseTimeRef = useRef<number | null>(null);
-
     useEffect(() => {
         (async () => {
+            // Attempt to restore ongoing tracking session
+            try {
+                const [activeStr, storedId] = await AsyncStorage.multiGet(['activity_tracking_active', 'activity_session_id']).then(entries => entries.map(e => e?.[1] ?? null));
+                const wasActive = activeStr === 'true';
+                if (wasActive && storedId) {
+                    const sid = Number(storedId);
+                    if (Number.isFinite(sid)) {
+                        // fetch latest server snapshot
+                        const data = await getActivityById(sid);
+                        console.log("data", data);
+
+                        // Prime refs/state to resume
+                        sessionIdRef.current = sid;
+                        setSessionId(String(sid));
+                        hasCreatedFirstSnapshotRef.current = true;
+                        // Rehydrate some metrics if available
+                        try {
+                            const server = (data as any)?.data ?? data;
+                            if (server?.startTime) {
+                                const start = new Date(server.startTime).getTime();
+                                setStartTime(start);
+                                startTimeRef.current = start;
+                            }
+                            // Coerce numeric strings to numbers
+                            const totalTimeNum = Number(server?.totalTime ?? 0) || 0;
+                            const activeTimeNum = Number(server?.activeTime ?? 0) || 0;
+                            const avgSpeedNum = Number(server?.avgSpeed ?? 0) || 0;
+                            const maxSpeedNum = Number(server?.maxSpeed ?? 0) || 0;
+                            const stepCountNum = Number(server?.stepCount ?? 0) || 0;
+                            // Prefer meters if backend provides, else convert from km
+                            const distanceMNum = Number(server?.distanceM ?? (Number(server?.distanceKm ?? 0) * 1000)) || 0;
+                            setElapsed(totalTimeNum);
+                            setActiveTime(activeTimeNum);
+                            setAvgSpeed(avgSpeedNum);
+                            setMaxSpeed(maxSpeedNum);
+                            setStepCount(stepCountNum);
+                            totalDistanceRef.current = distanceMNum;
+                            try {
+                                const lp = server?.LocationPoint;
+                                if (Array.isArray(lp) && lp.length > 0) {
+                                    const lastTime = Number(lp[lp.length - 1]?.time ?? 0);
+                                    if (Number.isFinite(lastTime)) lastSyncedLocationTimeRef.current = lastTime;
+                                }
+                            } catch { }
+                        } catch { }
+
+                        // ensure permissions then restart sensors and GPS watchers
+                        try {
+                            const ok = (await Location.getForegroundPermissionsAsync()).status === 'granted' || (await ensurePermission());
+                            if (ok) {
+                                await startAccelerometer();
+                                if (!subscriptionRef.current) {
+                                    subscriptionRef.current = await Location.watchPositionAsync(
+                                        {
+                                            accuracy: Location.Accuracy.BestForNavigation,
+                                            timeInterval: 2000,
+                                            distanceInterval: 0,
+                                        },
+                                        (loc) => {
+                                            const coord: TrackedPoint = { latitude: loc.coords.latitude, longitude: loc.coords.longitude, time: loc.timestamp ?? Date.now() };
+                                            const now = Date.now();
+                                            setPositions((p) => [...p, coord]);
+                                            setCurrent(coord);
+                                            const prev = lastPositionRef.current;
+                                            const prevTime = lastPositionTimeRef.current;
+                                            if (prev && prevTime && !isPauseRef.current) {
+                                                const distance = distanceBetween(prev, coord);
+                                                const timeDiff = (now - prevTime) / 1000;
+                                                if (timeDiff > 0 && distance > 0) {
+                                                    const speed = distance / timeDiff;
+                                                    setCurrentSpeed(speed);
+                                                    setMaxSpeed(prev => Math.max(prev, speed));
+                                                    totalDistanceRef.current += distance;
+                                                    const currentActive = calculateActiveTime(
+                                                        startTimeRef.current,
+                                                        pauseStartTimeRef.current,
+                                                        totalPauseTimeRef.current
+                                                    );
+                                                    const avg = calculateAverageSpeed(totalDistanceRef.current, currentActive);
+                                                    setAvgSpeed(avg);
+                                                }
+                                            }
+                                            lastPositionRef.current = coord;
+                                            lastPositionTimeRef.current = now;
+                                            mapRef.current?.animateToRegion({
+                                                ...coord,
+                                                latitudeDelta: 0.005,
+                                                longitudeDelta: 0.005,
+                                            } as Region, 300);
+                                        }
+                                    );
+                                }
+                                if (!isStartRef.current) setIsStart(true);
+                            }
+                        } catch { }
+                    }
+                }
+            } catch { }
             const { status } = await Location.requestForegroundPermissionsAsync();
             setHasPermission(status === "granted");
             if (status !== "granted") {
@@ -104,19 +197,6 @@ const Page = () => {
                 accelSubRef.current.remove();
                 accelSubRef.current = null;
             }
-            if (pedometerSubRef.current) {
-                pedometerSubRef.current.remove();
-                pedometerSubRef.current = null;
-            }
-            if (pedometerFallbackTimerRef.current) {
-                clearTimeout(pedometerFallbackTimerRef.current);
-                pedometerFallbackTimerRef.current = null;
-            }
-            if (pedometerPollTimerRef.current) {
-                clearInterval(pedometerPollTimerRef.current);
-                pedometerPollTimerRef.current = null;
-            }
-            pedometerBaseTimeRef.current = null;
         };
     }, []);
 
@@ -180,19 +260,6 @@ const Page = () => {
             accelSubRef.current.remove();
             accelSubRef.current = null;
         }
-        if (pedometerSubRef.current) {
-            pedometerSubRef.current.remove();
-            pedometerSubRef.current = null;
-        }
-        if (pedometerFallbackTimerRef.current) {
-            clearTimeout(pedometerFallbackTimerRef.current);
-            pedometerFallbackTimerRef.current = null;
-        }
-        if (pedometerPollTimerRef.current) {
-            clearInterval(pedometerPollTimerRef.current);
-            pedometerPollTimerRef.current = null;
-        }
-        pedometerBaseTimeRef.current = null;
     };
 
     // Đảm bảo có quyền: nếu chưa, yêu cầu tại trang này
@@ -266,95 +333,6 @@ const Page = () => {
         });
     };
 
-    const startPedometer = async () => {
-        const available = await Pedometer.isAvailableAsync();
-        console.log("Pedometer available:", available);
-        if (!available) {
-            console.log("Pedometer not available, falling back to accelerometer");
-            await startAccelerometer();
-            return;
-        }
-        pedometerEventSeenRef.current = false;
-        pedometerBaseTimeRef.current = Date.now();
-        pedometerSubRef.current = Pedometer.watchStepCount(({ steps }) => {
-            console.log("Pedometer watchStepCount steps:", steps, "isStart:", isStart, "isPause:", isPause);
-            pedometerEventSeenRef.current = true;
-            if (isStart && !isPause) {
-                setStepCount(steps);
-            }
-        });
-        if (!pedometerSubRef.current) {
-            console.log("Pedometer subscription failed to start");
-        } else {
-            console.log("Pedometer subscription started");
-            // If no events within 8s, auto-start accelerometer fallback
-            pedometerFallbackTimerRef.current = setTimeout(async () => {
-                if (!pedometerEventSeenRef.current) {
-                    console.log("No pedometer events received in time; starting accelerometer fallback");
-                    await startAccelerometer();
-                }
-            }, 8000);
-            if (pedometerPollTimerRef.current) {
-                clearInterval(pedometerPollTimerRef.current);
-            }
-            pedometerPollTimerRef.current = setInterval(async () => {
-                try {
-                    if (!isStart || isPause) return;
-                    const start = pedometerBaseTimeRef.current ?? Date.now();
-                    const end = Date.now();
-                    const { steps } = await Pedometer.getStepCountAsync(new Date(start), new Date(end));
-                    console.log("Pedometer.getStepCountAsync steps:", steps, "interval:", (end - start) / 1000, "s");
-                    setStepCount(steps);
-                } catch (e) {
-                    console.warn('Pedometer.getStepCountAsync failed:', e);
-                }
-            }, 2000);
-        }
-    };
-
-    const startCountdown = () => {
-        setShowCountdown(true);
-        setCountdown(3);
-        fadeAnim.setValue(0);
-
-        const animateCountdown = (number: number) => {
-            Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 300,
-                useNativeDriver: true,
-            }).start(() => {
-                setTimeout(() => {
-                    Animated.timing(fadeAnim, {
-                        toValue: 0,
-                        duration: 300,
-                        useNativeDriver: true,
-                    }).start();
-                }, 400);
-            });
-        };
-
-        animateCountdown(3);
-
-        const countdownInterval = setInterval(() => {
-            setCountdown((prev) => {
-                if (prev <= 1) {
-                    clearInterval(countdownInterval);
-                    Animated.timing(fadeAnim, {
-                        toValue: 0,
-                        duration: 300,
-                        useNativeDriver: true,
-                    }).start(() => {
-                        setShowCountdown(false);
-                        startTracking();
-                    });
-                    return 3;
-                }
-                animateCountdown(prev - 1);
-                return prev - 1;
-            });
-        }, 1000);
-    };
-
     const startTracking = async () => {
         console.log("startTracking called");
         const ok = await ensurePermission();
@@ -368,14 +346,13 @@ const Page = () => {
             const now = Date.now();
             setStartTime(now);
             startTimeRef.current = now;
-            // Prefer accelerometer in Expo Go for easier testing
-            if (Constants.appOwnership === 'expo') {
-                console.log('Expo Go detected; starting accelerometer');
-                await startAccelerometer();
-            } else {
-                console.log("Starting pedometer...");
-                await startPedometer();
-            }
+            console.log('Expo Go detected; starting accelerometer');
+            await startAccelerometer();
+
+            // mark tracking active in storage
+            try {
+                await AsyncStorage.setItem('activity_tracking_active', 'true');
+            } catch { }
 
             subscriptionRef.current = await Location.watchPositionAsync(
                 {
@@ -384,7 +361,7 @@ const Page = () => {
                     distanceInterval: 0, // update when move >= 0m
                 },
                 (loc) => {
-                    const coord = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+                    const coord: TrackedPoint = { latitude: loc.coords.latitude, longitude: loc.coords.longitude, time: loc.timestamp ?? Date.now() };
                     const now = Date.now();
 
                     setPositions((p) => [...p, coord]);
@@ -392,7 +369,7 @@ const Page = () => {
 
                     const prev = lastPositionRef.current;
                     const prevTime = lastPositionTimeRef.current;
-                    if (prev && prevTime && !isPause) {
+                    if (prev && prevTime && !isPauseRef.current) {
                         const distance = distanceBetween(prev, coord);
                         const timeDiff = (now - prevTime) / 1000;
                         if (timeDiff > 0 && distance > 0) {
@@ -439,7 +416,7 @@ const Page = () => {
             }
         }
 
-        saveActivityData({
+        saveActivityDataToStorage({
             distance: totalDistanceMeters,
             stepCount,
             positions,
@@ -459,21 +436,12 @@ const Page = () => {
             accelSubRef.current.remove();
             accelSubRef.current = null;
         }
-        if (pedometerSubRef.current) {
-            pedometerSubRef.current.remove();
-            pedometerSubRef.current = null;
-            console.log("Pedometer subscription removed");
-        }
-        if (pedometerFallbackTimerRef.current) {
-            clearTimeout(pedometerFallbackTimerRef.current);
-            pedometerFallbackTimerRef.current = null;
-        }
-        if (pedometerPollTimerRef.current) {
-            clearInterval(pedometerPollTimerRef.current);
-            pedometerPollTimerRef.current = null;
-        }
-        pedometerBaseTimeRef.current = null;
         resetAllState();
+        // clear persisted session
+        sessionIdRef.current = null;
+        setSessionId(null);
+        hasCreatedFirstSnapshotRef.current = false;
+        AsyncStorage.removeItem('activity_tracking_active').catch(() => { });
     };
 
     const handlePause = () => {
@@ -493,8 +461,52 @@ const Page = () => {
         setIsPause(!isPause);
     };
 
+    const startCountdown = () => {
+        setShowCountdown(true);
+        setCountdown(3);
+        fadeAnim.setValue(0);
 
-    const totalDistanceMeters = calculateTotalDistance(positions);
+        const animateCountdown = (number: number) => {
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+            }).start(() => {
+                setTimeout(() => {
+                    Animated.timing(fadeAnim, {
+                        toValue: 0,
+                        duration: 300,
+                        useNativeDriver: true,
+                    }).start();
+                }, 400);
+            });
+        };
+
+        animateCountdown(3);
+
+        const countdownInterval = setInterval(() => {
+            setCountdown((prev) => {
+                if (prev <= 1) {
+                    clearInterval(countdownInterval);
+                    Animated.timing(fadeAnim, {
+                        toValue: 0,
+                        duration: 300,
+                        useNativeDriver: true,
+                    }).start(() => {
+                        setShowCountdown(false);
+                        startTracking();
+                    });
+                    return 3;
+                }
+                animateCountdown(prev - 1);
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+
+    // Use accumulated ref for distance so resume shows immediately; keep positions-derived as fallback
+    const totalDistanceMeters = totalDistanceRef.current > 0 ? totalDistanceRef.current : calculateTotalDistance(positions);
 
     const polygonCoords = showPolygon && positions.length >= 3 ? [...positions, positions[0]] : undefined;
 
@@ -502,6 +514,141 @@ const Page = () => {
     // keep refs in sync to avoid stale closures inside sensor callbacks
     useEffect(() => { isStartRef.current = isStart; }, [isStart]);
     useEffect(() => { isPauseRef.current = isPause; }, [isPause]);
+    // live refs for frequently changing state used in logging
+    const positionsRef = useRef<TrackedPoint[]>([]);
+    const stepCountRef = useRef<number>(0);
+    const currentSpeedRef = useRef<number>(0);
+    const maxSpeedRef = useRef<number>(0);
+    const currentMVRef = useRef<number>(0);
+    const hasCreatedFirstSnapshotRef = useRef<boolean>(false);
+    const isSyncingRef = useRef<boolean>(false);
+    const sessionIdRef = useRef<number | null>(null);
+    const lastSyncedLocationTimeRef = useRef<number>(0);
+
+    useEffect(() => { positionsRef.current = positions; }, [positions]);
+    useEffect(() => { stepCountRef.current = stepCount; }, [stepCount]);
+    useEffect(() => { currentSpeedRef.current = currentSpeed; }, [currentSpeed]);
+    useEffect(() => { maxSpeedRef.current = maxSpeed; }, [maxSpeed]);
+    useEffect(() => { currentMVRef.current = currentMV; }, [currentMV]);
+
+    // Log activity snapshot every 5 seconds while tracking (stable interval)
+    const [sessionId, setSessionId] = useState<string | null>(null);
+    useEffect(() => {
+        if (!(isStart && !isPause)) return;
+
+        const intervalId = setInterval(async () => {
+            if (isSyncingRef.current) return;
+            const currentActiveTime = calculateActiveTime(
+                startTimeRef.current,
+                pauseStartTimeRef.current,
+                totalPauseTimeRef.current
+            );
+
+            let liveCalories = 0;
+            if (mvCountRef.current > 0) {
+                const avgMV = mvSumRef.current / mvCountRef.current;
+                const totalTimeSeconds = currentActiveTime / 1000;
+                if (totalTimeSeconds > 0) {
+                    const eePerHour = 4.83 * avgMV + 122.02;
+                    const eePerSecond = eePerHour / 3600;
+                    liveCalories = eePerSecond * totalTimeSeconds;
+                }
+            }
+
+            const avgSpeedLive = calculateAverageSpeed(
+                totalDistanceRef.current,
+                currentActiveTime
+            );
+
+            const totalElapsed = startTimeRef.current ? Date.now() - startTimeRef.current : 0;
+
+            const snapshot = {
+                distance: totalDistanceRef.current,
+                stepCount: stepCountRef.current,
+                positions: positionsRef.current,
+                avgSpeed: avgSpeedLive,
+                currentSpeed: currentSpeedRef.current,
+                maxSpeed: maxSpeedRef.current,
+                caloriesBurned: liveCalories,
+                currentMV: currentMVRef.current,
+                startTime: startTimeRef.current,
+                elapsed: totalElapsed,
+                activeTime: currentActiveTime
+            };
+
+            console.log('Activity snapshot', snapshot);
+
+            try {
+                isSyncingRef.current = true;
+                const distanceKm = Number.isFinite(snapshot.distance) ? snapshot.distance / 1000 : 0;
+                const stepCountNum = Number.isFinite(snapshot.stepCount as unknown as number) ? Number(snapshot.stepCount) : 0;
+                const avgSpeedNum = Number.isFinite(snapshot.avgSpeed) ? snapshot.avgSpeed : 0;
+                const maxSpeedNum = Number.isFinite(snapshot.maxSpeed) ? snapshot.maxSpeed : 0;
+                const kcalNum = Number.isFinite(snapshot.caloriesBurned) ? snapshot.caloriesBurned : 0;
+                const totalTimeNum = Number.isFinite(snapshot.elapsed) ? snapshot.elapsed : 0;
+                const activeTimeNum = Number.isFinite(snapshot.activeTime) ? snapshot.activeTime : 0;
+
+                if (!hasCreatedFirstSnapshotRef.current) {
+                    // mark created BEFORE awaiting to avoid duplicate create on next tick
+                    hasCreatedFirstSnapshotRef.current = true;
+                    const res = await saveActivityData(
+                        'walk',
+                        0,
+                        snapshot.startTime ?? Date.now(),
+                        Date.now(),
+                        distanceKm,
+                        stepCountNum,
+                        avgSpeedNum,
+                        maxSpeedNum,
+                        kcalNum,
+                        totalTimeNum,
+                        activeTimeNum,
+                    );
+                    const createdId = (res as any)?.sessionId ?? (res as any)?.data?.sessionId ?? null;
+                    if (createdId != null) {
+                        sessionIdRef.current = Number(createdId);
+                        setSessionId(String(createdId));
+
+                        try {
+                            await AsyncStorage.setItem('activity_session_id', String(createdId));
+                            await AsyncStorage.setItem('activity_tracking_active', 'true');
+                        } catch { }
+                    }
+                    // if backend failed but inserted, we keep the flag to avoid duplicates
+                } else if (sessionIdRef.current != null) {
+                    const response = await updateActivityData(sessionIdRef.current, {
+                        distanceKm,
+                        stepCount: stepCountNum,
+                        avgSpeed: avgSpeedNum,
+                        maxSpeed: maxSpeedNum,
+                        kcal: kcalNum,
+                        totalTime: totalTimeNum,
+                        activeTime: activeTimeNum,
+                    });
+
+                    
+                    const unsynced = positionsRef.current
+                        .filter(p => p.time > lastSyncedLocationTimeRef.current)
+                        .map(({ latitude, longitude, time }) => ({ latitude, longitude, time }));
+                    if (unsynced.length > 0) {
+                        await saveLocation(sessionIdRef.current as number, unsynced);
+                        lastSyncedLocationTimeRef.current = unsynced[unsynced.length - 1].time;
+                    }
+                }
+            } catch (err: any) {
+                const status = err?.response?.status;
+                const data = err?.response?.data;
+                console.error('sync failed', { status, data, err });
+                if (sessionIdRef.current == null) {
+                    hasCreatedFirstSnapshotRef.current = false;
+                }
+            } finally {
+                isSyncingRef.current = false;
+            }
+        }, 5000);
+
+        return () => clearInterval(intervalId);
+    }, [isStart, isPause]);
 
     return (
         <View className="flex-1 gap-2.5 py-10 font-lato-regular bg-[#f6f6f6]">
@@ -510,7 +657,7 @@ const Page = () => {
                     <View className='flex flex-row items-center justify-center gap-5'>
                         <View className='flex items-center justify-center bg-white rounded-md shadow-md p-2 w-[45%]'>
                             <Text className='text-lg text-black/60'>Thời gian</Text>
-                            <Text className='text-xl text-black font-bold'>{formatTime(elapsed)}</Text>
+                            <Text className='text-xl text-black font-bold'>{formatTime(activeTime)}</Text>
                         </View>
                         <View className='flex items-center justify-center bg-white rounded-md shadow-md p-2 w-[45%]'>
                             <Text className='text-lg text-black/60'>Tốc độ hiện tại</Text>

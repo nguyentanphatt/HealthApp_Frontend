@@ -70,7 +70,7 @@ export const calculateAverageSpeed = (distance: number, activeTimeMs: number): n
 };
 
 // Save activity data to AsyncStorage
-export const saveActivityData = async (data: {
+export const saveActivityDataToStorage = async (data: {
     distance: number;
     stepCount: number;
     positions: LatLng[];
@@ -89,13 +89,13 @@ export const saveActivityData = async (data: {
         ["stepCount", data.stepCount.toString()],
         ["caloriesBurned", data.caloriesBurned.toString()],
         ["positions", JSON.stringify(data.positions)],
-        ["avgSpeed", data.avgSpeed.toString()],
-        ["currentSpeed", data.currentSpeed.toString()],
-        ["maxSpeed", data.maxSpeed.toString()],
+        ["avgSpeed", (data.avgSpeed * 3.6).toFixed(1)],
+        ["currentSpeed", (data.currentSpeed * 3.6).toFixed(1)],
+        ["maxSpeed", (data.maxSpeed * 3.6).toFixed(1)],
         ["currentMV", data.currentMV.toString()],
         ["startTime", data.startTime?.toString() ?? ""],
-        ["elapsed", data.elapsed.toString()],
-        ["activeTime", data.activeTime.toString()],
+        ["elapsed", (data.elapsed / 60).toFixed(1)],
+        ["activeTime", (data.activeTime / 60).toFixed(1)],
         ["endTime", Date.now().toString()],
         ["Date", new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })],
     ]);

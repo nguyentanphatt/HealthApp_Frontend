@@ -1,4 +1,5 @@
 import ActivityResult from '@/components/ActivityResult'
+import { updateActivityData } from '@/services/activity'
 import { LatLng, formatDistance, formatTime } from '@/utils/activityHelper'
 import { formatDateTimeRange } from '@/utils/convertTime'
 import { FontAwesome6 } from '@expo/vector-icons'
@@ -21,6 +22,7 @@ type Data = {
   activeTime: number;
   endTime: string;
   Date: string;
+  sessionId: string | null;
 }
 
 const Page = () => {
@@ -29,7 +31,7 @@ const Page = () => {
   const mapRef = useRef<MapView | null>(null);
   const [data, setData] = useState<Data>();
 
-  
+
 
   useEffect(() => {
     const getData = async () => {
@@ -46,6 +48,7 @@ const Page = () => {
         const activeTime = await AsyncStorage.getItem('activeTime');
         const endTime = await AsyncStorage.getItem('endTime');
         const date = await AsyncStorage.getItem('Date');
+        const sessionId = await AsyncStorage.getItem('activity_session_id');
 
         const activityData: Data = {
           distance: parseFloat(distance || '0'),
@@ -59,11 +62,12 @@ const Page = () => {
           elapsed: parseInt(elapsed || '0'),
           activeTime: parseInt(activeTime || '0'),
           endTime: endTime || '',
-          Date: date || ''
+          Date: date || '',
+          sessionId: sessionId || null
         };
 
         setData(activityData);
-        
+
         // Fit map to show all positions
         if (activityData.positions && activityData.positions.length > 0) {
           setTimeout(() => {
@@ -75,31 +79,43 @@ const Page = () => {
         }
 
         // Ensure startTime is a number, fallback to 0 if null
-        /* const safeStartTime = activityData.startTime !== null ? activityData.startTime : 0;
+        const safeStartTime = activityData.startTime !== null ? activityData.startTime : 0;
         // Ensure endTime is a string that can be parsed to a number, fallback to 0 if invalid
         const safeEndTime = typeof activityData.endTime === 'string' && activityData.endTime !== '' ? parseInt(activityData.endTime) : 0;
-
         try {
           console.log('Attempting to save activity data...');
-          await saveActivityData(
-            "run",
-            0,
-            convertTimestampVNtoTimestamp(safeStartTime),
-            convertTimestampVNtoTimestamp(safeEndTime),
-            activityData.distance,
-            activityData.stepCount,
-            activityData.avgSpeed,
-            activityData.maxSpeed,
-            activityData.caloriesBurned,
-            activityData.elapsed,
-            activityData.activeTime,
-            activityData.positions
-          );
-          console.log('Activity data saved successfully!');
+          console.log('startTime', safeStartTime);
+          console.log('endTime', safeEndTime);
+          console.log('distance', activityData.distance);
+          console.log('stepCount', activityData.stepCount);
+          console.log('avgSpeed', activityData.avgSpeed);
+          console.log('maxSpeed', activityData.maxSpeed);
+          console.log('caloriesBurned', activityData.caloriesBurned);
+          console.log("totalTime", activityData.elapsed);
+          console.log("activeTime", activityData.activeTime);
+          console.log('positions', activityData.positions);
+          
+          if (sessionId) {
+            const response = await updateActivityData(sessionId, {
+              startTime: safeStartTime,
+              endTime: safeEndTime,
+              distanceKm: activityData.distance,
+              stepCount: activityData.stepCount,
+              avgSpeed: activityData.avgSpeed,
+              maxSpeed: activityData.maxSpeed,
+              kcal: Number(activityData.caloriesBurned.toFixed(1)),
+              totalTime: activityData.elapsed,
+              activeTime: activityData.activeTime,
+            });
+            console.log('response after update', response);
+            console.log('Activity data saved successfully!');
+            AsyncStorage.removeItem('activity_session_id').catch(() => {});
+          }
+
         } catch (saveError) {
           console.error('Failed to save activity data:', saveError);
-        } */
-        
+        }
+
       } catch (error) {
         console.error('Error loading activity data:', error);
       }
@@ -140,15 +156,39 @@ const Page = () => {
       <View className="bg-white rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4">
         <Text className="text-lg text-black/60">Thông tin chi tiết</Text>
         <View className='flex-row items-center justify-between'>
-          <View className='w-[45%] flex gap-2'>
-            <ActivityResult icon="clock" title="Tổng thời gian" result={formatTime(data?.elapsed || 0)} />
-            <ActivityResult icon="person-walking" title="Số bước" result={`${data?.stepCount || 0} bước`} />
-            <ActivityResult icon="gauge" title="Vận tốc trung bình" result={`${((data?.avgSpeed || 0) * 3.6).toFixed(1)} km/h`} />
+          <View className='w-[45%] flex gap-3'>
+            <ActivityResult
+              icon="clock"
+              title="Tổng thời gian"
+              result={formatTime((data?.elapsed ? data.elapsed * 60 : 0))}
+            />
+            <ActivityResult
+              icon="person-walking"
+              title="Số bước"
+              result={`${data?.stepCount ?? 0} bước`}
+            />
+            <ActivityResult
+              icon="gauge"
+              title="Vận tốc trung bình"
+              result={`${data?.avgSpeed ?? 0} km/h`}
+            />
           </View>
-          <View className='w-[45%] flex gap-2'>
-            <ActivityResult icon="bolt" title="Thời gian hoạt động" result={formatTime(data?.activeTime || 0)} />
-            <ActivityResult icon="fire" title="Lượng calo" result={`${(data?.caloriesBurned || 0).toFixed(1)} kcal`} />
-            <ActivityResult icon="gauge-high" title="Vận tốc tối đa" result={`${((data?.maxSpeed || 0) * 3.6).toFixed(1)} km/h`} />
+          <View className='w-[45%] flex gap-3'>
+            <ActivityResult
+              icon="bolt"
+              title="Thời gian hoạt động"
+              result={formatTime(data?.activeTime ? data.activeTime * 60 : 0)}
+            />
+            <ActivityResult
+              icon="fire"
+              title="Lượng calo"
+              result={`${(data?.caloriesBurned ?? 0).toFixed(1)} kcal`}
+            />
+            <ActivityResult
+              icon="gauge-high"
+              title="Vận tốc tối đa"
+              result={`${data?.maxSpeed ?? 0} km/h`}
+            />
           </View>
         </View>
       </View>
@@ -169,26 +209,26 @@ const Page = () => {
         >
           {data?.positions && data.positions.length > 0 && (
             <>
-              <Polyline 
-                coordinates={data.positions} 
-                strokeWidth={5} 
-                strokeColor="#007aff" 
+              <Polyline
+                coordinates={data.positions}
+                strokeWidth={5}
+                strokeColor="#007aff"
               />
               {data.positions.length >= 3 && (
-                <Polygon 
-                  coordinates={[...data.positions, data.positions[0]]} 
-                  fillColor="rgba(0,122,255,0.2)" 
-                  strokeColor="rgba(0,122,255,0.5)" 
+                <Polygon
+                  coordinates={[...data.positions, data.positions[0]]}
+                  fillColor="rgba(0,122,255,0.2)"
+                  strokeColor="rgba(0,122,255,0.5)"
                 />
               )}
-              <Marker 
-                coordinate={data.positions[0]} 
-                title="Điểm bắt đầu" 
+              <Marker
+                coordinate={data.positions[0]}
+                title="Điểm bắt đầu"
               />
               {data.positions.length > 1 && (
-                <Marker 
-                  coordinate={data.positions[data.positions.length - 1]} 
-                  title="Điểm kết thúc" 
+                <Marker
+                  coordinate={data.positions[data.positions.length - 1]}
+                  title="Điểm kết thúc"
                 />
               )}
             </>
