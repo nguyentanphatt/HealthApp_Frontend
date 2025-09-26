@@ -108,3 +108,12 @@ export const getAllLocations = async (sessionId: string | number) => {
   }
 }
 
+export const deleteAllLocations = async (sessionId: string | number) => {
+  try {
+    const response = await privateClient.delete(`/api/run/location/${sessionId}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+

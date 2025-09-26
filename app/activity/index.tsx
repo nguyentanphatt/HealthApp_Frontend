@@ -2,6 +2,7 @@ import LockScreen from '@/components/LockScreen';
 import { getActivityById, getAllLocations, saveActivityData, saveLocation, updateActivityData } from '@/services/activity';
 import {
     LatLng,
+    TrackedPoint,
     calculateActiveTime,
     calculateAverageSpeed,
     calculateTotalDistance,
@@ -25,7 +26,6 @@ import MapView, { Marker, Polygon, Polyline, Region } from "react-native-maps";
 const Page = () => {
     const router = useRouter();
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-    type TrackedPoint = LatLng & { time: number };
     const [positions, setPositions] = useState<TrackedPoint[]>([]);
     const [current, setCurrent] = useState<LatLng | null>(null);
     const [showPolygon, setShowPolygon] = useState(false);
@@ -631,6 +631,7 @@ const Page = () => {
                         activeTime: activeTimeNum,
                     });
 
+                    console.log("response after update", response);
                     
                     const unsynced = positionsRef.current
                         .filter(p => p.time > lastSyncedLocationTimeRef.current)

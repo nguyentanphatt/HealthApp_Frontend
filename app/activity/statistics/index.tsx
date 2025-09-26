@@ -1,6 +1,6 @@
 import ActivityResult from '@/components/ActivityResult'
-import { updateActivityData } from '@/services/activity'
-import { LatLng, formatDistance, formatTime } from '@/utils/activityHelper'
+import { deleteAllLocations, saveLocation, updateActivityData } from '@/services/activity'
+import { TrackedPoint, formatDistance, formatTime } from '@/utils/activityHelper'
 import { formatDateTimeRange } from '@/utils/convertTime'
 import { FontAwesome6 } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -12,7 +12,7 @@ import MapView, { Marker, Polygon, Polyline } from 'react-native-maps'
 type Data = {
   distance: number;
   stepCount: number;
-  positions: LatLng[];
+  positions: TrackedPoint[];
   avgSpeed: number;
   currentSpeed: number;
   maxSpeed: number;
@@ -107,6 +107,9 @@ const Page = () => {
               totalTime: activityData.elapsed,
               activeTime: activityData.activeTime,
             });
+
+            await deleteAllLocations(sessionId);
+            await saveLocation(sessionId, activityData.positions);
             console.log('response after update', response);
             console.log('Activity data saved successfully!');
             AsyncStorage.removeItem('activity_session_id').catch(() => {});

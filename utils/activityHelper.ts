@@ -4,6 +4,7 @@ import { PermissionsAndroid, Platform } from 'react-native';
 
 
 export type LatLng = { latitude: number; longitude: number };
+export type TrackedPoint = LatLng & { time: number };
 
 export const distanceBetween = (a: LatLng, b: LatLng) => {
     const toRad = (x: number) => (x * Math.PI) / 180;
@@ -73,7 +74,7 @@ export const calculateAverageSpeed = (distance: number, activeTimeMs: number): n
 export const saveActivityDataToStorage = async (data: {
     distance: number;
     stepCount: number;
-    positions: LatLng[];
+    positions: TrackedPoint[];
     avgSpeed: number;
     currentSpeed: number;
     maxSpeed: number;
