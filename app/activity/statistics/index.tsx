@@ -4,7 +4,7 @@ import { TrackedPoint, formatDistance, formatTime } from '@/utils/activityHelper
 import { formatDateTimeRange } from '@/utils/convertTime'
 import { FontAwesome6 } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useLocalSearchParams, useRouter } from 'expo-router/build/hooks'
+import { useRouter } from 'expo-router/build/hooks'
 import React, { useEffect, useRef, useState } from 'react'
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import MapView, { Marker, Polygon, Polyline } from 'react-native-maps'
@@ -26,12 +26,9 @@ type Data = {
 }
 
 const Page = () => {
-  const { type } = useLocalSearchParams()
   const router = useRouter()
   const mapRef = useRef<MapView | null>(null);
   const [data, setData] = useState<Data>();
-
-
 
   useEffect(() => {
     const getData = async () => {

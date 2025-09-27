@@ -71,7 +71,7 @@ export const convertTimestampVNtoTimestamp = (timestamp: number): number => {
 // Function to format date and time range
 export const formatDateTimeRange = (startTime: number | null, endTime: string) => {
         const startDate = new Date(startTime || 0);
-        const endDate = new Date(parseInt(endTime));
+        const endDate = new Date(endTime);
 
         const dateStr = startDate.toLocaleDateString('vi-VN', {
             day: '2-digit',

@@ -117,3 +117,11 @@ export const deleteAllLocations = async (sessionId: string | number) => {
   }
 }
 
+export const getAllActivities = async () => {
+  try {
+    const response = await privateClient.get(`/api/run/activity`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
