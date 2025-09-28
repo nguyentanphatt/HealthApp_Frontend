@@ -237,7 +237,7 @@ export default function HomeScreen() {
               />
               <Text className="text-black/60 text-xl h-[30px]">
                 <Text className="font-bold text-3xl text-black">
-                  {waterStatus?.currentIntake}
+                    {convertWater(waterStatus?.currentIntake ?? 0, units.water)}
                 </Text>
                 / {convertWater(waterStatus?.dailyGoal ?? 0, units.water)} {units.water}
               </Text>

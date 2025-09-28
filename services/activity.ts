@@ -125,3 +125,12 @@ export const getAllActivities = async () => {
     throw error
   }
 }
+
+export const getAllLocation = async (sessionId: string | number) => {
+  try {
+    const response = await privateClient.get(`/api/run/location`, { params: { sessionId } })
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}

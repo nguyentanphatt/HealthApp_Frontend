@@ -151,12 +151,16 @@ const Page = () => {
     const endTimeHour = Number(endTime.split(":")[0]);
     const endTimeMinute = Number(endTime.split(":")[1]);
 
-    const isStartTimeNextDay = startTimeHour >= 0;
+    const isStartTimeNextDay = startTimeHour === 0;
     const isEndTimeNextDay = true;
 
     const startTimeTimestamp = vnTimeToUtcTimestamp(startTimeHour, startTimeMinute, isStartTimeNextDay);
     const endTimeTimestamp = vnTimeToUtcTimestamp(endTimeHour, endTimeMinute, isEndTimeNextDay);
     
+    console.log("startTimeTimestamp", startTimeTimestamp);
+    console.log("endTimeTimestamp", endTimeTimestamp);
+    
+
     try {
       const response = await CreateSleepRecord(startTimeTimestamp.toString(), endTimeTimestamp.toString(), isAllWeek);
       if (response.success) {
@@ -198,6 +202,9 @@ const Page = () => {
       </View>
     );
   }
+
+  console.log("sleepStatus", sleepStatus?.history[0]);
+  
 
   return (
     <ScrollView

@@ -1,7 +1,7 @@
 import ActivityResult from '@/components/ActivityResult'
 import { deleteAllLocations, saveLocation, updateActivityData } from '@/services/activity'
 import { TrackedPoint, formatDistance, formatTime } from '@/utils/activityHelper'
-import { formatDateTimeRange } from '@/utils/convertTime'
+import { formatActivityDateTimeRange } from '@/utils/convertTime'
 import { FontAwesome6 } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router/build/hooks'
@@ -90,27 +90,57 @@ const Page = () => {
           console.log('caloriesBurned', activityData.caloriesBurned);
           console.log("totalTime", activityData.elapsed);
           console.log("activeTime", activityData.activeTime);
-          console.log('positions', activityData.positions);
+          console.log("sessionId", sessionId);
+          
+          console.log('positions', activityData.positions );
           
           if (sessionId) {
-            const response = await updateActivityData(sessionId, {
-              startTime: safeStartTime,
-              endTime: safeEndTime,
-              distanceKm: activityData.distance,
-              stepCount: activityData.stepCount,
-              avgSpeed: activityData.avgSpeed,
-              maxSpeed: activityData.maxSpeed,
-              kcal: Number(activityData.caloriesBurned.toFixed(1)),
-              totalTime: activityData.elapsed,
-              activeTime: activityData.activeTime,
-            });
+            // API 1: Update activity data
+            try {
+              console.log('Calling updateActivityData API...');
+              const response = await updateActivityData(sessionId, {
+                startTime: safeStartTime,
+                endTime: safeEndTime,
+                distanceKm: activityData.distance,
+                stepCount: activityData.stepCount,
+                avgSpeed: activityData.avgSpeed,
+                maxSpeed: activityData.maxSpeed,
+                kcal: Number(activityData.caloriesBurned.toFixed(1)),
+                totalTime: activityData.elapsed,
+                activeTime: activityData.activeTime,
+              });
+              console.log('✅ updateActivityData API success:', response);
+            } catch (error) {
+              console.error('❌ updateActivityData API failed:', error);
+              throw error;
+            }
 
-            await deleteAllLocations(sessionId);
-            await saveLocation(sessionId, activityData.positions);
-            console.log('response after update', response);
-            console.log('Activity data saved successfully!');
+            // API 2: Delete all locations
+            try {
+              //const locations = await getAllLocations(sessionId);
+              //console.log("locations", locations);
+
+              console.log('Calling deleteAllLocations API...');
+              await deleteAllLocations(sessionId);
+              console.log('✅ deleteAllLocations API success');
+            } catch (error) {
+              console.error('❌ deleteAllLocations API failed:', error);
+              throw error;
+            }
+
+            // API 3: Save location
+            try {
+              console.log('Calling saveLocation API...');
+              await saveLocation(sessionId, activityData.positions);
+              console.log('✅ saveLocation API success');
+            } catch (error) {
+              console.error('❌ saveLocation API failed:', error);
+              throw error;
+            }
+
+            console.log('All APIs completed successfully!');
             AsyncStorage.removeItem('activity_session_id').catch(() => {});
-          }
+          } 
 
         } catch (saveError) {
           console.error('Failed to save activity data:', saveError);
@@ -142,7 +172,7 @@ const Page = () => {
       </View>
 
       <View className="bg-white rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4">
-        <Text className="text-lg text-black/60">{formatDateTimeRange(data?.startTime || null, data?.endTime || '')}</Text>
+        <Text className="text-lg text-black/60">{formatActivityDateTimeRange(data?.startTime || null, data?.endTime || null)}</Text>
         <View className="flex-row items-center justify-center mt-3 ">
           <View className='border-4 border-[#19B1FF] w-[70px] h-[70px] rounded-full p-2 items-center justify-center'>
             <FontAwesome6 name="person-running" size={28} color="#19B1FF" />

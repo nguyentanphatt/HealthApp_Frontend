@@ -609,6 +609,8 @@ const Page = () => {
                         totalTimeNum,
                         activeTimeNum,
                     );
+                    console.log("data created");
+                    
                     const createdId = (res as any)?.sessionId ?? (res as any)?.data?.sessionId ?? null;
                     if (createdId != null) {
                         sessionIdRef.current = Number(createdId);
@@ -631,7 +633,7 @@ const Page = () => {
                         activeTime: activeTimeNum,
                     });
 
-                    console.log("response after update", response);
+                    console.log("data updated in db", response);
                     
                     const unsynced = positionsRef.current
                         .filter(p => p.time > lastSyncedLocationTimeRef.current)

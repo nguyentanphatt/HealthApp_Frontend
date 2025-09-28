@@ -69,28 +69,64 @@ export const convertTimestampVNtoTimestamp = (timestamp: number): number => {
 };
 
 // Function to format date and time range
-export const formatDateTimeRange = (startTime: number | null, endTime: string) => {
-        const startDate = new Date(startTime || 0);
-        const endDate = new Date(endTime);
+export const formatDateTimeRange = (startTime: number | null, endTime: string | number) => {
+    const startDate = new Date(startTime || 0);
+    const endDate = new Date(endTime);
 
-        const dateStr = startDate.toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+    const dateStr = startDate.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
 
-        const startTimeStr = startDate.toLocaleTimeString('vi-VN', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
+    const startTimeStr = startDate.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
 
-        const endTimeStr = endDate.toLocaleTimeString('vi-VN', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
+    const endTimeStr = endDate.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
 
-        return `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
-    
+    return `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
+
+};
+
+//format activity date and time range
+export const formatActivityDateTimeRange = (startTime: number | null, endTime: number | string | null) => {
+    const startDate = startTime ? new Date(startTime) : new Date();
+    let endTimeValue = endTime;
+    if (typeof endTime === 'string' && endTime !== '') {
+        endTimeValue = parseInt(endTime);
+    }
+
+    const endDate = endTimeValue ? new Date(endTimeValue) : new Date();
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        console.log('Invalid dates:', { startTime, endTime, startDate, endDate });
+        return 'Invalid Date Range';
+    }
+
+    const dateStr = startDate.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+
+    const startTimeStr = startDate.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    const endTimeStr = endDate.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    return `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
 };

@@ -81,7 +81,7 @@ const Page = () => {
             <ActivityResult
               icon="clock"
               title="Tổng thời gian"
-              result={formatTime((data?.elapsed ? data.elapsed * 60 : 0))}
+              result={formatTime((data?.totalTime ? data.totalTime * 60 : 0))}
             />
             <ActivityResult
               icon="person-walking"
