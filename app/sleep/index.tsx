@@ -7,12 +7,14 @@ import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-quer
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 import { BarChart, LineChart } from "react-native-gifted-charts";
 import Toast from "react-native-toast-message";
 
 const Page = () => {
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState(
@@ -138,11 +140,11 @@ const Page = () => {
   ];
 
   const moods = [
-    { label: "Tuyệt vời", emoji: "😄", color: "#007F3D", value: 100 },
-    { label: "Tốt", emoji: "🙂", color: "#6CC644", value: 80 },
-    { label: "Bình thường", emoji: "😐", color: "#FFA500", value: 60 },
-    { label: "Không tốt", emoji: "☹️", color: "#E74C3C", value: 40 },
-    { label: "Tệ", emoji: "😡", color: "#C0392B", value: 20 },
+    { label: t("Tuyệt vời"), emoji: "😄", color: "#007F3D", value: 100 },
+    { label: t("Tốt"), emoji: "🙂", color: "#6CC644", value: 80 },
+    { label: t("Bình thường"), emoji: "😐", color: "#FFA500", value: 60 },
+    { label: t("Không tốt"), emoji: "☹️", color: "#E74C3C", value: 40 },
+    { label: t("Tệ"), emoji: "😡", color: "#C0392B", value: 20 },
   ];
 
   const handleSetSleepTime = async (startTime: string, endTime: string, isAllWeek: boolean) => {
@@ -166,7 +168,7 @@ const Page = () => {
       if (response.success) {
         Toast.show({
           type: "success",
-          text1: "Thêm giờ ngủ thành công",
+          text1: t("Thêm giờ ngủ thành công"),
         });
         queryClient.invalidateQueries({ queryKey: ["sleepStatus"] });
         setTimeout(() => {
@@ -177,7 +179,7 @@ const Page = () => {
       console.error(error);
       Toast.show({
         type: "error",
-        text1: "Thêm giờ ngủ thất bại",
+        text1: t("Thêm giờ ngủ thất bại"),
       });
     }
 
@@ -218,7 +220,7 @@ const Page = () => {
           <TouchableOpacity onPress={() => router.push("/(tabs)")}>
             <FontAwesome6 name="chevron-left" size={24} color="black" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">Giấc ngủ</Text>
+          <Text className="text-2xl font-bold  self-center">{t("Giấc ngủ")}</Text>
           <View style={{ width: 24 }} />
         </View>
         <CalendarSwiper
@@ -242,7 +244,7 @@ const Page = () => {
             }}
           />
           <View className="flex-row items-center gap-10">
-            <Text className="text-xl">Thiết lập cho cả tuần</Text>
+            <Text className="text-xl">{t("Thiết lập cho cả tuần")}</Text>
             <Switch
               value={isEnabled}
               onValueChange={setIsEnabled}
@@ -258,7 +260,7 @@ const Page = () => {
               onPress={() => handleSetSleepTime(startTime, endTime, isEnabled)}
               className="self-center flex-row items-center justify-center w-[50%] bg-cyan-blue py-3 rounded-md shadow-md"
             >
-              <Text className="text-xl text-white font-bold ">Đặt giờ ngủ</Text>
+              <Text className="text-xl text-white font-bold ">{t("Đặt giờ ngủ")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -268,26 +270,26 @@ const Page = () => {
       {hasSleepData && (
         <View className="flex gap-5">
           <View className="bg-white rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4">
-            <Text className="font-bold text-xl">Thời gian ngủ</Text>
+            <Text className="font-bold text-xl">{t("Thời gian ngủ")}</Text>
             <View className="flex-row items-center justify-center gap-5 mt-3">
               <FontAwesome6 name="bed" size={24} color="black" />
               <Text className="text-2xl text-center font-bold">
-                {sleepStatus?.history[0].duration} giờ
+                {sleepStatus?.history[0].duration} {t("giờ")}
               </Text>
             </View>
             <Text className="text-lg text-black/60 text-center">
-              Từ {(() => {
+              {t("Từ")} {(() => {
                 const startTime = utcTimeToVnTime(new Date(sleepStatus?.history[0].startAt).getTime());
                 const endTime = utcTimeToVnTime(new Date(sleepStatus?.history[0].endedAt).getTime());
-                return `${formatTimeForDisplay(startTime.hour, startTime.minute)} giờ tới ${formatTimeForDisplay(endTime.hour, endTime.minute)} giờ`;
+                return `${formatTimeForDisplay(startTime.hour, startTime.minute)} ${t("giờ")} ${t("tới")} ${formatTimeForDisplay(endTime.hour, endTime.minute)} ${t("giờ")}`;
               })()}
             </Text>
           </View>
 
           <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4 mt-4">
             <View>
-              <Text className="font-bold text-xl">Ngủ đầy đặn</Text>
-              <Text className="text-black/60">Hãy giữ phong độ nào !</Text>
+              <Text className="font-bold text-xl">{t("Ngủ đầy đặn")}</Text>
+              <Text className="text-black/60">{t("Hãy giữ phong độ nào !")}</Text>
             </View>
             <ScrollView
               horizontal
@@ -308,23 +310,23 @@ const Page = () => {
             <View className="flex-row items-center justify-center gap-5 mt-2.5">
               <View className="flex-row items-center gap-2">
                 <View className="size-4 rounded-full bg-[#3634A3]" />
-                <Text className="text-lg">Ngủ</Text>
+                <Text className="text-lg">{t("Ngủ")}</Text>
               </View>
               <View className="flex-row items-center gap-2">
                 <View className="size-4 rounded-full bg-[#5EC8FE]" />
-                <Text className="text-lg">Ngáy/Ho</Text>
+                <Text className="text-lg">{t("Ngáy/Ho")}</Text>
               </View>
               <View className="flex-row items-center gap-2">
                 <View className="size-4 rounded-full bg-[#003FDD]" />
-                <Text className="text-lg">Thức</Text>
+                <Text className="text-lg">{t("Thức")}</Text>
               </View>
             </View>
           </View>
 
           <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md">
             <View>
-              <Text className="font-bold text-xl">Tiến trình ngủ</Text>
-              <Text className="text-black/60">Ngày hôm qua bạn ngủ như thế nào !</Text>
+              <Text className="font-bold text-xl">{t("Tiến trình ngủ")}</Text>
+              <Text className="text-black/60">{t("Ngày hôm qua bạn ngủ như thế nào !")}</Text>
             </View>
             <ScrollView
               horizontal
@@ -352,7 +354,7 @@ const Page = () => {
 
           </View>
           <View className="flex bg-white p-4 rounded-md shadow-md my-4">
-            <Text className="font-bold text-xl">Ngày hôm qua bạn ngủ như thế nào !</Text>
+            <Text className="font-bold text-xl">{t("Bạn đánh giá như thế nào !")}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}

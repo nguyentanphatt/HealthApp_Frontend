@@ -6,6 +6,7 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   BackHandler,
   Modal,
@@ -24,6 +25,10 @@ const Page = () => {
     type: string;
   }>();
 
+  console.log("Time when go", time);
+  const queryClient = useQueryClient();
+  
+
   const { units, displayWater, inputToBaseWater } = useUnits();
   const initAmount = Number(amount) || 250;
   const initialValue =
@@ -31,8 +36,7 @@ const Page = () => {
       ? initAmount
       : Number(convertWater(initAmount, units.water).toFixed(2));
   const router = useRouter();
-  const queryClient = useQueryClient();
-
+  const { t } = useTranslation();
   const dateTimestamp = convertISOToTimestamp(time);
   const date = new Date(time);
   const initHour = date.getUTCHours();
@@ -74,9 +78,10 @@ const Page = () => {
     newTime.setUTCMilliseconds(0);
     const timestamp = newTime.getTime();
     const valueInMl = inputToBaseWater(amount);
+    const rightTime = timestamp - 6 * 60 * 60 * 1000;
     console.log("Saved:", {
       amount: valueInMl,
-      time: timestamp,
+      time: rightTime,
       oldTime: date,
     });
 
@@ -85,7 +90,7 @@ const Page = () => {
         const response = await updateWaterRecord(
           valueInMl,
           date,
-          timestamp.toString()
+          rightTime.toString()
         );
         if (response.success) {
           queryClient.invalidateQueries({ queryKey: ["waterStatus"] });
@@ -128,11 +133,11 @@ const Page = () => {
         <TouchableOpacity onPress={() => router.back()}>
           <FontAwesome6 name="chevron-left" size={24} color="black" />
         </TouchableOpacity>
-        <Text className="text-2xl font-bold self-center">Chỉnh sửa</Text>
+        <Text className="text-2xl font-bold self-center">{t("Chỉnh sửa")}</Text>
         <View style={{ width: 24 }} />
       </View>
       <View className="flex items-center justify-center bg-white p-2 rounded-md shadow-md mb-1">
-        <Text className="text-xl font-bold">Lượng nước ({units.water})</Text>
+        <Text className="text-xl font-bold">{t("Lượng nước")} ({units.water})</Text>
         <View className="border-b-2 border-black max-w-[200px] h-[50px]">
           <TextInput
             className="text-2xl font-bold"
@@ -143,7 +148,7 @@ const Page = () => {
         </View>
       </View>
 
-      <Text className="text-xl font-bold">Thời gian</Text>
+      <Text className="text-xl font-bold">{t("Thời gian")}</Text>
       <View className="flex flex-row items-center justify-center bg-white rounded-md shadow-md p-4">
         <WheelPickerExpo
           height={240}
@@ -202,7 +207,7 @@ const Page = () => {
           onPress={() => router.back()}
           className="flex-row items-center justify-center w-[45%] bg-white py-3 rounded-md shadow-md"
         >
-          <Text className="text-xl text-black font-bold ">Hủy</Text>
+          <Text className="text-xl text-black font-bold ">{t("Hủy")}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
@@ -210,13 +215,13 @@ const Page = () => {
               Number(selectedAmount),
               selectedHour,
               selectedMinute,
-              dateTimestamp.toString(),
+             (date.getTime() - 7 * 60 * 60 * 1000).toString(),
               type
             );
           }}
           className="flex-row items-center justify-center w-[45%] bg-cyan-blue py-3 rounded-md shadow-md"
         >
-          <Text className="text-xl text-white font-bold ">Sửa</Text>
+          <Text className="text-xl text-white font-bold ">{t("Sửa")}</Text>
         </TouchableOpacity>
       </View>
 
@@ -229,7 +234,7 @@ const Page = () => {
         <View className="flex-1 items-center justify-center bg-black/30">
           <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
             <Text className="text-lg font-bold mb-4">
-              Dữ liệu chưa được lưu, bạn có muốn thoát ?
+              {t("Dữ liệu chưa được lưu, bạn có muốn thoát ?")}
             </Text>
 
             <View className="flex flex-row items-center justify-between">
@@ -237,7 +242,7 @@ const Page = () => {
                 onPress={() => router.back()}
                 className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
               >
-                <Text className="text-xl text-black font-bold ">Thoát</Text>
+                <Text className="text-xl text-black font-bold ">{t("Thoát")}</Text>
               </TouchableOpacity>
               <Text>|</Text>
               <TouchableOpacity
@@ -252,7 +257,7 @@ const Page = () => {
                 }
                 className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
               >
-                <Text className="text-xl text-black font-bold ">Lưu</Text>
+                <Text className="text-xl text-black font-bold ">{t("Lưu")}</Text>
               </TouchableOpacity>
             </View>
           </View>

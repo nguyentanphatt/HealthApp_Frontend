@@ -1,3 +1,4 @@
+import i18n from "@/plugins/i18n";
 // Convert time from VN to UTC timestamp (24-hour format)
 export function vnTimeToUtcTimestamp(hours: number, minutes: number, isNextDay: boolean = false): number {
     const now = new Date();
@@ -35,8 +36,12 @@ export function formatTimeForDisplay(hour: number, minute: number): string {
     return `${hour}:${formattedMinute}`;
 }
 
-//convert day from en to vn
+//convert day label based on current language
 export const convertDayToVN = (dayEn: string): string => {
+    // If current language is English, keep original abbreviation
+    if (i18n?.language && i18n.language.startsWith("en")) {
+        return dayEn;
+    }
     switch (dayEn) {
         case "Mo":
             return "T2";

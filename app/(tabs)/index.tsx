@@ -17,6 +17,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Href, router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Animated, Modal, Text, TouchableOpacity, View } from "react-native";
 import { tv } from "tailwind-variants";
 const HEADER_HEIGHT = 100;
@@ -30,6 +31,7 @@ export default function HomeScreen() {
   const [openModal, setOpenModal] = useState(false);
   const queryClient = useQueryClient();
   const { units } = useUnits()
+  const { t } = useTranslation();
 
   const {
     data: activityData,
@@ -189,24 +191,24 @@ export default function HomeScreen() {
         </Animated.View>
 
         <View className="flex-1 gap-2.5">
-          <Card title="Mục tiêu tuần" setting icon="ellipsis-vertical">
+          <Card title={t("Mục tiêu tuần")} setting icon="ellipsis-vertical">
             <TouchableOpacity className="self-center flex-row items-center justify-center px-6 py-3 bg-cyan-blue rounded-full">
-              <Text className="text-white">Đặt mục tiêu</Text>
+              <Text className="text-white">{t("Đặt mục tiêu")}</Text>
             </TouchableOpacity>
           </Card>
 
-          <Card title="Hoạt động hôm nay">
+          <Card title={t("Hoạt động hôm nay")}>
             <View className="flex flex-col gap-3">
               <ProgressItem
                 color="#00FF55"
                 index={0}
-                unit="phút"
+                unit={t("phút")}
                 icon="clock"
               />
               <ProgressItem
                 color="#00D4FF"
                 index={0}
-                unit="bước"
+                unit={t("bước")}
                 icon="person-running"
               />
               <ProgressItem color="#FFF200" index={0} unit="kcal" icon="bolt" />
@@ -215,8 +217,8 @@ export default function HomeScreen() {
 
           {sessionId && (
             <TouchableOpacity onPress={() => router.push('/activity' as Href)} className="flex p-4 items-center justify-between bg-white shadow-md rounded-md">
-              <Text className="text-xl text-black/60">Bạn đang có buổi tập tạm dừng</Text>
-              <Text className="text-2xl font-bold">Tiếp tục tập</Text>
+              <Text className="text-xl text-black/60">{t("Bạn đang có buổi tập tạm dừng")}</Text>
+              <Text className="text-2xl font-bold">{t("Tiếp tục tập")}</Text>
             </TouchableOpacity>
           )}
 
@@ -224,7 +226,7 @@ export default function HomeScreen() {
             <FunctionCard
               classname={card({ type: "left" })}
               iconName="glass-water-droplet"
-              title="Nước"
+              title={t("Nước")}
               href={`/water?selectedDate=${selectedDate}`}
             >
               <WaterVector
@@ -246,21 +248,21 @@ export default function HomeScreen() {
               <FunctionCard
                 classname={card({ type: "right-top" })}
                 iconName="bed"
-                title="Giấc ngủ"
+                title={t("Giấc ngủ")}
                 href={`/sleep?selectedDate=${selectedDate}`}
               >
                 <TouchableOpacity onPress={() => router.push(`/sleep?selectedDate=${selectedDate}`)} className="self-center flex-row items-center justify-center px-6 py-3 bg-cyan-blue rounded-full">
-                  <Text className="text-white">Chọn thời gian</Text>
+                  <Text className="text-white">{t("Chọn thời gian")}</Text>
                 </TouchableOpacity>
               </FunctionCard>
               <FunctionCard
                 classname={card({ type: "right-bottom" })}
                 iconName="bowl-food"
-                title="Thức ăn"
+                title={t("Thức ăn")}
                 href={`/food?selectedDate=${selectedDate}`}
               >
                 <TouchableOpacity onPress={() => router.push(`/food?selectedDate=${selectedDate}`)} className="self-center flex-row items-center justify-center px-6 py-3 bg-cyan-blue rounded-full">
-                  <Text className="text-white">Nhập số liệu</Text>
+                  <Text className="text-white">{t("Nhập số liệu")}</Text>
                 </TouchableOpacity>
               </FunctionCard>
             </View>
@@ -270,22 +272,22 @@ export default function HomeScreen() {
             <View className="size-20 rounded-full bg-black/20 flex items-center justify-center">
               <FontAwesome6 name="person-running" size={28} color="black" />
             </View>
-            <Text className="text-2xl font-bold">Vận động</Text>
+            <Text className="text-2xl font-bold">{t("Vận động")}</Text>
             <View className="size-20 rounded-full bg-black/20 flex items-center justify-center">
               <FontAwesome6 name="angles-right" size={28} color="black" />
             </View>
           </TouchableOpacity>
           {filteredActivityData.length > 0 && (
-            <Text className="text-xl text-black/60 text-center">Buổi tập hôm nay</Text>
+            <Text className="text-xl text-black/60 text-center">{t("Buổi tập hôm nay")}</Text>
           )}
           {filteredActivityData.map((activity: any, index: number) => (
             <TouchableOpacity key={activity.sessionId || index} onPress={() => router.push(`/activity/history/${activity.sessionId}` as Href)} className="flex-1 flex-col p-4 items-center gap-2 bg-white shadow-md rounded-md">
               <Text className="text-xl text-black/60">{formatDateTimeRange(activity.startTime, activity.endTime)}</Text>
               <Text className="text-2xl font-bold">{formatDistance(activity.distanceKm)}</Text>
               <View className="flex-row gap-4 mt-2">
-                <Text className="text-sm text-black/60">Bước: {activity.stepCount || 0}</Text>
+                <Text className="text-sm text-black/60">{t("Bước")}: {activity.stepCount || 0}</Text>
                 <Text className="text-sm text-black/60">Kcal: {activity.kcal || 0}</Text>
-                <Text className="text-sm text-black/60">Tốc độ TB: {activity.avgSpeed || 0} km/h</Text>
+                <Text className="text-sm text-black/60">{t("Tốc độ TB")}: {activity.avgSpeed || 0} km/h</Text>
               </View>
             </TouchableOpacity>
           ))}
@@ -332,7 +334,7 @@ export default function HomeScreen() {
         <View className="flex-1 items-center justify-center bg-black/30">
           <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
             <Text className="text-lg font-bold mb-4 text-black/60">
-              Bạn có buổi tập tạm dừng, bạn có muốn tiếp tục tập ?
+              {t("Bạn có buổi tập tạm dừng, bạn có muốn tiếp tục tập ?")}
             </Text>
 
             <View className="flex flex-row items-center justify-between px-5">
@@ -340,7 +342,7 @@ export default function HomeScreen() {
                 onPress={handleCancelActivity}
                 className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
               >
-                <Text className="text-xl text-black font-bold ">Hủy buổi tập</Text>
+                <Text className="text-xl text-black font-bold ">{t("Hủy buổi tập")}</Text>
               </TouchableOpacity>
               <Text>|</Text>
               <TouchableOpacity
@@ -349,7 +351,7 @@ export default function HomeScreen() {
                 }
                 className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
               >
-                <Text className="text-xl text-black font-bold ">Tiếp tục</Text>
+                <Text className="text-xl text-black font-bold ">{t("Tiếp tục")}</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -2,17 +2,18 @@ import { useUnits } from "@/context/unitContext";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 const Page = () => {
   const router = useRouter();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const { units, setUnit, isLoaded } = useUnits();
-
+  const { t } = useTranslation();
   const measureData = [
-    { key: "height", label: "Chiều cao", options: ["cm", "ft"] },
-    { key: "weight", label: "Cân nặng", options: ["kg", "g"] },
-    { key: "water", label: "Lượng nước", options: ["ml", "fl oz"] },
-    { key: "temperature", label: "Nhiệt độ", options: ["C", "F"] },
+    { key: "height", label: t("Chiều cao"), options: ["cm", "ft"] },
+    { key: "weight", label: t("Cân nặng"), options: ["kg", "g"] },
+    { key: "water", label: t("Lượng nước"), options: ["ml", "fl oz"] },
+    { key: "temperature", label: t("Nhiệt độ"), options: ["C", "F"] },
   ] as const;
 
   if (!isLoaded) {
@@ -36,7 +37,7 @@ const Page = () => {
           <TouchableOpacity onPress={() => router.back()}>
             <FontAwesome6 name="chevron-left" size={24} color="black" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">Đơn vị đo</Text>
+          <Text className="text-2xl font-bold  self-center">{t("Đơn vị đo")}</Text>
           <View style={{ width: 24 }} />
         </View>
       </View>

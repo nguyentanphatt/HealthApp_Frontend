@@ -3,6 +3,7 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Image,
@@ -17,6 +18,7 @@ import TimeWheelPicker from "@/components/TimeWheelPicker";
 import { images } from "@/constants/image";
 import Toast from "react-native-toast-message";
 const Page = () => {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -61,10 +63,10 @@ const Page = () => {
   }
 
   const nutritionFields = [
-    { label: "Chất đạm", key: "protein" },
-    { label: "Chất béo", key: "fat" },
-    { label: "Chất xơ", key: "fiber" },
-    { label: "Tinh bột", key: "starch" },
+    { label: t("Chất đạm"), key: "protein" },
+    { label: t("Chất béo"), key: "fat" },
+    { label: t("Chất xơ"), key: "fiber" },
+    { label: t("Tinh bột"), key: "starch" },
   ];
 
   const meals = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
@@ -82,12 +84,15 @@ const Page = () => {
 
     const utcISOString = date.toISOString();
     const timestamp = new Date(utcISOString).getTime();
+
+    console.log("selectedMeal", selectedMeal);
+    
     try {
       const res = await updateFoodRecord(id, timestamp.toString(), tag);
       if (res.success) {
         Toast.show({
           type: "success",
-          text1: "Cập nhật thành công",
+          text1: t("Cập nhật thành công"),
         });
         queryClient.invalidateQueries({ queryKey: ["foodStatus"] });
         queryClient.invalidateQueries({ queryKey: ["foodWeekly"] });
@@ -105,7 +110,7 @@ const Page = () => {
       if (res.success) {
         Toast.show({
           type: "success",
-          text1: "Xoá thành công",
+          text1: t("Xoá thành công"),
         });
         queryClient.invalidateQueries({ queryKey: ["foodStatus"] });
         queryClient.invalidateQueries({ queryKey: ["foodWeekly"] });
@@ -133,7 +138,7 @@ const Page = () => {
           <TouchableOpacity onPress={() => router.back()}>
             <FontAwesome6 name="chevron-left" size={24} color="black" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">Thức ăn</Text>
+          <Text className="text-2xl font-bold  self-center">{t("Thức ăn")}</Text>
           <TouchableOpacity onPress={() => setConfirmVisible(true)}>
             <FontAwesome6 name="trash" size={24} color="black" />
           </TouchableOpacity>
@@ -148,15 +153,16 @@ const Page = () => {
         <View className="flex-1 justify-end items-center bg-black/30">
           <View className="bg-white w-[80%] p-5 rounded-t-2xl shadow-lg">
             <Text className="text-xl text-center mb-10">
-              Bạn có xác nhận muốn xóa ?
+              {t("Bạn có xác nhận muốn xóa ?")}
             </Text>
             <View className="flex-row items-center justify-between h-auto w-full">
               <TouchableOpacity
-                onPress={() => setVisible(false)}
+                onPress={() => {setConfirmVisible(false)
+                }}
                 className="rounded-lg w-[45%]"
               >
                 <Text className="text-black text-center text-xl font-bold">
-                  Không
+                  {t("Không")}
                 </Text>
               </TouchableOpacity>
               <View className="h-5 w-0.5 bg-black/20" />
@@ -165,7 +171,7 @@ const Page = () => {
                 className=" rounded-lg w-[45%]"
               >
                 <Text className="text-red-500 text-center text-xl font-bold">
-                  Có
+                  {t("Có")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -215,7 +221,7 @@ const Page = () => {
                 }}
                 className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
               >
-                <Text className="text-xl text-black font-bold ">Chỉnh sửa</Text>
+                <Text className="text-xl text-black font-bold ">{t("Chỉnh sửa")}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -223,11 +229,10 @@ const Page = () => {
 
         <View className="relative w-full bg-gray-100">
           <View className="bg-white rounded-md shadow-md flex-row items-center justify-between w-full p-4 relative z-10">
-            <Text className="text-xl">Loại bữa ăn</Text>
+            <Text className="text-xl">{t("Loại bữa ăn")}</Text>
             <TouchableOpacity onPress={() => setDropdown(!dropdown)}>
               <Text className="text-xl">
-                {"Bữa "}
-                {selectedMeal}
+                {t(selectedMeal)}
               </Text>
             </TouchableOpacity>
 
@@ -262,7 +267,7 @@ const Page = () => {
                           : "text-black"
                       }`}
                     >
-                      Bữa {meal}
+                      {t(meal)}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -273,7 +278,7 @@ const Page = () => {
 
         <View className="bg-white rounded-md shadow-md flex items-center justify-center w-full h-auto p-4 gap-5">
           <Text className="text-xl font-bold self-start">
-            Thông tin dinh dưỡng
+            {t("Thông tin dinh dưỡng")}
           </Text>
           <View className="flex-row items-center justify-between">
             <Text className=" text-lg">Calo</Text>
@@ -306,7 +311,7 @@ const Page = () => {
             }}
             className="self-center flex-row items-center bg-white justify-center w-[45%] py-3 rounded-md"
           >
-            <Text className="text-xl text-black font-bold ">Hủy</Text>
+            <Text className="text-xl text-black font-bold ">{t("Hủy")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
@@ -314,7 +319,7 @@ const Page = () => {
             }}
             className="self-center flex-row items-center justify-center bg-cyan-blue w-[45%] py-3 rounded-md"
           >
-            <Text className="text-xl text-white font-bold ">Hoàn tất</Text>
+            <Text className="text-xl text-white font-bold ">{t("Hoàn tất")}</Text>
           </TouchableOpacity>
         </View>
       )}

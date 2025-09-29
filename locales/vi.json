@@ -1,0 +1,14 @@
+{
+  "common": {
+    "ok": "Đồng ý",
+    "cancel": "Huỷ",
+    "save": "Lưu"
+  },
+  "water": {
+    "title": "Nước",
+    "add": "Thêm",
+    "goal": "Mục tiêu",
+    "progress": "Tiến độ",
+    "remindMe": "Nhắc nhở tôi"
+  }
+}

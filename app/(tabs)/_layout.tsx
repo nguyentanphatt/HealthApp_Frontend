@@ -1,10 +1,13 @@
 import TabIcon from '@/components/TabIcon';
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function TabLayout() {
+  const { t, i18n } = useTranslation();
   return (
     <Tabs
+      key={i18n.language}
       screenOptions={{
         tabBarShowLabel: false,
         tabBarStyle: {
@@ -21,40 +24,40 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Trang chủ",
+          title: t("Trang chủ"),
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} name="house" tabName="Trang chủ" />
+            <TabIcon focused={focused} name="house" tabName={t("Trang chủ")} />
           ),
         }}
       />
       <Tabs.Screen
         name="work"
         options={{
-          title: "Tập luyện",
+          title: t("Tập luyện"),
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} name="dumbbell" tabName="Tập luyện" />
+            <TabIcon focused={focused} name="dumbbell" tabName={t("Tập luyện")} />
           ),
         }}
       />
       <Tabs.Screen
         name="news"
         options={{
-          title: "Tin tức",
+          title: t("Tin tức"),
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} name="newspaper" tabName="Tin tức" />
+            <TabIcon focused={focused} name="newspaper" tabName={t("Tin tức")} />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Trang cá nhân",
+          title: t("Trang cá nhân"),
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} name="user" tabName="Trang cá nhân" />
+            <TabIcon focused={focused} name="user" tabName={t("Trang cá nhân")} />
           ),
         }}
       />

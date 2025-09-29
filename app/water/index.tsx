@@ -22,6 +22,7 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Modal,
@@ -36,6 +37,7 @@ import WheelPickerExpo from "react-native-wheel-picker-expo";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const Page = () => {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams();
   const { units, displayWater, inputToBaseWater } = useUnits();
@@ -231,7 +233,6 @@ const Page = () => {
   const yAxisLabelTexts = baseLabels.map((val) =>
     displayWater(val).value.toString()
   );
-
   return (
     <ScrollView
       className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
@@ -244,7 +245,7 @@ const Page = () => {
           <TouchableOpacity onPress={() => router.push("/(tabs)")}>
             <FontAwesome6 name="chevron-left" size={24} color="black" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">Nước</Text>
+          <Text className="text-2xl font-bold  self-center">{t("Nước")}</Text>
           <View style={{ width: 24 }} />
         </View>
         <CalendarSwiper
@@ -281,7 +282,7 @@ const Page = () => {
             }
           >
             <InfoCard
-              title="Mục tiêu"
+              title={t("Mục tiêu")}
               content={
                 displayWater(waterStatus?.dailyGoal ?? 0).formatted ||
                 displayWater(2000).formatted
@@ -289,7 +290,7 @@ const Page = () => {
             />
           </TouchableOpacity>
           <InfoCard
-            title="Tiến độ"
+            title={t("Tiến độ")}
             content={
               displayWater(waterStatus?.currentIntake || 0).formatted ||
               displayWater(0).formatted
@@ -304,7 +305,7 @@ const Page = () => {
             className="flex flex-row items-center justify-center gap-2.5 bg-white p-2 rounded-md shadow-md h-[70px]"
           >
             <FontAwesome6 name="calendar" size={24} color="black" />
-            <Text className="text-xl">Nhắc nhở tôi</Text>
+            <Text className="text-xl">{t("Nhắc nhở tôi")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -313,7 +314,7 @@ const Page = () => {
           className="self-center flex-row items-center justify-center w-[70%] py-3 bg-cyan-blue rounded-full"
           onPress={() => setVisible(true)}
         >
-          <Text className="text-xl text-white">Thêm</Text>
+          <Text className="text-xl text-white">{t("Thêm")}</Text>
         </TouchableOpacity>
       </View>
       <Modal
@@ -326,7 +327,7 @@ const Page = () => {
         <View className="flex-1 items-center justify-center bg-black/30">
           <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
             <Text className="text-2xl font-bold mb-4">
-              Lượng nước uống ({units.water})
+              {t("Lượng nước uống")} ({units.water})
             </Text>
             <WheelPickerExpo
               height={240}
@@ -362,7 +363,7 @@ const Page = () => {
               }}
               className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
             >
-              <Text className="text-xl text-black font-bold ">Thêm</Text>
+              <Text className="text-xl text-black font-bold ">{t("Thêm")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -385,20 +386,20 @@ const Page = () => {
         })()}
       {percent >= 25 && (
         <Text className="text-lg text-center text-black/60 py-2">
-          Bạn đã hoàn thành {percent.toFixed(0)}% mục tiêu đề ra
+          {t("Bạn đã hoàn thành")} {percent.toFixed(0)}% {t("mục tiêu đề ra")}
         </Text>
       )}
       {filtered && filtered.length > 0 && (
         <Text className="font-bold text-lg text-black/60 pb-2">
-          Lịch sử hôm nay
+          {t("Lịch sử hôm nay")}
         </Text>
       )}
       <WaterHistory filtered={filtered ?? []} />
 
       <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4 mt-4">
         <View>
-          <Text className="font-bold text-xl">Tiến trình của bạn</Text>
-          <Text className="text-black/60">Hãy giữ phong độ nào !</Text>
+          <Text className="font-bold text-xl">{t("Tiến trình của bạn")}</Text>
+          <Text className="text-black/60">{t("Hãy giữ phong độ nào !")}</Text>
         </View>
         <ScrollView
           horizontal

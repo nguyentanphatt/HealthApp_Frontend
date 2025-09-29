@@ -6,11 +6,13 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import Checkbox from "expo-checkbox";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
 const ReminderCard = ({ amount, time, id, enabled }: { amount: string; time: number; id: string; enabled: boolean }) => {
   const queryClient = useQueryClient();
   const {units, displayWater} = useUnits()
+  const { t } = useTranslation();
   const [isChecked, setIsChecked] = useState(false);
   const timestamp = convertISOToTimestamp(time.toString());
   const hour = String(new Date(timestamp).getHours()).padStart(2, "0");
@@ -26,7 +28,7 @@ const ReminderCard = ({ amount, time, id, enabled }: { amount: string; time: num
     <View className="relative">
       <View className="flex gap-1 p-4 rounded-md bg-white shadow-md">
         <View className="flex flex-row items-center justify-between">
-          <Text className="text-xl">Nhắc nhở</Text>
+          <Text className="text-xl">{t("Nhắc nhở")}</Text>
           <Text className="text-xl">{hour} : {minute}</Text>
         </View>
         <View className="flex flex-row items-center justify-between">

@@ -18,7 +18,7 @@ const FunctionCard = ({classname, iconName, title, href, children}:FuctionCardPr
   }
   return (
       <TouchableOpacity className={classname} onPress={handleNavigation}>
-        <View className="flex flex-row items-start gap-2">
+        <View className="flex flex-row items-center gap-2">
           <FontAwesome6 name={iconName} size={28} color="black" />
           <Text className="font-bold text-xl">{title}</Text>
         </View>

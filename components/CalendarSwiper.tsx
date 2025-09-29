@@ -1,3 +1,4 @@
+import i18n from "@/plugins/i18n";
 import { convertDayToVN } from "@/utils/convertTime";
 import dayjs from "dayjs";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -173,7 +174,9 @@ export default function CalendarSwiper({
       }}
     >
       <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 8 }}>
-        {"Tháng " + dayjs(localSelected).format("M YYYY")}
+        {i18n?.language && i18n.language.startsWith("en")
+          ? dayjs(localSelected).format("MMMM, YYYY")
+          : "Tháng " + dayjs(localSelected).format("M YYYY")}
       </Text>
 
       <FlatList

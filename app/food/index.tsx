@@ -8,6 +8,7 @@ import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-quer
 import dayjs from "dayjs";
 import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   ScrollView,
@@ -16,6 +17,7 @@ import {
   View,
 } from "react-native";
 const Page = () => {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams();
   const queryClient = useQueryClient();
@@ -104,6 +106,9 @@ const Page = () => {
     {} as Record<string, typeof foodStatus.history>
   );
 
+  // Exclude items titled "Invalid" for all usages except groupedByTag
+  const filteredHistory = foodStatus?.history.filter((item) => item.name !== "Invalid") ?? [];
+
   const order = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
 
   const loading = loadingFoodStatus || loadingWeekly || loadingFoodStatus || loadingWeekly;
@@ -133,7 +138,7 @@ const Page = () => {
           <TouchableOpacity onPress={() => router.push("/(tabs)")}>
             <FontAwesome6 name="chevron-left" size={24} color="black" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">Thức ăn</Text>
+          <Text className="text-2xl font-bold  self-center">{t("Thức ăn")}</Text>
           <View style={{ width: 24 }} />
         </View>
         <CalendarSwiper
@@ -149,7 +154,7 @@ const Page = () => {
       </View>
       <View className="flex gap-2.5">
         <View className="bg-white rounded-md shadow-md flex justify-between gap-5 w-full px-4 py-4">
-          <Text className="font-bold text-xl">Lượng thức ăn</Text>
+          <Text className="font-bold text-xl">{t("Lượng thức ăn")}</Text>
           <Text className="text-black/60 text-xl text-center">
             <Text className="font-bold text-3xl text-black">
               {foodStatus?.currentCalories ?? 0}
@@ -158,15 +163,14 @@ const Page = () => {
           </Text>
         </View>
         <Text className="text-center text-lg text-black/60 py-2">
-          Bữa ăn quan trọng đối với sức khỏe hằng ngày, vì vậy hãy gửi ảnh về
-          bữa ăn của bạn. Tôi sẽ cho bạn biết thành phần dinh dưỡng của bữa ăn.
+          {t("Bữa ăn quan trọng đối với sức khỏe hằng ngày, vì vậy hãy gửi ảnh về bữa ăn của bạn. Tôi sẽ cho bạn biết thành phần dinh dưỡng của bữa ăn.")}
         </Text>
         <View className="flex flex-row items-center justify-center py-5">
           <TouchableOpacity
             onPress={() => router.push("/food/upload" as Href)}
             className="self-center flex-row items-center justify-center w-[50%] bg-cyan-blue py-3 rounded-md shadow-md"
           >
-            <Text className="text-xl text-white font-bold ">Tải ảnh lên</Text>
+            <Text className="text-xl text-white font-bold ">{t("Tải ảnh lên")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -178,7 +182,7 @@ const Page = () => {
           return null;
         })}
       </View>
-      <FoodPieChart data={foodStatus?.history ?? []} />
+      <FoodPieChart data={filteredHistory} />
       <FoodBarChart data={data ?? []}/>
     </ScrollView>
   );

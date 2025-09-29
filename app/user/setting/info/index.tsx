@@ -1,18 +1,20 @@
 import ActionModal from '@/components/ActionModal';
 import { images } from '@/constants/image';
 import { useUnits } from '@/hooks/useUnits';
+import i18n from '@/plugins/i18n';
 import { getUserProfile, updateUserInfo } from '@/services/user';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from "expo-image-picker";
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, BackHandler, Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import DateTimePicker, { DateType, useDefaultStyles } from 'react-native-ui-datepicker';
 const Page = () => {
     const { units, displayHeight, displayWeight, inputToBaseHeight, inputToBaseWeight } = useUnits();
-    
+    const { t } = useTranslation();
     const {
         data: userProfileStatus,
         isLoading: loadingUserProfileStatus,
@@ -154,7 +156,7 @@ const Page = () => {
                     <FontAwesome6 name="chevron-left" size={24} color="black" />
                 </TouchableOpacity>
                 <Text className="text-3xl font-bold text-center py-5">
-                    Cập nhật thông tin
+                    {t("Cập nhật thông tin")}
                 </Text>
                 <View style={{ width: 24 }} />
             </View>
@@ -180,7 +182,7 @@ const Page = () => {
                 </TouchableOpacity>
 
                 <View className="flex bg-white p-2 rounded-md shadow-md mb-1">
-                    <Text className="text-xl">Tên người dùng</Text>
+                    <Text className="text-xl">{t("Tên người dùng")}</Text>
                     <View className="border-b-2 border-black w-full h-[50px]">
                         <TextInput
                             className="text-2xl"
@@ -213,7 +215,7 @@ const Page = () => {
                                 value={height}
                                 keyboardType="numeric"
                                 onChangeText={(text) => setHeight(text)}
-                                placeholder={`Chiều cao (${units.height})`}
+                                placeholder={`${t("Chiều cao")} (${units.height})`}
                                 placeholderTextColor="gray"
                             />
                             <Text className="text-xl text-gray-500 mt-2.5">{units.height}</Text>
@@ -231,7 +233,7 @@ const Page = () => {
                                 value={weight}
                                 keyboardType="numeric"
                                 onChangeText={(text) => setWeight(text)}
-                                placeholder={`Cân nặng (${units.weight})`}
+                                placeholder={`${t("Cân nặng")} (${units.weight})`}
                                 placeholderTextColor="gray"
                             />
                             <Text className="text-xl text-gray-500 mt-2.5">{units.weight}</Text>
@@ -279,12 +281,12 @@ const Page = () => {
             >
                 <View className="flex-1 justify-end bg-black/50">
                     <View className="bg-white rounded-t-3xl p-6">
-                        <Text className="text-xl font-bold text-center mb-4">Chọn ngày sinh</Text>
+                        <Text className="text-xl font-bold text-center mb-4">{t("Chọn ngày sinh")}</Text>
                         <DateTimePicker
                             mode="single"
                             date={selected}
                             onChange={({ date }) => setSelected(date)}
-                            locale="vi"
+                            locale={i18n.language}
                             styles={{
                                 ...defaultStyles,
                                 button_next_image: { tintColor: '#000' },
@@ -311,7 +313,7 @@ const Page = () => {
                                 onPress={() => setShowDateModal(false)}
                                 className="flex-1 py-3 px-4 rounded-lg bg-gray-200"
                             >
-                                <Text className="text-lg text-center text-gray-700">Hủy</Text>
+                                <Text className="text-lg text-center text-gray-700">{t("Hủy")}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() => {
@@ -324,7 +326,7 @@ const Page = () => {
                                 }}
                                 className="flex-1 py-3 px-4 rounded-lg bg-blue-500"
                             >
-                                <Text className="text-lg text-center text-white font-bold">Xác nhận</Text>
+                                <Text className="text-lg text-center text-white font-bold">{t("Xác nhận")}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -335,7 +337,7 @@ const Page = () => {
             <ActionModal
                 visible={showGenderModal}
                 onClose={() => setShowGenderModal(false)}
-                title="Chọn giới tính"
+                title={t("Chọn giới tính")}
                 options={genderOptions.map(option => ({
                     label: option.label,
                     onPress: () => {
@@ -350,14 +352,14 @@ const Page = () => {
             <ActionModal
                 visible={showImageModal}
                 onClose={() => setShowImageModal(false)}
-                title="Chọn ảnh"
+                title={t("Chọn ảnh")}
                 options={[
                     {
-                        label: "Thư viện",
+                        label: t("Thư viện"),
                         onPress: pickImage
                     },
                     {
-                        label: "Chụp ảnh",
+                        label: t("Chụp ảnh"),
                         onPress: takePhoto
                     }
                 ]}
@@ -372,7 +374,7 @@ const Page = () => {
                 <View className="flex-1 items-center justify-center bg-black/30">
                     <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
                         <Text className="text-lg font-bold mb-4">
-                            Dữ liệu chưa được lưu, bạn có muốn thoát ?
+                            {t("Dữ liệu chưa được lưu, bạn có muốn thoát ?")}
                         </Text>
 
                         <View className="flex flex-row items-center justify-between">
@@ -380,7 +382,7 @@ const Page = () => {
                                 onPress={() => router.push('/(tabs)/profile')}
                                 className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
                             >
-                                <Text className="text-xl text-black font-bold ">Thoát</Text>
+                                <Text className="text-xl text-black font-bold ">{t("Thoát")}</Text>
                             </TouchableOpacity>
                             <Text>|</Text>
                             <TouchableOpacity
@@ -390,7 +392,7 @@ const Page = () => {
                                 }
                                 className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
                             >
-                                <Text className="text-xl text-black font-bold ">Lưu</Text>
+                                <Text className="text-xl text-black font-bold ">{t("Lưu")}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

@@ -2,22 +2,20 @@ import { submitFoodRecord } from "@/services/food";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 const Page = () => {
   const router = useRouter();
-  const params = useLocalSearchParams();
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState(
-    params.selectedDate ? Number(params.selectedDate) : 0
-  );
+  const { t } = useTranslation();
   const [selectedTag, setSelectedTag] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const options = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
+  const options = [t("Sáng"), t("Trưa"), t("Tối"), t("Phụ"), t("Khác")];
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -56,7 +54,7 @@ const Page = () => {
               Toast.show({
                 type: "error",
                 text1: `Ảnh ${i + 1} sai`,
-                text2: "Vui lòng chọn ảnh về bữa ăn",
+                text2: t("Vui lòng chọn ảnh về bữa ăn"),
               });
             } else {
               Toast.show({
@@ -71,7 +69,7 @@ const Page = () => {
           Toast.show({
             type: "error",
             text1: `Ảnh ${i + 1} lỗi`,
-            text2: "Không thể upload ảnh này",
+            text2: t("Không thể upload ảnh này"),
           });
         }
 
@@ -99,13 +97,13 @@ const Page = () => {
             <TouchableOpacity onPress={() => router.back()}>
               <FontAwesome6 name="chevron-left" size={24} color="black" />
             </TouchableOpacity>
-            <Text className="text-2xl font-bold self-center">Hình ảnh</Text>
+            <Text className="text-2xl font-bold self-center">{t("Hình ảnh")}</Text>
             <View style={{ width: 24 }} />
           </View>
         </View>
         <View className="flex gap-5">
           <View>
-            <Text className="font-bold text-xl pt-5 pb-2">Loại bữa ăn</Text>
+            <Text className="font-bold text-xl pt-5 pb-2">{t("Loại bữa ăn")}</Text>
             <View className="flex-row gap-3">
               <FlatList
                 data={options}
@@ -136,7 +134,7 @@ const Page = () => {
             <View className="size-20 flex items-center justify-center bg-cyan-blue/20 rounded-full">
               <FontAwesome6 name="image" color="black" size={24} />
             </View>
-            <Text className="text-xl text-center">Chọn ảnh</Text>
+            <Text className="text-xl text-center">{t("Chọn ảnh")}</Text>
           </View>
 
           <View className="flex flex-row items-center justify-center gap-5">
@@ -145,18 +143,18 @@ const Page = () => {
               className="self-center flex-row items-center justify-center gap-5 w-[40%] bg-white py-3 rounded-md shadow-md"
             >
               <FontAwesome6 name="upload" color="#19B1FF" size={20} />
-              <Text className="text-xl text-black ">Thư viện</Text>
+              <Text className="text-xl text-black ">{t("Thư viện")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={takePhoto}
               className="self-center flex-row items-center justify-center gap-5 w-[40%] bg-white py-3 rounded-md shadow-md"
             >
               <FontAwesome6 name="camera" color="#19B1FF" size={20} />
-              <Text className="text-xl text-black ">Chụp ảnh</Text>
+              <Text className="text-xl text-black ">{t("Chụp ảnh")}</Text>
             </TouchableOpacity>
           </View>
           <View className="py-2">
-            {images.length > 0 && <Text>Ảnh đã chọn ({images.length})</Text>}
+            {images.length > 0 && <Text>{t("Ảnh đã chọn")} ({images.length})</Text>}
             <View className="flex-row items-center gap-4 py-2">
               {images.map((uri, idx) => (
                 <View key={idx} className="w-32 h-32 rounded-md relative">
@@ -206,7 +204,7 @@ const Page = () => {
             }}
             className="self-center flex-row items-center justify-center w-[45%] bg-cyan-blue py-3 rounded-md shadow-md"
           >
-            <Text className="text-xl text-white font-bold ">Tải ảnh lên</Text>
+            <Text className="text-xl text-white font-bold ">{t("Tải ảnh lên")}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -217,10 +215,10 @@ const Page = () => {
           <View className="bg-white rounded-lg p-6 flex items-center justify-center w-[90%] h-[300px]">
             <ActivityIndicator size="large" color="#19B1FF" />
             <Text className="text-2xl font-bold mt-4 text-center">
-              AI đang phân tích...
+              {t("AI đang phân tích...")}
             </Text>
             <Text className="text-lg text-gray-600 mt-2 text-center">
-              Vui lòng chờ trong giây lát
+              {t("Vui lòng chờ trong giây lát")}
             </Text>
           </View>
         </View>

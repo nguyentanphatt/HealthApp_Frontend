@@ -6,6 +6,7 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Text, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
@@ -19,7 +20,7 @@ const Page = () => {
 
   const {units, inputToBaseWater} = useUnits()
   const initAmount = Number(amount);
-
+  const { t } = useTranslation();
   const initialValue =
     units.water === "ml" ? initAmount : Number(convertWater(initAmount, units.water).toFixed(2));
 
@@ -46,7 +47,7 @@ const Page = () => {
         queryClient.invalidateQueries({ queryKey: ["waterStatus"] });
         Toast.show({
           type: "success",
-          text1: response.message,
+          text1: t(response.message),
         });
 
         router.push(`/water`);
@@ -63,17 +64,16 @@ const Page = () => {
         >
           <FontAwesome6 name="chevron-left" size={24} color="black" />
         </TouchableOpacity>
-        <Text className="text-2xl font-bold self-center">Đặt mục tiêu</Text>
+        <Text className="text-2xl font-bold self-center">{t("Đặt mục tiêu")}</Text>
         <View style={{ width: 24 }} />
       </View>
-      <Text className="text-lg text-center text-black/60">
-        Hãy luôn đặt mục tiêu uống nước mỗi ngày – vì một cơ thể khỏe mạnh bắt
-        đầu từ những thói quen nhỏ nhất.
+      <Text className="text-lg text-center text-black/60 min-h-[70px]">
+        {t("Hãy luôn đặt mục tiêu uống nước mỗi ngày – vì một cơ thể khỏe mạnh bắt đầu từ những thói quen nhỏ nhất.")}
       </Text>
 
       <View className="flex items-center justify-center p-4 bg-white rounded-md">
         <Text className="text-2xl font-bold mb-4">
-          Mục tiêu lượng nước ({units.water})
+             {t("Mục tiêu lượng nước")} ({units.water})
         </Text>
         <WheelPickerExpo
           height={240}

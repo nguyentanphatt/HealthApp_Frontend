@@ -3,6 +3,7 @@ import { convertISOToTimestamp } from "@/utils/convertTime";
 import { scheduleReminders } from "@/utils/notificationsHelper";
 import { Href, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Text, TouchableOpacity, View } from "react-native";
 import ReminderCard from "./ReminderCard";
 
@@ -14,7 +15,7 @@ const ReminderList = ({
   const router = useRouter();
   const [showAll, setShowAll] = useState(false);
   const displayedData = showAll ? data : data.slice(0, 3);
-
+  const { t } = useTranslation();
 	const hasScheduled = useRef(false);
 
   useEffect(() => {
@@ -54,7 +55,7 @@ const ReminderList = ({
       {data.length > 3 && (
         <TouchableOpacity onPress={() => setShowAll(!showAll)} className="py-5">
           <Text className="text-lg text-center text-black/60 font-semibold">
-            {showAll ? "Ẩn bớt" : "Xem thêm"}
+            {showAll ? t("Ẩn bớt") : t("Xem thêm")}
           </Text>
         </TouchableOpacity>
       )}
