@@ -88,8 +88,8 @@ const Page = () => {
           console.log('avgSpeed', activityData.avgSpeed);
           console.log('maxSpeed', activityData.maxSpeed);
           console.log('caloriesBurned', activityData.caloriesBurned);
-          console.log("totalTime", activityData.elapsed);
-          console.log("activeTime", activityData.activeTime);
+          console.log("totalTime", activityData.elapsed / 1000);
+          console.log("activeTime", activityData.activeTime / 1000);
           console.log("sessionId", sessionId);
           
           console.log('positions', activityData.positions );
@@ -106,8 +106,8 @@ const Page = () => {
                 avgSpeed: activityData.avgSpeed,
                 maxSpeed: activityData.maxSpeed,
                 kcal: Number(activityData.caloriesBurned.toFixed(1)),
-                totalTime: activityData.elapsed,
-                activeTime: activityData.activeTime,
+                totalTime: activityData.elapsed / 1000,
+                activeTime: activityData.activeTime / 1000,
               });
               console.log('✅ updateActivityData API success:', response);
             } catch (error) {

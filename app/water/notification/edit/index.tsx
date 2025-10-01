@@ -1,3 +1,4 @@
+import ActionModal from "@/components/ActionModal";
 import { useUnits } from "@/hooks/useUnits";
 import { updateWaterReminder } from "@/services/water";
 import { convertWater } from "@/utils/convertMeasure";
@@ -9,11 +10,10 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   BackHandler,
-  Modal,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
@@ -223,44 +223,15 @@ const Page = () => {
         </TouchableOpacity>
       </View>
 
-      <Modal
+      <ActionModal
         visible={visible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setVisible(false)}
-      >
-        <View className="flex-1 items-center justify-center bg-black/30">
-          <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
-            <Text className="text-lg font-bold mb-4">
-              {t("Dữ liệu chưa được lưu, bạn có muốn thoát ?")}
-            </Text>
-
-            <View className="flex flex-row items-center justify-between">
-              <TouchableOpacity
-                onPress={() => router.back()}
-                className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
-              >
-                <Text className="text-xl text-black font-bold ">{t("Thoát")}</Text>
-              </TouchableOpacity>
-              <Text>|</Text>
-              <TouchableOpacity
-                onPress={() =>
-                  handleSave(
-                    Number(selectedAmount),
-                    selectedHour,
-                    selectedMinute,
-                    dateTimestamp.toString(),
-                    id
-                  )
-                }
-                className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
-              >
-                <Text className="text-xl text-black font-bold ">{t("Lưu")}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setVisible(false)}
+        title={t("Dữ liệu chưa được lưu, bạn có muốn thoát ?")}
+        options={[
+          { label: t("Thoát"), onPress: () => router.back() },
+          { label: t("Lưu"), onPress: () => handleSave(Number(selectedAmount), selectedHour, selectedMinute, dateTimestamp.toString(), id) },
+        ]}
+      />
     </View>
   );
 };

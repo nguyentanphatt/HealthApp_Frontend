@@ -20,7 +20,7 @@ import * as Location from "expo-location";
 import { Href, useRouter } from 'expo-router';
 import { Accelerometer } from 'expo-sensors';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, AppState, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, Region } from "react-native-maps";
 
 const Page = () => {
@@ -72,13 +72,42 @@ const Page = () => {
     const warmupCountRef = useRef<number>(0);
     const absNetEmaRef = useRef<number>(0);
 
+    // Track app state changes
+    useEffect(() => {
+        const handleAppStateChange = (nextAppState: string) => {
+            if (nextAppState === 'active') {
+                AsyncStorage.setItem('last_app_state', Date.now().toString());
+            } else if (nextAppState === 'background' || nextAppState === 'inactive') {
+                // Save pause time when app goes to background
+                AsyncStorage.setItem('app_pause_time', Date.now().toString());
+            }
+        };
+
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
+        
+        // Set initial app state
+        AsyncStorage.setItem('last_app_state', Date.now().toString());
+
+        return () => subscription?.remove();
+    }, []);
+
     useEffect(() => {
         (async () => {
-            // Attempt to restore ongoing tracking session
+            // Check if app was killed and reset session if needed
             try {
-                const [activeStr, storedId] = await AsyncStorage.multiGet(['activity_tracking_active', 'activity_session_id']).then(entries => entries.map(e => e?.[1] ?? null));
+                const [activeStr, storedId, lastAppState] = await AsyncStorage.multiGet(['activity_tracking_active', 'activity_session_id', 'last_app_state']).then(entries => entries.map(e => e?.[1] ?? null));
                 const wasActive = activeStr === 'true';
-                if (wasActive && storedId) {
+                const currentTime = Date.now();
+                const lastStateTime = lastAppState ? parseInt(lastAppState) : 0;
+                
+                // If app was killed (more than 30 seconds since last state) or no last state, reset session
+                if (wasActive && storedId && (currentTime - lastStateTime > 30000 || !lastAppState)) {
+                    console.log('App was killed, resetting activity session');
+                    await AsyncStorage.multiRemove(['activity_tracking_active', 'activity_session_id', 'last_app_state']);
+                    return;
+                }
+                
+                if (wasActive && storedId && (currentTime - lastStateTime <= 30000)) {
                     const sid = Number(storedId);
                     if (Number.isFinite(sid)) {
                         const data = await getActivityById(sid);
@@ -110,8 +139,22 @@ const Page = () => {
                             const stepCountNum = Number(server?.stepCount ?? 0) || 0;
                             const distanceMNum = Number(server?.distanceM ?? (Number(server?.distanceKm ?? 0) * 1000)) || 0;
                             
+                            // Calculate pause time and adjust elapsed/active time
+                            const [appPauseTime, isPausedStr, pauseStartStr, totalPauseStr] = await AsyncStorage
+                                .multiGet(['app_pause_time', 'activity_is_paused', 'activity_pause_start', 'activity_total_pause'])
+                                .then(entries => entries.map(e => e?.[1] ?? null));
+                            const pauseDurationBackground = appPauseTime ? currentTime - parseInt(appPauseTime) : 0;
+                            const wasPaused = isPausedStr === 'true';
+                            const pauseStartTs = pauseStartStr ? parseInt(pauseStartStr) : 0;
+                            const persistedTotalPause = totalPauseStr ? parseInt(totalPauseStr) : 0;
+                            const pauseDurationWhileKilled = wasPaused && pauseStartTs > 0 ? (currentTime - pauseStartTs) : 0;
+                            const accumulatedPause = Math.max(0, persistedTotalPause + pauseDurationBackground + pauseDurationWhileKilled);
+
                             setElapsed(totalTimeNum);
                             setActiveTime(activeTimeNum);
+                            // Add pause time to total pause time
+                            setTotalPauseTime(prev => prev + accumulatedPause);
+                            totalPauseTimeRef.current += accumulatedPause;
                             setAvgSpeed(avgSpeedNum);
                             setMaxSpeed(maxSpeedNum);
                             setStepCount(stepCountNum);
@@ -357,6 +400,7 @@ const Page = () => {
             // mark tracking active in storage
             try {
                 await AsyncStorage.setItem('activity_tracking_active', 'true');
+                await AsyncStorage.multiRemove(['activity_is_paused', 'activity_pause_start', 'activity_total_pause', 'app_pause_time']).catch(() => {});
             } catch { }
 
             subscriptionRef.current = await Location.watchPositionAsync(
@@ -447,6 +491,7 @@ const Page = () => {
         setSessionId(null);
         hasCreatedFirstSnapshotRef.current = false;
         AsyncStorage.removeItem('activity_tracking_active').catch(() => { });
+        AsyncStorage.multiRemove(['activity_is_paused', 'activity_pause_start', 'activity_total_pause', 'app_pause_time']).catch(() => {});
     };
 
     const handlePause = () => {
@@ -457,11 +502,23 @@ const Page = () => {
                 totalPauseTimeRef.current += pauseDuration;
                 setPauseStartTime(null);
                 pauseStartTimeRef.current = null;
+                // Persist accumulated pause and clear pause start
+                AsyncStorage.multiSet([
+                    ['activity_total_pause', String(totalPauseTimeRef.current)],
+                    ['activity_is_paused', 'false']
+                ]).catch(() => {});
+                AsyncStorage.removeItem('activity_pause_start').catch(() => {});
             }
         } else {
             const now = Date.now();
             setPauseStartTime(now);
             pauseStartTimeRef.current = now;
+            // Persist pause start and mark paused
+            AsyncStorage.multiSet([
+                ['activity_pause_start', String(now)],
+                ['activity_is_paused', 'true'],
+                ['activity_total_pause', String(totalPauseTimeRef.current)]
+            ]).catch(() => {});
         }
         setIsPause(!isPause);
     };
@@ -590,8 +647,8 @@ const Page = () => {
                 const avgSpeedNum = Number.isFinite(snapshot.avgSpeed) ? snapshot.avgSpeed : 0;
                 const maxSpeedNum = Number.isFinite(snapshot.maxSpeed) ? snapshot.maxSpeed : 0;
                 const kcalNum = Number.isFinite(snapshot.caloriesBurned) ? snapshot.caloriesBurned : 0;
-                const totalTimeNum = Number.isFinite(snapshot.elapsed) ? snapshot.elapsed : 0;
-                const activeTimeNum = Number.isFinite(snapshot.activeTime) ? snapshot.activeTime : 0;
+                const totalTimeNum = Number.isFinite(snapshot.elapsed) ? snapshot.elapsed / 1000 / 60 : 0; // Convert ms to minutes
+                const activeTimeNum = Number.isFinite(snapshot.activeTime) ? snapshot.activeTime / 1000 / 60 : 0; // Convert ms to minutes
 
                 if (!hasCreatedFirstSnapshotRef.current) {
                     // mark created BEFORE awaiting to avoid duplicate create on next tick

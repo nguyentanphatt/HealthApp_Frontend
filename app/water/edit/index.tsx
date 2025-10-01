@@ -1,3 +1,4 @@
+import ActionModal from "@/components/ActionModal";
 import { useUnits } from "@/hooks/useUnits";
 import { updateWaterRecord } from "@/services/water";
 import { convertWater } from "@/utils/convertMeasure";
@@ -9,11 +10,10 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   BackHandler,
-  Modal,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
@@ -107,8 +107,8 @@ const Page = () => {
   };
 
   const isChanged =
-    initAmount !== selectedAmount &&
-    initHour !== selectedHour &&
+    initAmount !== selectedAmount ||
+    initHour !== selectedHour ||
     initMinute !== selectedMinute;
   useEffect(() => {
     const backAction = () => {
@@ -225,7 +225,7 @@ const Page = () => {
         </TouchableOpacity>
       </View>
 
-      <Modal
+      {/* <Modal
         visible={visible}
         transparent
         animationType="fade"
@@ -262,7 +262,16 @@ const Page = () => {
             </View>
           </View>
         </View>
-      </Modal>
+      </Modal> */}
+      <ActionModal
+        visible={visible}
+        onClose={() => setVisible(false)}
+        title={t("Dữ liệu chưa được lưu, bạn có muốn thoát ?")}
+        options={[
+          { label: t("Thoát"), onPress: () => router.back() },
+          { label: t("Lưu"), onPress: () => handleSave(Number(selectedAmount), selectedHour, selectedMinute, dateTimestamp.toString(), type) },
+        ]}
+      />
     </View>
   );
 };

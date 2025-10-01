@@ -29,10 +29,13 @@ export default function ActionModal({ visible, onClose, title, options }: Action
                                 option.onPress();
                                 onClose();
                             }}
-                            className={`py-4 px-4 rounded-lg mb-2 ${option.isSelected ? 'bg-blue-100' : 'bg-gray-50'
-                                }`}
+                            className="py-4 px-4 rounded-lg mb-2"
+                            style={{
+                                backgroundColor: index === 0 ? '#ef4444' : index === 1 ? '#19B1FF' : '#f9fafb'
+                            }}
                         >
-                            <Text className={`text-lg text-center ${option.isSelected ? 'text-blue-600 font-bold' : 'text-gray-700'
+                            <Text className={`text-lg text-center ${index === 0 ? 'text-white font-bold' : index === 1 ? 'text-white font-bold' : 'text-gray-700'
+                                } ${option.isSelected ? 'text-blue-600 font-bold' : 'text-gray-700'
                                 }`}>
                                 {option.label}
                             </Text>
@@ -40,7 +43,7 @@ export default function ActionModal({ visible, onClose, title, options }: Action
                     ))}
                     <TouchableOpacity
                         onPress={onClose}
-                        className="py-3 px-4 rounded-lg bg-gray-200 mt-4"
+                        className="py-4 px-4 rounded-lg bg-gray-200"
                     >
                         <Text className="text-lg text-center text-gray-700">Hủy</Text>
                     </TouchableOpacity>

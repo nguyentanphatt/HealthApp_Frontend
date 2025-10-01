@@ -132,5 +132,12 @@
   "Tốt": "Good",
   "Bình thường": "Average",
   "Không tốt": "Bad",
-  "Tệ": "Very bad"
+  "Tệ": "Very bad",
+  "Phân loại": "Category",
+  "Sắp xếp": "Sort",
+  "Mới nhất": "Newest",
+  "Cũ nhất": "Oldest",
+  "Yêu thích ↑": "Favorite ↑",
+  "Độ yêu thích giảm": "Favorite ↓",
+  "Tất cả": "All"
 }

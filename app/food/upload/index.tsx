@@ -5,7 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 const Page = () => {
   const router = useRouter();
@@ -181,7 +181,7 @@ const Page = () => {
           </View>
         </View>
       </ScrollView>
-      {previewUri && (
+      {/* {previewUri && (
         <View className="absolute inset-0 bg-black/80 justify-center items-center z-50">
           <TouchableOpacity
             className="absolute top-10 right-10 z-10 "
@@ -195,7 +195,35 @@ const Page = () => {
             resizeMode="contain"
           />
         </View>
-      )}
+      )} */}
+      <Modal
+        visible={!!previewUri}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setPreviewUri(null)}
+      >
+        <View className="flex-1 bg-black/90 items-center justify-center">
+          <TouchableOpacity
+            className="absolute top-12 right-4 z-10"
+            onPress={() => setPreviewUri(null)}
+          >
+            <View className="w-10 h-10 bg-black/50 rounded-full items-center justify-center">
+              <FontAwesome6 name="x" size={20} color="white" />
+            </View>
+          </TouchableOpacity>
+
+          {previewUri && (
+            <Image
+              source={{ uri: previewUri }}
+              style={{
+                width: '90%',
+                height: '80%',
+                resizeMode: 'contain'
+              }}
+            />
+          )}
+        </View>
+      </Modal>
       {images.length > 0 && (
         <View className="absolute bottom-10 left-0 right-0 p-4 bg-[#f6f6f6]">
           <TouchableOpacity

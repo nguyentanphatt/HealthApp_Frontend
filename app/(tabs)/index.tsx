@@ -1,3 +1,4 @@
+import ActionModal from "@/components/ActionModal";
 import CalendarSwiper from "@/components/CalendarSwiper";
 import Card from "@/components/Card";
 import FunctionCard from "@/components/FunctionCard";
@@ -18,7 +19,7 @@ import dayjs from "dayjs";
 import { Href, router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Animated, Modal, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Animated, Text, TouchableOpacity, View } from "react-native";
 import { tv } from "tailwind-variants";
 const HEADER_HEIGHT = 100;
 const CALENDAR_HEIGHT = 140;
@@ -32,7 +33,8 @@ export default function HomeScreen() {
   const queryClient = useQueryClient();
   const { units } = useUnits()
   const { t } = useTranslation();
-
+  const [showAll, setShowAll] = useState(false);
+  
   const {
     data: activityData,
     isLoading: loadingActivityData,
@@ -56,6 +58,8 @@ export default function HomeScreen() {
     
     return activityDateString === selectedDateString;
   }) || [];
+
+  const displayedActivityData = showAll ? filteredActivityData : filteredActivityData.slice(0, 3);
 
   useEffect(() => {
     queryClient.prefetchQuery({
@@ -280,7 +284,7 @@ export default function HomeScreen() {
           {filteredActivityData.length > 0 && (
             <Text className="text-xl text-black/60 text-center">{t("Buổi tập hôm nay")}</Text>
           )}
-          {filteredActivityData.map((activity: any, index: number) => (
+          {displayedActivityData.map((activity: any, index: number) => (
             <TouchableOpacity key={activity.sessionId || index} onPress={() => router.push(`/activity/history/${activity.sessionId}` as Href)} className="flex-1 flex-col p-4 items-center gap-2 bg-white shadow-md rounded-md">
               <Text className="text-xl text-black/60">{formatDateTimeRange(activity.startTime, activity.endTime)}</Text>
               <Text className="text-2xl font-bold">{formatDistance(activity.distanceKm)}</Text>
@@ -291,6 +295,14 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
           ))}
+
+{filteredActivityData.length > 3 && (
+        <TouchableOpacity onPress={() => setShowAll(!showAll)} className="py-5 items-center">
+          <Text className="text-lg text-center text-black/60 font-semibold">
+            {showAll ? t("Ẩn bớt") : t("Xem thêm")}
+          </Text>
+        </TouchableOpacity>
+      )}
           
         </View>
       </Animated.ScrollView>
@@ -324,39 +336,15 @@ export default function HomeScreen() {
       >
         <Text className="text-3xl font-bold">HealthCare</Text>
       </Animated.View>
-
-      <Modal
+      <ActionModal
         visible={openModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setOpenModal(false)}
-      >
-        <View className="flex-1 items-center justify-center bg-black/30">
-          <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
-            <Text className="text-lg font-bold mb-4 text-black/60">
-              {t("Bạn có buổi tập tạm dừng, bạn có muốn tiếp tục tập ?")}
-            </Text>
-
-            <View className="flex flex-row items-center justify-between px-5">
-              <TouchableOpacity
-                onPress={handleCancelActivity}
-                className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
-              >
-                <Text className="text-xl text-black font-bold ">{t("Hủy buổi tập")}</Text>
-              </TouchableOpacity>
-              <Text>|</Text>
-              <TouchableOpacity
-                onPress={() =>
-                  router.push('/activity' as Href)
-                }
-                className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
-              >
-                <Text className="text-xl text-black font-bold ">{t("Tiếp tục")}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setOpenModal(false)}
+        title={t("Bạn có buổi tập tạm dừng, bạn có muốn tiếp tục tập ?")}
+        options={[
+          { label: t("Hủy buổi tập"), onPress: handleCancelActivity },
+          { label: t("Tiếp tục"), onPress: () => router.push('/activity' as Href) },
+        ]}
+      />
     </View>
   );
 }
