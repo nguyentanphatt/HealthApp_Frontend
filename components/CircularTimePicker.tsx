@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { GestureResponderEvent, PanResponder, PanResponderGestureState, Text, View } from "react-native";
 import Svg, { Circle, G, Path, Text as SvgText } from "react-native-svg";
 
@@ -113,6 +113,14 @@ export default function CircularTimePicker({
 
   const startTime = getTimeFromAngle(startAngle);
   const endTime = getTimeFromAngle(endAngle);
+
+  // Emit initial values so parent gets defaults without interaction
+  useEffect(() => {
+    onStartChange?.(startAngle, startTime);
+    onEndChange?.(endAngle, endTime);
+    onChange?.({ startAngle, endAngle, startTime, endTime });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <View

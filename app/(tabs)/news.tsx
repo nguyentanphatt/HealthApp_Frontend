@@ -1,4 +1,5 @@
 import FilterSelector from '@/components/FilterSelector';
+import { options, sortOptions } from '@/constants/data';
 import { images } from '@/constants/image';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { Href, useRouter } from 'expo-router';
@@ -10,66 +11,8 @@ const News = () => {
   const router = useRouter();
   const { t } = useTranslation();
   const [selectedTag, setSelectedTag] = useState({ label: "Tất cả", value: "all" });
-  const [dropdown, setDropdown] = useState(false);
   const [selectedSort, setSelectedSort] = useState({ label: "Mới nhất", value: "newest" });
-  const options = [
-    {
-      id: 1,
-      label: "Tất cả",
-      value: "all",
-    },
-    {
-      id: 2,
-      label: "Nước",
-      value: "water",
-    },
-    {
-      id: 3,
-      label: "Thức ăn",
-      value: "food",
-    },
 
-    {
-      id: 4,
-      label: "Vận động",
-      value: "fitness",
-    },
-
-    {
-      id: 5,
-      label: "Giấc ngủ",
-      value: "sleep",
-    },
-
-    {
-      id: 6,
-      label: "Khác",
-      value: "other",
-    },
-  ]
-
-  const sortOptions = [
-    {
-      id: 1,
-      label: "Mới nhất",
-      value: "newest",
-    },
-    {
-      id: 1,
-      label: "Cũ nhất",
-      value: "oldest",
-    },
-    {
-      id: 1,
-      label: "Yêu thích ↑",
-      value: "favorite-increase",
-    },
-    {
-      id: 1,
-      label: "Độ yêu ↓",
-      value: "favorite-decrease",
-    },
-  ]
   return (
     <View className="flex-1 relative">
       <ScrollView
@@ -79,7 +22,7 @@ const News = () => {
         showsVerticalScrollIndicator={false}
       >
         <View className="flex bg-[#f6f6f6] pt-16">
-          <Text className="text-2xl font-bold  self-center">{t("Tin tức")}</Text>
+          <Text className="text-2xl font-bold  self-center">{t("Cộng đồng")}</Text>
         </View>
 
         <View className='flex flex-row items-center justify-between py-5'>

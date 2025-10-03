@@ -4,7 +4,7 @@ import { Href, useRouter } from "expo-router";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, Image, Text, TouchableOpacity, View } from "react-native";
-const FoodDaily = ({title, data}:{title:string, data:FoodDetail[]}) => {
+const FoodDaily = ({title, data, selectedDate}:{title:string, data:FoodDetail[], selectedDate:number}) => {
   const { t } = useTranslation();
   const router = useRouter()
   const convertData = data.map(
@@ -30,7 +30,7 @@ const FoodDaily = ({title, data}:{title:string, data:FoodDetail[]}) => {
         showsHorizontalScrollIndicator={false}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => router.push(`/food/details/${item.recordId}` as Href)}
+            onPress={() => router.push(`/food/details/${item.recordId}?selectedDate=${selectedDate}` as Href)}
           >
             <View className="w-[340px] items-center justify-center pr-4 flex gap-4">
               <Image

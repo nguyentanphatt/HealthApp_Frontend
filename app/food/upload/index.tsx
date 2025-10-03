@@ -1,19 +1,20 @@
 import { submitFoodRecord } from "@/services/food";
+import { useModalStore } from "@/stores/useModalStore";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, FlatList, Image, Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 const Page = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const { openModal } = useModalStore();
   const [selectedTag, setSelectedTag] = useState("");
   const [images, setImages] = useState<string[]>([]);
-  const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const options = [t("Sáng"), t("Trưa"), t("Tối"), t("Phụ"), t("Khác")];
   const pickImage = async () => {
@@ -168,7 +169,7 @@ const Page = () => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={{ width: "100%", height: "100%" }}
-                    onPress={() => setPreviewUri(uri)}
+                      onPress={() => openModal("imageview", { uri: uri })}
                   >
                     <Image
                       source={{ uri }}
@@ -181,49 +182,6 @@ const Page = () => {
           </View>
         </View>
       </ScrollView>
-      {/* {previewUri && (
-        <View className="absolute inset-0 bg-black/80 justify-center items-center z-50">
-          <TouchableOpacity
-            className="absolute top-10 right-10 z-10 "
-            onPress={() => setPreviewUri(null)}
-          >
-            <FontAwesome6 name="x" size={20} color="white" />
-          </TouchableOpacity>
-          <Image
-            source={{ uri: previewUri }}
-            className="w-[90%] h-[70%]"
-            resizeMode="contain"
-          />
-        </View>
-      )} */}
-      <Modal
-        visible={!!previewUri}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setPreviewUri(null)}
-      >
-        <View className="flex-1 bg-black/90 items-center justify-center">
-          <TouchableOpacity
-            className="absolute top-12 right-4 z-10"
-            onPress={() => setPreviewUri(null)}
-          >
-            <View className="w-10 h-10 bg-black/50 rounded-full items-center justify-center">
-              <FontAwesome6 name="x" size={20} color="white" />
-            </View>
-          </TouchableOpacity>
-
-          {previewUri && (
-            <Image
-              source={{ uri: previewUri }}
-              style={{
-                width: '90%',
-                height: '80%',
-                resizeMode: 'contain'
-              }}
-            />
-          )}
-        </View>
-      </Modal>
       {images.length > 0 && (
         <View className="absolute bottom-10 left-0 right-0 p-4 bg-[#f6f6f6]">
           <TouchableOpacity
@@ -237,7 +195,7 @@ const Page = () => {
         </View>
       )}
 
-      {/* Loading Overlay */}
+
       {isUploading && (
         <View className="absolute inset-0 bg-black/50 justify-center items-center z-50">
           <View className="bg-white rounded-lg p-6 flex items-center justify-center w-[90%] h-[300px]">

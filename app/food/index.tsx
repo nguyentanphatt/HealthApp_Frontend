@@ -2,6 +2,7 @@ import CalendarSwiper from "@/components/CalendarSwiper";
 import FoodBarChart from "@/components/chart/FoodBarChart";
 import FoodPieChart from "@/components/chart/FoodPieChart";
 import FoodDaily from "@/components/FoodDaily";
+import { meals } from "@/constants/data";
 import { foodWeekly, getFoodStatus } from "@/services/food";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,7 +31,7 @@ const Page = () => {
     isLoading: loadingFoodStatus,
     refetch: refetchFoodStatus,
   } = useQuery({
-    queryKey: ["foodStatus", {date:selectedDate}],
+    queryKey: ["foodStatus", { date: selectedDate }],
     queryFn: () =>
       getFoodStatus(
         selectedDate !== 0
@@ -47,7 +48,7 @@ const Page = () => {
     isLoading: loadingWeekly,
     refetch: refetchWeekly,
   } = useQuery({
-    queryKey: ["foodWeekly", {date:selectedDate}],
+    queryKey: ["foodWeekly", { date: selectedDate }],
     queryFn: () =>
       foodWeekly(
         selectedDate !== 0
@@ -65,24 +66,24 @@ const Page = () => {
     const nextTimestamp = currentTimestamp + 86400;
 
     queryClient.prefetchQuery({
-      queryKey: ["foodStatus", {date:prevTimestamp}],
+      queryKey: ["foodStatus", { date: prevTimestamp }],
       queryFn: () =>
         getFoodStatus({ date: (prevTimestamp * 1000).toString() }),
       staleTime: 1000 * 60 * 5,
     });
     queryClient.prefetchQuery({
-      queryKey: ["foodStatus", {date:nextTimestamp}],
+      queryKey: ["foodStatus", { date: nextTimestamp }],
       queryFn: () => getFoodStatus({ date: (nextTimestamp * 1000).toString() }),
       staleTime: 1000 * 60 * 5,
     });
 
     queryClient.prefetchQuery({
-      queryKey: ["foodWeekly", {date:prevTimestamp}],
+      queryKey: ["foodWeekly", { date: prevTimestamp }],
       queryFn: () => foodWeekly({ date: (prevTimestamp * 1000).toString() }),
       staleTime: 1000 * 60 * 5,
     });
     queryClient.prefetchQuery({
-      queryKey: ["foodWeekly", {date:nextTimestamp}],
+      queryKey: ["foodWeekly", { date: nextTimestamp }],
       queryFn: () => foodWeekly({ date: (nextTimestamp * 1000).toString() }),
       staleTime: 1000 * 60 * 5,
     });
@@ -90,8 +91,13 @@ const Page = () => {
     if (selectedDate === 0) {
       const todayTimestamp = Math.floor(Date.now() / 1000);
       queryClient.prefetchQuery({
-        queryKey: ["foodWeekly", {date:todayTimestamp}],
+        queryKey: ["foodWeekly", { date: todayTimestamp }],
         queryFn: () => foodWeekly({ date: (todayTimestamp * 1000).toString() }),
+        staleTime: 1000 * 60 * 5,
+      });
+      queryClient.prefetchQuery({
+        queryKey: ["foodStatus", { date: todayTimestamp }],
+        queryFn: () => getFoodStatus({ date: (todayTimestamp * 1000).toString() }),
         staleTime: 1000 * 60 * 5,
       });
     }
@@ -106,10 +112,7 @@ const Page = () => {
     {} as Record<string, typeof foodStatus.history>
   );
 
-  // Exclude items titled "Invalid" for all usages except groupedByTag
   const filteredHistory = foodStatus?.history.filter((item) => item.name !== "Invalid") ?? [];
-
-  const order = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
 
   const loading = loadingFoodStatus || loadingWeekly || loadingFoodStatus || loadingWeekly;
 
@@ -124,7 +127,7 @@ const Page = () => {
   const data = foodWeeklyData?.map((item) => ({
     value: item.totalCalories,
     label: item.dayOfWeek,
-  }));  
+  }));
 
   return (
     <ScrollView
@@ -175,15 +178,15 @@ const Page = () => {
         </View>
       </View>
       <View className="flex gap-5">
-        {order.map((tag) => {
+        {meals.map((tag) => {
           if (groupedByTag && groupedByTag[tag]) {
-            return <FoodDaily key={tag} title={tag} data={groupedByTag[tag]} />;
+            return <FoodDaily key={tag} title={tag} data={groupedByTag[tag]} selectedDate={selectedDate} />;
           }
           return null;
         })}
       </View>
       <FoodPieChart data={filteredHistory} />
-      <FoodBarChart data={data ?? []}/>
+      <FoodBarChart data={data ?? []} />
     </ScrollView>
   );
 };

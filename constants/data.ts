@@ -33,3 +33,71 @@ export const introductionData = [
     blurBg: images.blur04,
   },
 ];
+
+export const nutritionFields = [
+  { label: "Chất đạm", key: "protein" },
+  { label: "Chất béo", key: "fat" },
+  { label: "Chất xơ", key: "fiber" },
+  { label: "Tinh bột", key: "starch" },
+];
+
+export const meals = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
+
+export const options = [
+  {
+    id: 1,
+    label: "Tất cả",
+    value: "all",
+  },
+  {
+    id: 2,
+    label: "Nước",
+    value: "water",
+  },
+  {
+    id: 3,
+    label: "Thức ăn",
+    value: "food",
+  },
+
+  {
+    id: 4,
+    label: "Vận động",
+    value: "fitness",
+  },
+
+  {
+    id: 5,
+    label: "Giấc ngủ",
+    value: "sleep",
+  },
+
+  {
+    id: 6,
+    label: "Khác",
+    value: "other",
+  },
+]
+
+export const sortOptions = [
+  {
+    id: 1,
+    label: "Mới nhất",
+    value: "newest",
+  },
+  {
+    id: 1,
+    label: "Cũ nhất",
+    value: "oldest",
+  },
+  {
+    id: 1,
+    label: "Yêu thích ↑",
+    value: "favorite-increase",
+  },
+  {
+    id: 1,
+    label: "Độ yêu ↓",
+    value: "favorite-decrease",
+  },
+]

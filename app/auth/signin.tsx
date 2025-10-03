@@ -1,7 +1,8 @@
 import InputWithIcon from "@/components/InputWithIcon";
 import { images } from "@/constants/image";
-import { sendOtp, signin } from "@/services/user";
+import { signin } from "@/services/user";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -13,7 +14,33 @@ const Signin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSignin = async () => {
+
+  const signinMutation = useMutation({
+    mutationFn: async ({email, password}: {email: string, password: string}) => {
+      return await signin(email, password)
+    },
+
+    onSuccess: async (Response, variables) => {
+      await AsyncStorage.multiSet([
+        ["email", variables.email],
+        ["type", "signin"],
+      ]);
+      //await sendOtp(variables.email)
+      router.push('/auth/verify')
+    },
+
+    onError: (error) => {
+      const err = error as AxiosError<{ message: string }>;
+      const msg = err.response?.data?.message || "Đăng nhập thất bại!";
+      console.log("err", err);
+      Toast.show({
+        type: "error",
+        text1: msg,
+      });
+    },
+  })
+
+  /* const handleSignin = async () => {
     try {
       const response = await signin(email, password)
       if(response.success) {
@@ -34,7 +61,7 @@ const Signin = () => {
         text1: err.response?.data.message,
       });
     }
-  }
+  } */
 
   const googleSignin = () => {
     //Signin with google
@@ -78,7 +105,7 @@ const Signin = () => {
         </View>
         <TouchableOpacity
           className="flex items-center justify-center py-4 w-full bg-cyan-blue rounded-full"
-          onPress={handleSignin}
+          onPress={() => signinMutation.mutate({email, password})}
         >
           <Text className="text-white">Đăng nhập</Text>
         </TouchableOpacity>

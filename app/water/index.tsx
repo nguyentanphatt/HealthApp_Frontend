@@ -15,6 +15,7 @@ import {
   WaterWeekly,
   WeatherSuggest,
 } from "@/services/water";
+import { useModalStore } from "@/stores/useModalStore";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -25,24 +26,22 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
-  Modal,
   ScrollView,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import Toast from "react-native-toast-message";
-import WheelPickerExpo from "react-native-wheel-picker-expo";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const Page = () => {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { openModal } = useModalStore();
   const { units, displayWater, inputToBaseWater } = useUnits();
   const queryClient = useQueryClient();
-  const [visible, setVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(
     params.selectedDate ? Number(params.selectedDate) : 0
   );
@@ -52,7 +51,6 @@ const Page = () => {
       ? 360
       : Number(displayWater(360).value.toFixed(2));
 
-  const [amount, setAmount] = useState(initialValue);
   const items =
     units.water === "ml"
       ? Array.from({ length: 100 }, (_, i) => {
@@ -312,62 +310,17 @@ const Page = () => {
       <View className="flex items-center justify-center py-4">
         <TouchableOpacity
           className="self-center flex-row items-center justify-center w-[70%] py-3 bg-cyan-blue rounded-full"
-          onPress={() => setVisible(true)}
+          onPress={() => openModal("waterwheel", {
+            title: `${t("Lượng nước uống")} (${units.water})`,
+            items: items,
+            initialValue: initialValue,
+            currentDate: currentDate,
+            handleConfirm: handleConfirm,
+          })}
         >
           <Text className="text-xl text-white">{t("Thêm")}</Text>
         </TouchableOpacity>
       </View>
-      <Modal
-        visible={visible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setVisible(false)}
-        className="flex-1"
-      >
-        <View className="flex-1 items-center justify-center bg-black/30">
-          <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
-            <Text className="text-2xl font-bold mb-4">
-              {t("Lượng nước uống")} ({units.water})
-            </Text>
-            <WheelPickerExpo
-              height={240}
-              width={250}
-              initialSelectedIndex={items.findIndex((i) => i.amount === initialValue)}
-              items={items.map((item) => ({
-                label: item.label,
-                value: item.amount,
-              }))}
-              selectedStyle={{
-                borderColor: "gray",
-                borderWidth: 0.5,
-              }}
-              renderItem={({ label }) => {
-                return (
-                  <Text
-                    style={{
-                      fontSize: 28,
-                      fontWeight: "500",
-                    }}
-                  >
-                    {label}
-                  </Text>
-                );
-              }}
-              onChange={({ item }) => setAmount(item.value)}
-            />
-
-            <TouchableOpacity
-              onPress={() => {
-                handleConfirm(amount, currentDate.toString());
-                setVisible(false);
-              }}
-              className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
-            >
-              <Text className="text-xl text-black font-bold ">{t("Thêm")}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       {waterReminderData &&
         (() => {

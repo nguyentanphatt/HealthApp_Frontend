@@ -4,6 +4,7 @@ import { TrackedPoint, formatDistance, formatTime } from '@/utils/activityHelper
 import { formatActivityDateTimeRange } from '@/utils/convertTime'
 import { FontAwesome6 } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router/build/hooks'
 import React, { useEffect, useRef, useState } from 'react'
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
@@ -29,7 +30,7 @@ const Page = () => {
   const router = useRouter()
   const mapRef = useRef<MapView | null>(null);
   const [data, setData] = useState<Data>();
-
+  const queryClient = useQueryClient();
   useEffect(() => {
     const getData = async () => {
       try {
@@ -140,6 +141,8 @@ const Page = () => {
 
             console.log('All APIs completed successfully!');
             AsyncStorage.removeItem('activity_session_id').catch(() => {});
+
+            queryClient.invalidateQueries({ queryKey: ["activityData"] });
           } 
 
         } catch (saveError) {

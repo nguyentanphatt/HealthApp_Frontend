@@ -1,7 +1,7 @@
 import CalendarSwiper from "@/components/CalendarSwiper";
 import CircularTimePicker from "@/components/CircularTimePicker";
 import { CreateSleepRecord, getSleepStatus, UpdateSleepRecord } from "@/services/sleep";
-import { formatTimeForDisplay, utcTimeToVnTime, vnTimeToUtcTimestamp } from "@/utils/convertTime";
+import { formatTimeForDisplay, utcTimeToVnTime, vnDateAndTimeToUtcTimestamp, vnTimeToUtcTimestamp } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -156,8 +156,13 @@ const Page = () => {
     const isStartTimeNextDay = startTimeHour === 0;
     const isEndTimeNextDay = true;
 
-    const startTimeTimestamp = vnTimeToUtcTimestamp(startTimeHour, startTimeMinute, isStartTimeNextDay);
-    const endTimeTimestamp = vnTimeToUtcTimestamp(endTimeHour, endTimeMinute, isEndTimeNextDay);
+    const startTimeTimestamp = selectedDate
+      ? vnDateAndTimeToUtcTimestamp(selectedDate, startTimeHour, startTimeMinute, isStartTimeNextDay)
+      : vnTimeToUtcTimestamp(startTimeHour, startTimeMinute, isStartTimeNextDay);
+    const endTimeTimestamp = selectedDate
+      ? vnDateAndTimeToUtcTimestamp(selectedDate, endTimeHour, endTimeMinute, isEndTimeNextDay)
+      : vnTimeToUtcTimestamp(endTimeHour, endTimeMinute, isEndTimeNextDay);
+    console.log("selectedDate", selectedDate);
     
     console.log("startTimeTimestamp", startTimeTimestamp);
     console.log("endTimeTimestamp", endTimeTimestamp);
@@ -170,10 +175,10 @@ const Page = () => {
           type: "success",
           text1: t("Thêm giờ ngủ thành công"),
         });
-        queryClient.invalidateQueries({ queryKey: ["sleepStatus"] });
+        refetchSleepStatus();
         setTimeout(() => {
           router.push("/sleep");
-        }, 3000);
+        }, 1000);
       }
     } catch (error) {
       console.error(error);
@@ -240,7 +245,7 @@ const Page = () => {
           <CircularTimePicker
             onChange={({ startTime, endTime }) => {
               setStartTime(startTime);
-              setEndTime(endTime);
+              setEndTime(endTime); 
             }}
           />
           <View className="flex-row items-center gap-10">

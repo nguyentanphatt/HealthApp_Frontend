@@ -50,15 +50,6 @@ export const submitFoodRecord = async (
     console.log("Upload response:", response.data);
     return response.data;
   } catch (error) {
-    console.error("Upload error details:", error);
-    if (error.response) {
-      console.error("Response status:", error.response.status);
-      console.error("Response data:", error.response.data);
-    } else if (error.request) {
-      console.error("Request error:", error.request);
-    } else {
-      console.error("Error message:", error.message);
-    }
     throw error;
   }
 };

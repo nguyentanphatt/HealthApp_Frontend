@@ -1,4 +1,3 @@
-import ActionModal from "@/components/ActionModal";
 import CalendarSwiper from "@/components/CalendarSwiper";
 import Card from "@/components/Card";
 import FunctionCard from "@/components/FunctionCard";
@@ -8,13 +7,16 @@ import { useUnits } from "@/context/unitContext";
 import { getAllActivities } from "@/services/activity";
 import { getFoodStatus } from "@/services/food";
 import { getSleepStatus } from "@/services/sleep";
+import { getUserProfile } from "@/services/user";
 import { getWaterStatus } from "@/services/water";
+import { useModalStore } from "@/stores/useModalStore";
+import { useUserStore } from "@/stores/useUserStore";
 import { formatDistance } from "@/utils/activityHelper";
 import { convertWater } from "@/utils/convertMeasure";
 import { convertTimestampVNtoTimestamp, formatDateTimeRange } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Href, router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -25,16 +27,19 @@ const HEADER_HEIGHT = 100;
 const CALENDAR_HEIGHT = 140;
 
 export default function HomeScreen() {
+  const setUser = useUserStore(state => state.setUser)
+  const { openModal } = useModalStore();
+  const { closeModal } = useModalStore();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [bgActive, setBgActive] = useState(false);
   const [selectedDate, setSelectedDate] = useState(0);
   const [sessionId, setSessionId] = useState("");
-  const [openModal, setOpenModal] = useState(false);
+  //const [openModal, setOpenModal] = useState(false);
   const queryClient = useQueryClient();
   const { units } = useUnits()
   const { t } = useTranslation();
   const [showAll, setShowAll] = useState(false);
-  
+
   const {
     data: activityData,
     isLoading: loadingActivityData,
@@ -49,13 +54,13 @@ export default function HomeScreen() {
 
 
   const filteredActivityData = activityData?.filter((activity: any) => {
-    if(selectedDate === 0) return true;  
+    if (selectedDate === 0) return true;
     const selectedDateUTC = new Date(convertTimestampVNtoTimestamp(selectedDate * 1000));
     const activityDateUTC = new Date(activity.startTime);
-    
+
     const activityDateString = activityDateUTC.toDateString();
     const selectedDateString = selectedDateUTC.toDateString();
-    
+
     return activityDateString === selectedDateString;
   }) || [];
 
@@ -77,6 +82,12 @@ export default function HomeScreen() {
     queryClient.prefetchQuery({
       queryKey: ["sleepStatus", 0],
       queryFn: () => getSleepStatus(),
+      staleTime: 1000 * 60 * 5,
+    });
+
+    queryClient.prefetchQuery({
+      queryKey: ["activityData"],
+      queryFn: () => getAllActivities(),
       staleTime: 1000 * 60 * 5,
     });
   }, []);
@@ -107,6 +118,15 @@ export default function HomeScreen() {
     };
   }, [scrollY, bgActive]);
 
+  const userProfileMutation = useMutation({
+    mutationFn: async () => {
+      return await getUserProfile()
+    },
+    onSuccess: (response) => {
+      setUser(response)
+    }
+  })
+
   useEffect(() => {
     const fetchSessionId = async () => {
       const sessionId = await AsyncStorage.getItem('activity_session_id');
@@ -115,6 +135,7 @@ export default function HomeScreen() {
       }
     };
     fetchSessionId();
+    userProfileMutation.mutate()
   }, []);
 
   // Set selectedDate to current date if it's 0
@@ -126,15 +147,21 @@ export default function HomeScreen() {
   }, [selectedDate]);
 
   const handleActivity = () => {
-    if(sessionId){
-      setOpenModal(true);
+    if (sessionId) {
+      openModal("action", {
+        title: t("Bạn có buổi tập tạm dừng, bạn có muốn tiếp tục tập ?"),
+        options: [
+          { label: t("Hủy buổi tập"), onPress: handleCancelActivity },
+          { label: t("Tiếp tục"), onPress: () => router.push('/activity' as Href) },
+        ]
+      });
     } else {
       router.push('/activity' as Href);
     }
   }
 
   const handleCancelActivity = () => {
-    setOpenModal(false);
+    closeModal();
     AsyncStorage.removeItem('activity_session_id');
     setSessionId("");
   }
@@ -149,6 +176,7 @@ export default function HomeScreen() {
       },
     },
   });
+  
 
   const loading = loadingActivityData
   if (loading) {
@@ -158,7 +186,6 @@ export default function HomeScreen() {
       </View>
     );
   }
-  
   return (
     <View className="flex-1 px-4 font-lato-regular">
       <Animated.ScrollView
@@ -243,7 +270,7 @@ export default function HomeScreen() {
               />
               <Text className="text-black/60 text-xl h-[30px]">
                 <Text className="font-bold text-3xl text-black">
-                    {convertWater(waterStatus?.currentIntake ?? 0, units.water)}
+                  {convertWater(waterStatus?.currentIntake ?? 0, units.water)}
                 </Text>
                 / {convertWater(waterStatus?.dailyGoal ?? 0, units.water)} {units.water}
               </Text>
@@ -296,14 +323,14 @@ export default function HomeScreen() {
             </TouchableOpacity>
           ))}
 
-{filteredActivityData.length > 3 && (
-        <TouchableOpacity onPress={() => setShowAll(!showAll)} className="py-5 items-center">
-          <Text className="text-lg text-center text-black/60 font-semibold">
-            {showAll ? t("Ẩn bớt") : t("Xem thêm")}
-          </Text>
-        </TouchableOpacity>
-      )}
-          
+          {filteredActivityData.length > 3 && (
+            <TouchableOpacity onPress={() => setShowAll(!showAll)} className="py-5 items-center">
+              <Text className="text-lg text-center text-black/60 font-semibold">
+                {showAll ? t("Ẩn bớt") : t("Xem thêm")}
+              </Text>
+            </TouchableOpacity>
+          )}
+
         </View>
       </Animated.ScrollView>
 
@@ -336,15 +363,6 @@ export default function HomeScreen() {
       >
         <Text className="text-3xl font-bold">HealthCare</Text>
       </Animated.View>
-      <ActionModal
-        visible={openModal}
-        onClose={() => setOpenModal(false)}
-        title={t("Bạn có buổi tập tạm dừng, bạn có muốn tiếp tục tập ?")}
-        options={[
-          { label: t("Hủy buổi tập"), onPress: handleCancelActivity },
-          { label: t("Tiếp tục"), onPress: () => router.push('/activity' as Href) },
-        ]}
-      />
     </View>
   );
 }

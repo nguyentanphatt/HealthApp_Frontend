@@ -44,10 +44,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="news"
         options={{
-          title: t("Tin tức"),
+          title: t("Cộng đồng"),
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} name="newspaper" tabName={t("Tin tức")} />
+            <TabIcon focused={focused} name="newspaper" tabName={t("Cộng đồng")} />
           ),
         }}
       />

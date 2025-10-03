@@ -1,29 +1,28 @@
+import { meals, nutritionFields } from "@/constants/data";
+import { images } from "@/constants/image";
 import { deleteFoodRecordById, getFoodById, updateFoodRecord } from "@/services/food";
+import { useModalStore } from "@/stores/useModalStore";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Image,
-  Modal,
   ScrollView,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-
-import TimeWheelPicker from "@/components/TimeWheelPicker";
-import { images } from "@/constants/image";
 import Toast from "react-native-toast-message";
+
 const Page = () => {
   const { t } = useTranslation();
-  const { id } = useLocalSearchParams();
+  const { id, selectedDate } = useLocalSearchParams();
+  const { openModal } = useModalStore();
   const queryClient = useQueryClient();
   const router = useRouter();
-  const [visible, setVisible] = useState(false);
-  const [confirmVisible, setConfirmVisible] = useState(false);
   const [dropdown, setDropdown] = useState(false);
   const {
     data: foodDetail,
@@ -53,42 +52,24 @@ const Page = () => {
     }
   }, [foodDetail]);
 
-  const loading = loadingFoodDetail;
-  if (loading || !foodDetail) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#000" />
-      </View>
-    );
-  }
+  useEffect(() => {
+    if (foodDetail?.tag) {
+      setSelectedMeal(foodDetail.tag);
+    }
+  }, [foodDetail?.tag]);
 
-  const nutritionFields = [
-    { label: t("Chất đạm"), key: "protein" },
-    { label: t("Chất béo"), key: "fat" },
-    { label: t("Chất xơ"), key: "fiber" },
-    { label: t("Tinh bột"), key: "starch" },
-  ];
+  const updateFoodRecordMutation = useMutation({
+    mutationFn: async ({ id, hour, minute, tag }: { id: string; hour: number; minute: number; tag: string }) => {
+      if (!foodDetail) throw new Error("Missing foodDetail");
 
-  const meals = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
+      const date = foodDetail.loggedAt ? new Date(foodDetail.loggedAt) : new Date();
+      date.setHours(hour, minute, 0, 0);
 
-  const handleSave = async (id:string , hour: number, minute: number, tag:string) => {
-    if (!foodDetail) return;
-    const date = foodDetail.loggedAt
-      ? new Date(foodDetail.loggedAt)
-      : new Date();
+      const timestamp = date.getTime();
 
-    date.setHours(hour);
-    date.setMinutes(minute);
-    date.setSeconds(0);
-    date.setMilliseconds(0);
-
-    const utcISOString = date.toISOString();
-    const timestamp = new Date(utcISOString).getTime();
-
-    console.log("selectedMeal", selectedMeal);
-    
-    try {
-      const res = await updateFoodRecord(id, timestamp.toString(), tag);
+      return updateFoodRecord(id, timestamp.toString(), tag);
+    },
+    onSuccess: (res) => {
       if (res.success) {
         Toast.show({
           type: "success",
@@ -98,34 +79,47 @@ const Page = () => {
         queryClient.invalidateQueries({ queryKey: ["foodWeekly"] });
         refetchFoodDetail();
       }
-    } catch (error) {
-      console.log("Error updating food record:", error);
-      
-    }
-  };
+    },
+    onError: (err) => {
+      console.log("Error updating food record:", err);
+    },
+  });
 
-  const handleDelete = async (id: string) => {
-    try {
-      const res = await deleteFoodRecordById(id);
+  const deleteFoodRecordMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return deleteFoodRecordById(id);
+    },
+    onSuccess: async (res, variables) => {
       if (res.success) {
         Toast.show({
           type: "success",
           text1: t("Xoá thành công"),
         });
-        queryClient.invalidateQueries({ queryKey: ["foodStatus"] });
-        queryClient.invalidateQueries({ queryKey: ["foodWeekly"] });
-        router.back();
+        queryClient.invalidateQueries({ queryKey: ["foodStatus", { date: selectedDate }] });
+        queryClient.invalidateQueries({ queryKey: ["foodWeekly", { date: selectedDate }] });
+        router.push(`/food?selectedDate=${selectedDate}` as Href);
       }
-    } catch (error) {
-      console.error("Error deleting food record:", error);
-    }
-  };
+    },
+    onError: (err) => {
+      console.log("Error deleting food record:", err);
+    },
+  });
+
+  const loading = loadingFoodDetail;
+  if (loading || !foodDetail) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
+  }
 
   const isChanged =
     hour !== hourVN ||
     minute !== minuteVN ||
     selectedMeal !== (foodDetail?.tag || "Sáng");
-
+  console.log("selectedDate", selectedDate);
+  
   return (
     <ScrollView
       className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
@@ -139,45 +133,11 @@ const Page = () => {
             <FontAwesome6 name="chevron-left" size={24} color="black" />
           </TouchableOpacity>
           <Text className="text-2xl font-bold  self-center">{t("Thức ăn")}</Text>
-          <TouchableOpacity onPress={() => setConfirmVisible(true)}>
+          <TouchableOpacity onPress={() => openModal("delete", { confirmDelete: () => deleteFoodRecordMutation.mutate(id as string) })}>
             <FontAwesome6 name="trash" size={24} color="black" />
           </TouchableOpacity>
         </View>
       </View>
-      <Modal
-        visible={confirmVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setConfirmVisible(false)}
-      >
-        <View className="flex-1 justify-end items-center bg-black/30">
-          <View className="bg-white w-[80%] p-5 rounded-t-2xl shadow-lg">
-            <Text className="text-xl text-center mb-10">
-              {t("Bạn có xác nhận muốn xóa ?")}
-            </Text>
-            <View className="flex-row items-center justify-between h-auto w-full">
-              <TouchableOpacity
-                onPress={() => {setConfirmVisible(false)
-                }}
-                className="rounded-lg w-[45%]"
-              >
-                <Text className="text-black text-center text-xl font-bold">
-                  {t("Không")}
-                </Text>
-              </TouchableOpacity>
-              <View className="h-5 w-0.5 bg-black/20" />
-              <TouchableOpacity
-                onPress={() => handleDelete(id as string)}
-                className=" rounded-lg w-[45%]"
-              >
-                <Text className="text-red-500 text-center text-xl font-bold">
-                  {t("Có")}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
       <View className="flex items-center justify-center gap-5 pt-10">
         <Image
           source={
@@ -189,7 +149,7 @@ const Page = () => {
         />
 
         <TouchableOpacity
-          onPress={() => setVisible(true)}
+          onPress={() => openModal("timepicker", { initialHour: hour, initialMinute: minute, handleConfirm: (h: number, m: number) => { setHour(h); setMinute(m); } })}
           className="bg-white rounded-full shadow-md flex-row items-center justify-between h-auto px-6 py-3 gap-5"
         >
           <Text className="text-xl">
@@ -197,35 +157,6 @@ const Page = () => {
             {minute.toString().padStart(2, "0")}
           </Text>
         </TouchableOpacity>
-
-        <Modal
-          visible={visible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setVisible(false)}
-        >
-          <View className="flex-1 items-center justify-center bg-black/30">
-            <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
-              <TimeWheelPicker
-                initialHour={hour}
-                initialMinute={minute}
-                onChange={(h, m) => {
-                  setHour(h);
-                  setMinute(m);
-                }}
-              />
-
-              <TouchableOpacity
-                onPress={() => {
-                  setVisible(false);
-                }}
-                className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
-              >
-                <Text className="text-xl text-black font-bold ">{t("Chỉnh sửa")}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
 
         <View className="relative w-full bg-gray-100">
           <View className="bg-white rounded-md shadow-md flex-row items-center justify-between w-full p-4 relative z-10">
@@ -261,11 +192,10 @@ const Page = () => {
                     className="p-2"
                   >
                     <Text
-                      className={`text-xl ${
-                        selectedMeal === meal
-                          ? "text-blue-500 font-semibold"
-                          : "text-black"
-                      }`}
+                      className={`text-xl ${selectedMeal === meal
+                        ? "text-blue-500 font-semibold"
+                        : "text-black"
+                        }`}
                     >
                       {t(meal)}
                     </Text>
@@ -293,7 +223,7 @@ const Page = () => {
               key={field.key}
               className="flex-row items-center justify-between"
             >
-              <Text className=" text-lg">{field.label}</Text>
+              <Text className=" text-lg">{t(field.label)}</Text>
               <View className="border border-dashed border-black flex-1 mx-2" />
               <Text className=" text-lg">
                 {foodDetail?.[field.key as keyof typeof foodDetail]}
@@ -315,7 +245,7 @@ const Page = () => {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
-              handleSave(id as string, hour, minute, selectedMeal);
+              updateFoodRecordMutation.mutate({ id: id as string, hour, minute, tag: selectedMeal });
             }}
             className="self-center flex-row items-center justify-center bg-cyan-blue w-[45%] py-3 rounded-md"
           >

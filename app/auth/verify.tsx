@@ -1,6 +1,8 @@
 import { images } from "@/constants/image";
 import useAuthStorage from "@/hooks/useAuthStorage";
 import { sendOtp, verifyOtp } from "@/services/user";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useUserStore } from "@/stores/useUserStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
@@ -14,6 +16,8 @@ const Verify = () => {
   const [type, setType] = useState("");
   const [otp, setOtp] = useState("");
   const [timeLeft, setTimeLeft] = useState(5 * 60);
+  const setTokens = useAuthStore(state => state.setTokens)
+  const setUser = useUserStore(state => state.setUser)
   const { saveAuthData } = useAuthStorage()
 
   useEffect(() => {
@@ -41,6 +45,8 @@ const Verify = () => {
         setType(type);
         await AsyncStorage.removeItem("email");
         await AsyncStorage.removeItem("type");
+        // Send OTP after setting email
+        sendOtp(storedEmail);
       }
     };
     loadEmail();
@@ -50,7 +56,8 @@ const Verify = () => {
     try {
      const response = await verifyOtp(email, otp);
      if(response.success){
-      await saveAuthData(response.data)
+      //await saveAuthData(response.data)
+      setTokens(response.data.accessToken, response.data.refreshToken)
       if(type === 'signup'){
         Toast.show({
           type: "success",
@@ -64,7 +71,7 @@ const Verify = () => {
         });
         router.push("/(tabs)");
       }
-      
+
      } 
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;

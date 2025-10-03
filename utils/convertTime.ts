@@ -15,6 +15,19 @@ export function vnTimeToUtcTimestamp(hours: number, minutes: number, isNextDay: 
     return utcDate.getTime();
 }
 
+// Convert a specific selected VN date (unix seconds) plus time to UTC timestamp
+export function vnDateAndTimeToUtcTimestamp(selectedDateSeconds: number, hours: number, minutes: number, isNextDay: boolean = false): number {
+    const vnOffset = 7 * 60 * 60 * 1000;
+    const baseUtcMs = selectedDateSeconds * 1000;
+    const vnDate = new Date(baseUtcMs + vnOffset);
+
+    const appliedHours = isNextDay ? hours + 24 : hours;
+    vnDate.setUTCHours(appliedHours, minutes, 0, 0);
+
+    const utcDate = new Date(vnDate.getTime() - vnOffset);
+    return utcDate.getTime();
+}
+
 //convert utc time to vn time with hour and minute
 export function utcTimeToVnTime(utcTime: number): { hour: number, minute: number } {
     const date = new Date(utcTime);

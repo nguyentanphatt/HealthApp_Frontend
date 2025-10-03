@@ -1,17 +1,16 @@
-import ActionModal from '@/components/ActionModal'
+import { useModalStore } from '@/stores/useModalStore'
 import { FontAwesome6 } from '@expo/vector-icons'
 import * as ImagePicker from "expo-image-picker"
 import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FlatList, Image, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { FlatList, Image, Text, TextInput, TouchableOpacity, View } from 'react-native'
 const index = () => {
     const router = useRouter();
+    const { openModal } = useModalStore();
     const { t } = useTranslation();
     const [selectedTag, setSelectedTag] = useState({ label: "Khác", value: "other" });
     const [images, setImages] = useState<string[]>([]);
-    const [openModal, setOpenModal] = useState(false);
-    const [previewUri, setPreviewUri] = useState<string | null>(null);
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ["images"],
@@ -70,7 +69,7 @@ const index = () => {
                     <TouchableOpacity onPress={() => router.back()}>
                         <FontAwesome6 name="chevron-left" size={24} color="black" />
                     </TouchableOpacity>
-                    <Text className="text-2xl font-bold  self-center">{t("Thêm tin tức")}</Text>
+                    <Text className="text-2xl font-bold  self-center">{t("Thêm bài viết")}</Text>
                     <TouchableOpacity>
                         <Text className="text-2xl font-bold text-cyan-blue self-center">{t("Lưu")}</Text>
                     </TouchableOpacity>
@@ -78,7 +77,7 @@ const index = () => {
             </View>
             <View className='flex gap-2.5'>
                 <View>
-                    <Text className='text-lg font-bold'>
+                    <Text className='text-xl font-bold'>
                         {t("Tiêu đề")}
                     </Text>
                     <TextInput
@@ -88,7 +87,7 @@ const index = () => {
                 </View>
 
                 <View>
-                    <Text className="font-bold text-xl">{t("Loại")}</Text>
+                    <Text className="font-bold text-xl">{t("Chủ đề")}</Text>
                     <View className="flex-row gap-3 mt-4">
                         <FlatList
                             data={options}
@@ -107,7 +106,7 @@ const index = () => {
                                         <Text
                                             className={`text-lg ${isSelectedTag ? "text-white" : "text-black"}`}
                                         >
-                                            {item.label}
+                                            {t(item.label)}
                                         </Text>
                                     </TouchableOpacity>
                                 );
@@ -130,7 +129,12 @@ const index = () => {
                 </View>
                 <View>
                     <Text className="font-bold text-xl">{t("Ảnh")}</Text>
-                    <TouchableOpacity onPress={() => setOpenModal(true)} className="w-full h-64 bg-white rounded-md shadow-md flex items-center justify-center border-dashed border-2 border-black/20 mt-4">
+                    <TouchableOpacity onPress={() => openModal("action", {
+                        options: [
+                            { label: t("Thư viện"), onPress: pickImage },
+                            { label: t("Chụp ảnh"), onPress: takePhoto }
+                        ]
+                    })} className="w-full h-64 bg-white rounded-md shadow-md flex items-center justify-center border-dashed border-2 border-black/20 mt-4">
                         <View className="size-20 flex items-center justify-center bg-cyan-blue/20 rounded-full">
                             <FontAwesome6 name="image" color="black" size={24} />
                         </View>
@@ -151,7 +155,7 @@ const index = () => {
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={{ width: "100%", height: "100%" }}
-                                        onPress={() => setPreviewUri(uri)}
+                                        onPress={() => openModal("imageview", { uri: uri })}
                                     >
                                         <Image
                                             source={{ uri }}
@@ -163,50 +167,6 @@ const index = () => {
                         </View>
                     </View>
                 </View>
-                <ActionModal
-                    visible={openModal}
-                    onClose={() => setOpenModal(false)}
-                    title={t("Chọn ảnh")}
-                    options={[
-                        {
-                            label: t("Thư viện"),
-                            onPress: pickImage
-                        },
-                        {
-                            label: t("Chụp ảnh"),
-                            onPress: takePhoto
-                        }
-                    ]}
-                />
-
-                <Modal
-                    visible={!!previewUri}
-                    transparent={true}
-                    animationType="fade"
-                    onRequestClose={() => setPreviewUri(null)}
-                >
-                    <View className="flex-1 bg-black/90 items-center justify-center">
-                        <TouchableOpacity 
-                            className="absolute top-12 right-4 z-10"
-                            onPress={() => setPreviewUri(null)}
-                        >
-                            <View className="w-10 h-10 bg-black/50 rounded-full items-center justify-center">
-                                <FontAwesome6 name="x" size={20} color="white" />
-                            </View>
-                        </TouchableOpacity>
-                        
-                        {previewUri && (
-                            <Image
-                                source={{ uri: previewUri }}
-                                style={{ 
-                                    width: '90%', 
-                                    height: '80%',
-                                    resizeMode: 'contain'
-                                }}
-                            />
-                        )}
-                    </View>
-                </Modal>
             </View >
         </View>
     )

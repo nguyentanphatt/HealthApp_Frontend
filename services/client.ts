@@ -1,5 +1,5 @@
+import { useAuthStore } from "@/stores/useAuthStore";
 import axios from "axios";
-import * as SecureStore from "expo-secure-store";
 import { getNewToken } from "./user";
 
 const BASE_URL = "http://168.138.168.177:25565/";
@@ -26,7 +26,8 @@ export const uploadClient = axios.create({
 // Request interceptor for privateClient
 privateClient.interceptors.request.use(
   async (config) => {
-    const storedAccess = await SecureStore.getItemAsync("access_token");
+    //const storedAccess = await SecureStore.getItemAsync("access_token");
+    const storedAccess = useAuthStore.getState().accessToken
     if (storedAccess) {
       config.headers.Authorization = `Bearer ${storedAccess}`;
     }
@@ -38,7 +39,8 @@ privateClient.interceptors.request.use(
 // Request interceptor for uploadClient
 uploadClient.interceptors.request.use(
   async (config) => {
-    const storedAccess = await SecureStore.getItemAsync("access_token");
+    //const storedAccess = await SecureStore.getItemAsync("access_token");
+    const storedAccess = useAuthStore.getState().accessToken
     if (storedAccess) {
       config.headers.Authorization = `Bearer ${storedAccess}`;
     }
@@ -69,13 +71,16 @@ privateClient.interceptors.response.use(
 
       isRefreshing = true;
       try {
-        const refreshToken = await SecureStore.getItemAsync("refresh_token");
+        //const refreshToken = await SecureStore.getItemAsync("refresh_token");
+        const refreshToken = useAuthStore.getState().refreshToken
         if (!refreshToken) throw error;
         const data = await getNewToken(refreshToken);
         const newAccess = data.data?.accessToken ?? data.accessToken;
         const newRefresh = data.data?.refreshToken ?? data.refreshToken;
-        if (newAccess) await SecureStore.setItemAsync("access_token", newAccess);
-        if (newRefresh) await SecureStore.setItemAsync("refresh_token", newRefresh);
+        //if (newAccess) await SecureStore.setItemAsync("access_token", newAccess);
+        if (newAccess) useAuthStore.getState().setTokens(newAccess, newRefresh)
+        //if (newRefresh) await SecureStore.setItemAsync("refresh_token", newRefresh);
+        if (newRefresh) useAuthStore.getState().setTokens(newAccess, newRefresh)
         originalRequest.headers.Authorization = `Bearer ${newAccess}`;
 
         pendingQueue.forEach((cb) => cb(newAccess));
@@ -113,13 +118,16 @@ uploadClient.interceptors.response.use(
 
       isRefreshing = true;
       try {
-        const refreshToken = await SecureStore.getItemAsync("refresh_token");
+        //const refreshToken = await SecureStore.getItemAsync("refresh_token");
+        const refreshToken = useAuthStore.getState().refreshToken
         if (!refreshToken) throw error;
         const data = await getNewToken(refreshToken);
         const newAccess = data.data?.accessToken ?? data.accessToken;
         const newRefresh = data.data?.refreshToken ?? data.refreshToken;
-        if (newAccess) await SecureStore.setItemAsync("access_token", newAccess);
-        if (newRefresh) await SecureStore.setItemAsync("refresh_token", newRefresh);
+        //if (newAccess) await SecureStore.setItemAsync("access_token", newAccess);
+        if (newAccess) useAuthStore.getState().setTokens(newAccess, newRefresh)
+        //if (newRefresh) await SecureStore.setItemAsync("refresh_token", newRefresh);
+        if (newRefresh) useAuthStore.getState().setTokens(newAccess, newRefresh)
 
         originalRequest.headers.Authorization = `Bearer ${newAccess}`;
         pendingQueue.forEach((cb) => cb(newAccess));

@@ -1,11 +1,11 @@
-import ActionModal from "@/components/ActionModal";
 import { useUnits } from "@/hooks/useUnits";
 import { updateWaterRecord } from "@/services/water";
+import { useModalStore } from "@/stores/useModalStore";
 import { convertWater } from "@/utils/convertMeasure";
 import { convertISOToTimestamp } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -19,6 +19,7 @@ import Toast from "react-native-toast-message";
 import WheelPickerExpo from "react-native-wheel-picker-expo";
 
 const Page = () => {
+  const { openModal } = useModalStore();
   const { amount, time, type } = useLocalSearchParams<{
     amount: string;
     time: string;
@@ -45,7 +46,6 @@ const Page = () => {
   const [selectedAmount, setSelectedAmount] = useState(initialValue);
   const [selectedHour, setSelectedHour] = useState(initHour);
   const [selectedMinute, setSelectedMinute] = useState(initMinute);
-  const [visible, setVisible] = useState(false);
 
   const hours = Array.from({ length: 24 }, (_, i) => ({
     label: (i + 1).toString(),
@@ -85,6 +85,7 @@ const Page = () => {
       oldTime: date,
     });
 
+
     try {
       if (type === "history") {
         const response = await updateWaterRecord(
@@ -102,7 +103,7 @@ const Page = () => {
         }
       }
     } catch (error) {
-      console.error(error);
+      console.log("error", error);
     }
   };
 
@@ -113,7 +114,13 @@ const Page = () => {
   useEffect(() => {
     const backAction = () => {
       if (isChanged) {
-        setVisible(true);
+        openModal("action", {
+          title: t("Dữ liệu chưa được lưu, bạn có muốn thoát ?"),
+          options: [
+            { label: t("Thoát"), onPress: () => router.push("/water" as Href) },
+            { label: t("Lưu"), onPress: () => handleSave(Number(selectedAmount), selectedHour, selectedMinute, dateTimestamp.toString(), type) },
+          ]
+        });
         return true;
       }
       return false;
@@ -224,54 +231,6 @@ const Page = () => {
           <Text className="text-xl text-white font-bold ">{t("Sửa")}</Text>
         </TouchableOpacity>
       </View>
-
-      {/* <Modal
-        visible={visible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setVisible(false)}
-      >
-        <View className="flex-1 items-center justify-center bg-black/30">
-          <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
-            <Text className="text-lg font-bold mb-4">
-              {t("Dữ liệu chưa được lưu, bạn có muốn thoát ?")}
-            </Text>
-
-            <View className="flex flex-row items-center justify-between">
-              <TouchableOpacity
-                onPress={() => router.back()}
-                className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
-              >
-                <Text className="text-xl text-black font-bold ">{t("Thoát")}</Text>
-              </TouchableOpacity>
-              <Text>|</Text>
-              <TouchableOpacity
-                onPress={() =>
-                  handleSave(
-                    Number(selectedAmount),
-                    selectedHour,
-                    selectedMinute,
-                    dateTimestamp.toString(),
-                    type
-                  )
-                }
-                className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
-              >
-                <Text className="text-xl text-black font-bold ">{t("Lưu")}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal> */}
-      <ActionModal
-        visible={visible}
-        onClose={() => setVisible(false)}
-        title={t("Dữ liệu chưa được lưu, bạn có muốn thoát ?")}
-        options={[
-          { label: t("Thoát"), onPress: () => router.back() },
-          { label: t("Lưu"), onPress: () => handleSave(Number(selectedAmount), selectedHour, selectedMinute, dateTimestamp.toString(), type) },
-        ]}
-      />
     </View>
   );
 };

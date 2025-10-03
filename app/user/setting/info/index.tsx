@@ -1,38 +1,29 @@
-import ActionModal from '@/components/ActionModal';
 import { images } from '@/constants/image';
 import { useUnits } from '@/hooks/useUnits';
 import i18n from '@/plugins/i18n';
-import { getUserProfile, updateUserInfo } from '@/services/user';
+import { updateUserInfo } from '@/services/user';
+import { useModalStore } from '@/stores/useModalStore';
+import { useUserStore } from '@/stores/useUserStore';
 import { FontAwesome6 } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from "expo-image-picker";
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, BackHandler, Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { BackHandler, Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import DateTimePicker, { DateType, useDefaultStyles } from 'react-native-ui-datepicker';
 const Page = () => {
+    const { openModal } = useModalStore();
     const { units, displayHeight, displayWeight, inputToBaseHeight, inputToBaseWeight } = useUnits();
     const { t } = useTranslation();
-    const {
-        data: userProfileStatus,
-        isLoading: loadingUserProfileStatus,
-        refetch: refetchUserProfileStatus,
-      } = useQuery({
-        queryKey: ["userProfile"],
-        queryFn: () =>
-          getUserProfile(
-          ),
-        staleTime: 1000 * 60 * 5,
-      });
+    const user = useUserStore(state => state.user)
     const initialValues = {
-        userName: userProfileStatus?.fullName || "",
-        height: userProfileStatus?.height ? displayHeight(userProfileStatus.height).value.toString() : "",
-        weight: userProfileStatus?.weight ? displayWeight(userProfileStatus.weight).value.toString() : "",
-        gender: userProfileStatus?.gender === "male" ? "Nam" : userProfileStatus?.gender === "female" ? "Nữ" : "Giới tính",
-        birthday: userProfileStatus?.dob ? new Date(userProfileStatus.dob).toLocaleDateString('vi-VN') : "Sinh nhật",
-        profileImage: userProfileStatus?.imageUrl || "noImg",
+        userName: user?.fullName || "",
+        height: user?.height ? displayHeight(user.height).value.toString() : "",
+        weight: user?.weight ? displayWeight(user.weight).value.toString() : "",
+        gender: user?.gender === "male" ? "Nam" : user?.gender === "female" ? "Nữ" : "Giới tính",
+        birthday: user?.dob ? new Date(user.dob).toLocaleDateString('vi-VN') : "Sinh nh�t",
+        profileImage: user?.imageUrl || "noImg",
     };
 
     const [userName, setUserName] = useState<string>(initialValues.userName);
@@ -43,11 +34,9 @@ const Page = () => {
     const [showDateModal, setShowDateModal] = useState<boolean>(false);
     const [birthday, setBirthday] = useState<string>(initialValues.birthday);
     const [gender, setGender] = useState<string>(initialValues.gender);
-    const [genderValue, setGenderValue] = useState<string>(userProfileStatus?.gender || "");
+    const [genderValue, setGenderValue] = useState<string>(user?.gender || "");
     const [showGenderModal, setShowGenderModal] = useState<boolean>(false);
-    const [visible, setVisible] = useState<boolean>(false);
     const [profileImage, setProfileImage] = useState<string | "noImg">(initialValues.profileImage);
-    const [showImageModal, setShowImageModal] = useState<boolean>(false);
     const genderOptions = [
         { label: "Nam", value: "male" },
         { label: "Nữ", value: "female" }
@@ -77,7 +66,7 @@ const Page = () => {
         const formatDate = birthday.split("/");
         const filename = imageUrl.split("/").pop() || `photo.jpg`;
         const formattedDate = `${formatDate[2]}-${formatDate[1]}-${formatDate[0]}`;
-        
+
         const heightInCm = inputToBaseHeight(Number(height));
         const weightInKg = inputToBaseWeight(Number(weight));
 
@@ -96,19 +85,19 @@ const Page = () => {
     }
 
     useEffect(() => {
-        if (userProfileStatus) {
-            setUserName(userProfileStatus.fullName || "");
-            setHeight(userProfileStatus.height ? displayHeight(userProfileStatus.height).value.toString() : "");
-            setWeight(userProfileStatus.weight ? displayWeight(userProfileStatus.weight).value.toString() : "");
-            setGender(userProfileStatus.gender === "male" ? "Nam" : userProfileStatus.gender === "female" ? "Nữ" : "Giới tính");
-            setGenderValue(userProfileStatus.gender || "");
-            setBirthday(userProfileStatus.dob ? new Date(userProfileStatus.dob).toLocaleDateString('vi-VN') : "Sinh nhật");
-            setProfileImage(userProfileStatus.imageUrl || "noImg");
+        if (user) {
+            setUserName(user.fullName || "");
+            setHeight(user.height ? displayHeight(user.height).value.toString() : "");
+            setWeight(user.weight ? displayWeight(user.weight).value.toString() : "");
+            setGender(user.gender === "male" ? "Nam" : user.gender === "female" ? "Nữ" : "Giới tính");
+            setGenderValue(user.gender || "");
+            setBirthday(user.dob ? new Date(user.dob).toLocaleDateString('vi-VN') : "Sinh nhật");
+            setProfileImage(user.imageUrl || "noImg");
         }
-    }, [userProfileStatus, units]);
+    }, [user, units]);
 
-    
-    
+
+
 
     const isChanged =
         userName !== initialValues.userName ||
@@ -118,11 +107,17 @@ const Page = () => {
         birthday !== initialValues.birthday ||
         profileImage !== initialValues.profileImage ||
         profileImage === "noImg";
-    
+
     useEffect(() => {
         const backAction = () => {
             if (isChanged) {
-                setVisible(true);
+                openModal("delete", {
+                    title: t("Dữ liệu chưa được lưu, bạn có muốn thoát ?"),
+                    options: [
+                        { label: t("Thoát"), onPress: () => router.push('/(tabs)/profile') },
+                        { label: t("Lưu"), onPress: () => handleUpdateUserInfo(userName, height, weight, gender, birthday, profileImage ?? "") },
+                    ]
+                });
                 return true;
             }
             return false;
@@ -136,15 +131,6 @@ const Page = () => {
         return () => backHandler.remove();
     }, [isChanged]);
 
-
-    const loading = loadingUserProfileStatus;
-    if (loading) {
-        return (
-            <View className="flex-1 items-center justify-center bg-white">
-                <ActivityIndicator size="large" color="#000" />
-            </View>
-        );
-    }
     return (
         <ScrollView
             className="flex-1 gap-2.5 px-4 py-16 font-lato-regular bg-[#f6f6f6]"
@@ -162,16 +148,19 @@ const Page = () => {
             </View>
 
             <View className="flex gap-6">
-                <TouchableOpacity onPress={() => setShowImageModal(true)} className="relative w-[100px] h-[100px] bg-black/20 rounded-full self-center flex items-center justify-center">
+                <TouchableOpacity onPress={() => openModal("action", { options: [
+                    { label: t("Thư viện"), onPress: pickImage },
+                    { label: t("Chụp ảnh"), onPress: takePhoto }
+                ] })} className="relative w-[100px] h-[100px] bg-black/20 rounded-full self-center flex items-center justify-center">
                     {profileImage !== "noImg" ? (
-                        <Image 
-                            source={{ uri: profileImage }} 
+                        <Image
+                            source={{ uri: profileImage }}
                             className="w-full h-full rounded-full"
                             resizeMode="cover"
                         />
                     ) : (
-                        <Image 
-                            source={images.noImg} 
+                        <Image
+                            source={images.noImg}
                             className="w-full h-full rounded-full"
                             resizeMode="cover"
                         />
@@ -272,7 +261,7 @@ const Page = () => {
                     </TouchableOpacity>
                 </View>
             )}
-            {/* Modal chọn ngày sinh */}
+
             <Modal
                 visible={showDateModal}
                 transparent={true}
@@ -332,40 +321,43 @@ const Page = () => {
                     </View>
                 </View>
             </Modal>
-
-            {/* Modal chọn giới tính */}
-            <ActionModal
-                visible={showGenderModal}
-                onClose={() => setShowGenderModal(false)}
-                title={t("Chọn giới tính")}
-                options={genderOptions.map(option => ({
-                    label: option.label,
-                    onPress: () => {
-                        setGender(option.label);
-                        setGenderValue(option.value);
-                    },
-                    isSelected: gender === option.label
-                }))}
-            />
-
-            {/* Modal chọn ảnh */}
-            <ActionModal
-                visible={showImageModal}
-                onClose={() => setShowImageModal(false)}
-                title={t("Chọn ảnh")}
-                options={[
-                    {
-                        label: t("Thư viện"),
-                        onPress: pickImage
-                    },
-                    {
-                        label: t("Chụp ảnh"),
-                        onPress: takePhoto
-                    }
-                ]}
-            />
-
             <Modal
+                visible={showGenderModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowGenderModal(false)}
+            >
+                <View className="flex-1 justify-end bg-black/50">
+                    <View className="bg-white rounded-t-3xl p-6">
+                        <Text className="text-xl font-bold text-center mb-4">Chọn giới tính</Text>
+                        {genderOptions.map((option, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                onPress={() => {
+                                    setGender(option.label);
+                                    setGenderValue(option.value);
+                                    setShowGenderModal(false);
+                                }}
+                                className={`py-4 px-4 rounded-lg mb-2 ${gender === option.label ? 'bg-blue-100' : 'bg-gray-50'
+                                    }`}
+                            >
+                                <Text className={`text-lg text-center ${gender === option.label ? 'text-blue-600 font-bold' : 'text-gray-700'
+                                    }`}>
+                                    {option.label}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                        <TouchableOpacity
+                            onPress={() => setShowGenderModal(false)}
+                            className="py-3 px-4 rounded-lg bg-gray-200 mt-4"
+                        >
+                            <Text className="text-lg text-center text-gray-700">Hủy</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* <Modal
                 visible={visible}
                 transparent
                 animationType="fade"
@@ -397,7 +389,7 @@ const Page = () => {
                         </View>
                     </View>
                 </View>
-            </Modal>
+            </Modal> */}
         </ScrollView >
     )
 }

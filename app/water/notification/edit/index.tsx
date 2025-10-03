@@ -1,11 +1,11 @@
-import ActionModal from "@/components/ActionModal";
 import { useUnits } from "@/hooks/useUnits";
 import { updateWaterReminder } from "@/services/water";
+import { useModalStore } from "@/stores/useModalStore";
 import { convertWater } from "@/utils/convertMeasure";
 import { convertISOToTimestamp } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -24,6 +24,7 @@ const Page = () => {
     message: string;
     expiresIn: string;
   }>();
+  const { openModal } = useModalStore();
   const { t } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -41,7 +42,6 @@ const Page = () => {
   const [selectedAmount, setSelectedAmount] = useState(initialValue);
   const [selectedHour, setSelectedHour] = useState(initHour);
   const [selectedMinute, setSelectedMinute] = useState(initMinute);
-  const [visible, setVisible] = useState(false);
 
   const hours = Array.from({ length: 24 }, (_, i) => ({
     label: (i + 1).toString(),
@@ -111,7 +111,13 @@ const Page = () => {
   useEffect(() => {
     const backAction = () => {
       if (isChanged) {
-        setVisible(true);
+        openModal("action", {
+          title: t("Dữ liệu chưa được lưu, bạn có muốn thoát ?"),
+          options: [
+            { label: t("Thoát"), onPress: () => router.push("/water" as Href) },
+            { label: t("Lưu"), onPress: () => handleSave(Number(selectedAmount), selectedHour, selectedMinute, dateTimestamp.toString(), id) },
+          ]
+        });
         return true;
       }
       return false;
@@ -222,16 +228,6 @@ const Page = () => {
           <Text className="text-xl text-white font-bold ">{t("Sửa")}</Text>
         </TouchableOpacity>
       </View>
-
-      <ActionModal
-        visible={visible}
-        onClose={() => setVisible(false)}
-        title={t("Dữ liệu chưa được lưu, bạn có muốn thoát ?")}
-        options={[
-          { label: t("Thoát"), onPress: () => router.back() },
-          { label: t("Lưu"), onPress: () => handleSave(Number(selectedAmount), selectedHour, selectedMinute, dateTimestamp.toString(), id) },
-        ]}
-      />
     </View>
   );
 };

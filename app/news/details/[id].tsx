@@ -21,7 +21,7 @@ const NewsDetails = () => {
                     <TouchableOpacity onPress={() => router.back()}>
                         <FontAwesome6 name="chevron-left" size={24} color="black" />
                     </TouchableOpacity>
-                    <Text className="text-2xl font-bold  self-center">{t("Tin tức")}</Text>
+                    <Text className="text-2xl font-bold  self-center">{t("Bài viết")}</Text>
                     <TouchableOpacity>
                         <FontAwesome6 name="heart" size={20} color="red" />
                     </TouchableOpacity>

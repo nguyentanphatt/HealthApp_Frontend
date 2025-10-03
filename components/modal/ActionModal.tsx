@@ -2,7 +2,7 @@ import { Modal, Text, TouchableOpacity, View } from "react-native";
 
 interface ActionModalProps {
     visible: boolean;
-    onClose: () => void;
+    closeModal: () => void;
     title: string;
     options: Array<{
         label: string;
@@ -11,13 +11,13 @@ interface ActionModalProps {
     }>;
 }
 
-export default function ActionModal({ visible, onClose, title, options }: ActionModalProps) {
+export default function ActionModal({ visible, closeModal , title, options }: ActionModalProps) {
     return (
         <Modal
             visible={visible}
             transparent={true}
             animationType="fade"
-            onRequestClose={onClose}
+            onRequestClose={closeModal}
         >
             <View className="flex-1 justify-end bg-black/50">
                 <View className="bg-white rounded-t-3xl p-6">
@@ -27,7 +27,7 @@ export default function ActionModal({ visible, onClose, title, options }: Action
                             key={index}
                             onPress={() => {
                                 option.onPress();
-                                onClose();
+                                closeModal();
                             }}
                             className="py-4 px-4 rounded-lg mb-2"
                             style={{
@@ -42,7 +42,7 @@ export default function ActionModal({ visible, onClose, title, options }: Action
                         </TouchableOpacity>
                     ))}
                     <TouchableOpacity
-                        onPress={onClose}
+                        onPress={closeModal}
                         className="py-4 px-4 rounded-lg bg-gray-200"
                     >
                         <Text className="text-lg text-center text-gray-700">Hủy</Text>
