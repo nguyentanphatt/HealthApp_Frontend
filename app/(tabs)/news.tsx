@@ -84,7 +84,7 @@ const News = () => {
     }
   }, [blogs, blogsByUserId, page, selectedSort.value, type]);
 
-  const handleTagChange = (tag: {label: string, value: string}) => {
+  const handleTagChange = (tag: { label: string, value: string }) => {
     // Ignore if selecting the same tag
     if (selectedTag.value === tag?.value) return;
     setSelectedTag(tag);
@@ -92,7 +92,7 @@ const News = () => {
     setAllBlogs([]);
   };
 
-  const handleSortChange = (sort: {label: string, value: string}) => {
+  const handleSortChange = (sort: { label: string, value: string }) => {
     // Ignore if selecting the same sort
     if (selectedSort.value === sort?.value) return;
     setSelectedSort(sort);
@@ -135,16 +135,16 @@ const News = () => {
       >
         <View className="flex bg-[#f6f6f6] pt-16">
           <View className='flex flex-row items-center justify-between'>
-           {type === "user" ? (
-            <TouchableOpacity onPress={() => router.push(`/(tabs)/news` as Href)} className='size-14 bg-[#f6f6f6] rounded-full flex items-center justify-center'>
-              <FontAwesome6 name="chevron-left" size={24} color="black" />
-            </TouchableOpacity>
-           ) : (
-            <View className='size-14 bg-[#f6f6f6] rounded-full' />
-           )}
+            {type === "user" ? (
+              <TouchableOpacity onPress={() => router.push(`/(tabs)/news` as Href)} className='size-14 bg-[#f6f6f6] rounded-full flex items-center justify-center'>
+                <FontAwesome6 name="chevron-left" size={24} color="black" />
+              </TouchableOpacity>
+            ) : (
+              <View className='size-14 bg-[#f6f6f6] rounded-full' />
+            )}
             <Text className="text-2xl font-bold  self-center">{type === "user" ? t("Cá nhân") : t("Cộng đồng")}</Text>
             <TouchableOpacity onPress={() => router.push(`/(tabs)/news?type=user` as Href)}>
-            <Image source={user?.imageUrl ? { uri: user.imageUrl } : images.noImg} className='size-14 bg-red-500 rounded-full' />
+              <Image source={user?.imageUrl ? { uri: user.imageUrl } : images.noImg} className='size-14 bg-red-500 rounded-full' />
             </TouchableOpacity>
           </View>
           <View className='flex flex-row items-center justify-between py-5'>
@@ -178,22 +178,16 @@ const News = () => {
               </View>
               <Text className='text-center text-3xl font-bold'>{item.title}</Text>
 
-              <View className='flex flex-row items-center justify-center gap-2'>
-                <Text className='text-black/60 text-lg'>{item.userName}</Text>
-                <Text className='text-black/60 text-lg'>
-                {dayjs(item.createAt).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm')}
-                </Text>
-              </View>
-              <View className='border-t border-black/10 pt-4'>
+              <View className=''>
                 <Text
                   numberOfLines={2}
                   ellipsizeMode="tail"
-                  className="text-black/70 text-base leading-5"
+                  className="text-black/70 text-xl leading-5"
                 >
                   {item.content}
                 </Text>
                 <View className='flex-row items-center justify-between'>
-                  <TouchableOpacity className="mt-2" onPress={() => router.push(`/news/details/${item.id}` as Href)}>
+                  <TouchableOpacity className="mt-4" onPress={() => router.push(`/news/details/${item.id}` as Href)}>
                     <Text className="text-cyan-blue font-semibold">{t("Xem thêm")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity className="mt-2 flex-row items-center justify-center gap-2">
@@ -202,6 +196,29 @@ const News = () => {
                   </TouchableOpacity>
                 </View>
               </View>
+              <View className='w-full h-[1px] bg-black/20 my-4' />
+              <View className='flex flex-row items-center gap-5'>
+                <View className='flex flex-row items-center gap-2'>
+                  <FontAwesome6 name="user" size={20} color="black" />
+                  <Text className='text-black/60 text-lg'>{item.userName}</Text>
+                </View>
+                <View className='flex flex-row items-center gap-2 ml-2'>
+                  <FontAwesome6 name="calendar" size={20} color="black" />
+                  <Text className='text-black/60 text-lg'>
+                    {dayjs(item.createAt).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm')}
+                  </Text>
+                </View>
+
+              </View>
+              {item.updateAt && (
+                <View className='w-full flex flex-row items-center'>
+                  <Text className='text-black/60'>{"("}{t("Ngày cập nhật:")}</Text>
+
+                  <Text className='text-black text ml-2'>
+                    {dayjs(item.updateAt).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm')}{")"}
+                  </Text>
+                </View>
+              )}
             </View>
           </TouchableOpacity>
         ))}

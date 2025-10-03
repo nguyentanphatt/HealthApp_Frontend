@@ -66,3 +66,45 @@ export const getBlogsByUserId = async (optional?:{page?:number, heart?:string}):
         throw error
     }
 }
+
+export const deleteBlog = async (id: string):Promise<{success: boolean, message?: string, deletedBlog: CreateBlog}> => {
+    try {
+        const response = await privateClient.delete(`/api/blog/${id}`)
+        return response.data
+    } catch (error) {
+        throw error
+    }
+}
+
+export const updateBlog = async (id: string, title:string, image:string, content:string, category:string):Promise<CreateBlog> => {
+    try {
+        const formData = new FormData();
+        
+        formData.append("title", title);
+        formData.append("content", content);
+        formData.append("category", category);
+        
+        if (image) {
+            const filename = image.split("/").pop() || `photo.jpg`;
+            const match = /\.(\w+)$/.exec(filename);
+            const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+            const file: any = {
+                uri: image,
+                name: filename,
+                type,
+            };
+            
+            formData.append("file", file);
+        }
+  
+        const response = await privateClient.put(`/api/blog/${id}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

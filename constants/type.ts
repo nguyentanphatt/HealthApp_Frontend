@@ -235,8 +235,8 @@ export interface CreateBlog {
   title: string,
   image:string,
   content:string,
-  createdAt:string,
-  updatedAt:string,
+  createAt:string,
+  updateAt:string,
   userId:string
   userName:string,
   category:string

@@ -1,26 +1,46 @@
 import { categoryBlog } from '@/constants/data'
-import { createNewBlog } from '@/services/blog'
+import { createNewBlog, getBlogById, updateBlog } from '@/services/blog'
 import { useModalStore } from '@/stores/useModalStore'
 import { FontAwesome6 } from '@expo/vector-icons'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as ImagePicker from "expo-image-picker"
-import { useRouter } from 'expo-router'
-import React, { useRef, useState } from 'react'
+import { Href, useLocalSearchParams, useRouter } from 'expo-router'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FlatList, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import Toast from 'react-native-toast-message'
 const index = () => {
     const router = useRouter();
     const { openModal } = useModalStore();
+    const { id } = useLocalSearchParams();
     const { t } = useTranslation();
+    const queryClient = useQueryClient();
     const [selectedTag, setSelectedTag] = useState({ label: "Khác", value: "other" });
     const [images, setImages] = useState<string[]>([]);
     const [content, setContent] = useState("");
     const [title, setTitle] = useState("");
     const scrollViewRef = useRef<ScrollView>(null);
     const contentInputRef = useRef<TextInput>(null);
+    const shouldAutoScrollRef = useRef(false);
+    
+    const { data: blog, isLoading } = useQuery({
+        queryKey: ["blog", id],
+        queryFn: () => getBlogById(id as string),
+        select: (res) => res.blogs[0],
+    });
+
+    useEffect(() => {
+        if (blog) {
+            setTitle(blog.title);
+            setContent(blog.content);
+            setImages([blog.image]);
+            setSelectedTag({ label: blog.category, value: blog.category });
+            // Do not auto scroll when prefilling edit data
+            shouldAutoScrollRef.current = false;
+        }
+    }, [id]);
+
     const pickImage = async () => {
-        // Blur content input to prevent keyboard from showing after image selection
         contentInputRef.current?.blur();
         
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -36,7 +56,7 @@ const index = () => {
     };
 
     const takePhoto = async () => {
-        // Blur content input to prevent keyboard from showing after photo capture
+        
         contentInputRef.current?.blur();
         
         let result = await ImagePicker.launchCameraAsync({
@@ -50,13 +70,6 @@ const index = () => {
     const createMutation = useMutation({
         mutationFn: ({title, image, content, category}: {title:string, image:string, content:string, category:string}) => {
             const timestamp = new Date().getTime();
-            console.log("image", image,
-                "title", title,
-                "content", content,
-                "category", category,
-                "timestamp", timestamp
-            );
-            
             return createNewBlog(title, image, content, timestamp, category);
         },
         onSuccess: () => {
@@ -75,6 +88,55 @@ const index = () => {
             });
         },
     })
+
+    const updateMutation = useMutation({
+        mutationFn: ({id, title, image, content, category}: {id:string, title:string, image:string, content:string, category:string}) => {
+            return updateBlog(id, title, image, content, category);
+        },
+        onSuccess: () => {
+            Toast.show({
+                type: "success",
+                text1: "Sửa bài viết thành công",
+            });
+        },
+        onError: (error) => {
+            console.log("error", error);
+            Toast.show({
+                type: "error",
+                text1: "Sửa bài viết thất bại",
+            });
+        },
+    })
+
+    const handleSave = () => {
+        const titleTrimmed = title.trim();
+        const contentTrimmed = content.trim();
+        if (!titleTrimmed || !contentTrimmed) {
+            Toast.show({
+                type: "error",
+                text1: t("Vui lòng nhập đầy đủ tiêu đề và nội dung"),
+            });
+            return;
+        }
+        if (id) {
+            updateMutation.mutate({
+                id: id as string,
+                title: titleTrimmed,
+                image: images[0],
+                content: contentTrimmed,
+                category: selectedTag.value,
+            });
+            queryClient.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"), refetchType: 'active' });
+            router.push(`/news/details/${id}` as Href);
+        } else {
+            createMutation.mutate({
+                title: titleTrimmed,
+                image: images[0],
+                content: contentTrimmed,
+                category: selectedTag.value,
+            });
+        }
+    };
 
     const logData = (title:string, image:string, content:string, category:string) => {
         const date = new Date();
@@ -105,14 +167,9 @@ const index = () => {
                     <TouchableOpacity onPress={() => router.back()}>
                         <FontAwesome6 name="chevron-left" size={24} color="black" />
                     </TouchableOpacity>
-                    <Text className="text-2xl font-bold self-center">{t("Thêm bài viết")}</Text>
-                    <TouchableOpacity onPress={() => createMutation.mutate({
-                        title,
-                        image: images[0],
-                        content,
-                        category: selectedTag.value
-                    })}>
-                        <Text className="text-2xl font-bold text-cyan-blue self-center">{t("Lưu")}</Text>
+                    <Text className="text-2xl font-bold self-center">{id ? t("Sửa bài viết") : t("Thêm bài viết")}</Text>
+                    <TouchableOpacity onPress={handleSave}>
+                        <Text className="text-2xl font-bold text-cyan-blue self-center">{id ? t("Sửa") : t("Lưu")}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -170,19 +227,24 @@ const index = () => {
                         value={content}
                         onChangeText={(text) => {
                             setContent(text);
-                            setTimeout(() => {
-                                scrollViewRef.current?.scrollToEnd({ animated: true });
-                            }, 100);
+                            if (shouldAutoScrollRef.current) {
+                                setTimeout(() => {
+                                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                                }, 100);
+                            }
                         }}
                         onFocus={() => {
+                            shouldAutoScrollRef.current = true;
                             setTimeout(() => {
                                 scrollViewRef.current?.scrollToEnd({ animated: true });
                             }, 300);
                         }}
                         onContentSizeChange={() => {
-                            setTimeout(() => {
-                                scrollViewRef.current?.scrollToEnd({ animated: true });
-                            }, 10);
+                            if (shouldAutoScrollRef.current) {
+                                setTimeout(() => {
+                                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                                }, 10);
+                            }
                         }}
                         style={{ 
                             minHeight: 100,

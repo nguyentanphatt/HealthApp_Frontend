@@ -1,25 +1,50 @@
 import ActionModal from '@/components/modal/ActionModal';
 import { images } from '@/constants/image';
-import { getBlogById } from '@/services/blog';
+import { deleteBlog, getBlogById } from '@/services/blog';
+import { useModalStore } from '@/stores/useModalStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { FontAwesome6 } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 const NewsDetails = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const user = useUserStore((state) => state.user);
   const [isLiked, setIsLiked] = useState(false);
   const [showAction, setShowAction] = useState(false);
+  const { openModal } = useModalStore();
   const { data: blog, isLoading } = useQuery({
     queryKey: ["blog", id],
     queryFn: () => getBlogById(id as string),
     select: (res) => res.blogs,
+  });
+
+  const deleteBlogMutation = useMutation({
+    mutationFn: async (id: string) => {
+      console.log("id", id);
+      
+      return deleteBlog(id);
+    },
+    onSuccess: (res) => {
+      if (res.success) {
+        Toast.show({
+          type: "success",
+          text1: t("Xoá thành công"),
+        });
+      }
+      queryClient.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"), refetchType: 'active' });
+      router.push(`/news` as Href);
+    },
+    onError: (err) => {
+      console.log("Error deleting blog:", err);
+    },
   });
 
   if (isLoading || !blog) {
@@ -29,9 +54,6 @@ const NewsDetails = () => {
       </View>
     );
   }
-
-  console.log("blog", blog);
-  console.log("user", user);
   
   return (
     <View className='flex-1 relative'>
@@ -60,7 +82,7 @@ const NewsDetails = () => {
           <Text className="text-3xl font-bold">{blog[0]?.title}</Text>
           <View className='flex flex-row items-center justify-center gap-2 mb-10'>
             <Text className='text-black/60 text-lg'>{blog[0]?.userName}</Text>
-            <Text className='text-black/60 text-lg'>{dayjs(blog[0]?.createdAt).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm')}</Text>
+            <Text className='text-black/60 text-lg'>{dayjs(blog[0]?.createAt).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm')}</Text>
           </View>
           <Image
             source={blog[0]?.image ? { uri: blog[0].image } : images.noImg}
@@ -104,7 +126,8 @@ const NewsDetails = () => {
           {
             label: t('Xóa'),
             onPress: () => {
-              // TODO: integrate delete API
+              //deleteBlogMutation.mutate(id as string);
+              openModal("delete", { confirmDelete: () => deleteBlogMutation.mutate(id as string) });
               setShowAction(false);
             },
             backgroundColor: '#ef4444',
