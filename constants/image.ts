@@ -9,6 +9,8 @@ import food01 from '@/assets/images/food01.png';
 import noImg from '@/assets/images/no_img.png';
 import sleep from '@/assets/images/sleep.png';
 
+import heart from '@/assets/images/heart.png';
+
 import googleicon from '@/assets/images/googleicon.png';
 import star from '@/assets/images/star.png';
 export const images = {
@@ -23,5 +25,6 @@ export const images = {
   star,
   googleicon,
   food01,
-  noImg
+  noImg,
+  heart
 };

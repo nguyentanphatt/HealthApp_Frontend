@@ -79,6 +79,37 @@ export const options = [
   },
 ]
 
+export const categoryBlog = [
+  {
+    id: 1,
+    label: "Nước",
+    value: "water",
+  },
+  {
+    id: 2,
+    label: "Thức ăn",
+    value: "food",
+  },
+
+  {
+    id: 3,
+    label: "Vận động",
+    value: "fitness",
+  },
+
+  {
+    id: 4,
+    label: "Giấc ngủ",
+    value: "sleep",
+  },
+
+  {
+    id: 5,
+    label: "Khác",
+    value: "other",
+  },
+]
+
 export const sortOptions = [
   {
     id: 1,
@@ -86,18 +117,18 @@ export const sortOptions = [
     value: "newest",
   },
   {
-    id: 1,
+    id: 2,
     label: "Cũ nhất",
     value: "oldest",
   },
   {
-    id: 1,
+    id: 3,
     label: "Yêu thích ↑",
     value: "favorite-increase",
   },
   {
-    id: 1,
-    label: "Độ yêu ↓",
+    id: 4,
+    label: "Yêu thích ↓",
     value: "favorite-decrease",
   },
 ]

@@ -229,3 +229,26 @@ export interface UserProfile {
   weight:number,
   imageUrl:string
 }
+
+export interface CreateBlog {
+  id: number,
+  title: string,
+  image:string,
+  content:string,
+  createdAt:string,
+  updatedAt:string,
+  userId:string
+  userName:string,
+  category:string
+  likes:number
+}
+
+export interface GetBlogsResponse {
+  success: boolean
+  blogs: CreateBlog[]
+  pagination?: {
+    page: number,
+    totalPages: number,
+    totalItems: number,
+  }
+}

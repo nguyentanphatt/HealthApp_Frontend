@@ -1,10 +1,11 @@
 import { images } from '@/constants/image';
 import { useUnits } from '@/hooks/useUnits';
 import i18n from '@/plugins/i18n';
-import { updateUserInfo } from '@/services/user';
+import { getUserProfile, updateUserInfo, uploadImage } from '@/services/user';
 import { useModalStore } from '@/stores/useModalStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { FontAwesome6 } from '@expo/vector-icons';
+import { useMutation } from '@tanstack/react-query';
 import * as ImagePicker from "expo-image-picker";
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -14,6 +15,7 @@ import Toast from 'react-native-toast-message';
 import DateTimePicker, { DateType, useDefaultStyles } from 'react-native-ui-datepicker';
 const Page = () => {
     const { openModal } = useModalStore();
+    const setUser = useUserStore(state => state.setUser)
     const { units, displayHeight, displayWeight, inputToBaseHeight, inputToBaseWeight } = useUnits();
     const { t } = useTranslation();
     const user = useUserStore(state => state.user)
@@ -62,21 +64,33 @@ const Page = () => {
         }
     };
 
+    const userProfileMutation = useMutation({
+        mutationFn: async () => {
+          return await getUserProfile()
+        },
+        onSuccess: (response) => {
+          setUser(response)
+        }
+      })
+
     const handleUpdateUserInfo = async (fullName: string, height: string, weight: string, gender: string, birthday: string, imageUrl: string) => {
         const formatDate = birthday.split("/");
-        const filename = imageUrl.split("/").pop() || `photo.jpg`;
         const formattedDate = `${formatDate[2]}-${formatDate[1]}-${formatDate[0]}`;
 
         const heightInCm = inputToBaseHeight(Number(height));
         const weightInKg = inputToBaseWeight(Number(weight));
 
         try {
-            const response = await updateUserInfo(fullName, formattedDate, genderValue, heightInCm, weightInKg, filename);
+            const imageRes = await uploadImage(imageUrl)
+            console.log("imageRes", imageRes);
+            
+            const response = await updateUserInfo(fullName, formattedDate, genderValue, heightInCm, weightInKg, imageRes.imageUrl);
             if (response.success) {
                 Toast.show({
                     type: "success",
                     text1: "Cập nhật thông tin thành công",
                 });
+                userProfileMutation.mutateAsync()
                 router.push('/(tabs)/profile');
             }
         } catch (error) {

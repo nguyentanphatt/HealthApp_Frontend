@@ -8,6 +8,8 @@ interface ActionModalProps {
         label: string;
         onPress: () => void;
         isSelected?: boolean;
+        backgroundColor?: string;
+        textColor?: string;
     }>;
 }
 
@@ -31,12 +33,13 @@ export default function ActionModal({ visible, closeModal , title, options }: Ac
                             }}
                             className="py-4 px-4 rounded-lg mb-2"
                             style={{
-                                backgroundColor: index === 0 ? '#ef4444' : index === 1 ? '#19B1FF' : '#f9fafb'
+                                backgroundColor: option.backgroundColor || '#d1d4dc'
                             }}
                         >
-                            <Text className={`text-lg text-center ${index === 0 ? 'text-white font-bold' : index === 1 ? 'text-white font-bold' : 'text-gray-700'
-                                } ${option.isSelected ? 'text-blue-600 font-bold' : 'text-gray-700'
-                                }`}>
+                            <Text 
+                                style={{ color: option.textColor || 'black' }} 
+                                className="text-lg text-center"
+                            >
                                 {option.label}
                             </Text>
                         </TouchableOpacity>
