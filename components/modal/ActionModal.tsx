@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 
 interface ActionModalProps {
@@ -14,6 +15,7 @@ interface ActionModalProps {
 }
 
 export default function ActionModal({ visible, closeModal , title, options }: ActionModalProps) {
+    const { t } = useTranslation();
     return (
         <Modal
             visible={visible}
@@ -48,7 +50,7 @@ export default function ActionModal({ visible, closeModal , title, options }: Ac
                         onPress={closeModal}
                         className="py-4 px-4 rounded-lg bg-gray-200"
                     >
-                        <Text className="text-lg text-center text-gray-700">Hủy</Text>
+                        <Text className="text-lg text-center text-gray-700">{t("Hủy")}</Text>
                     </TouchableOpacity>
                 </View>
             </View>

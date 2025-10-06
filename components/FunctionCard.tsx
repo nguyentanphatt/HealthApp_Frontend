@@ -13,7 +13,7 @@ const FunctionCard = ({classname, iconName, title, href, children}:FuctionCardPr
   const router = useRouter()
   const handleNavigation = () => {
     if (href) {
-      router.push(href as any); //Can change if need
+      router.push(href as any);
     }
   }
   return (

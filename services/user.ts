@@ -1,6 +1,7 @@
+import { NewTokens, OtpData, UserProfile, WeeklyGoal } from "@/constants/type";
 import { privateClient, publicClient } from "./client";
 
-export const signup = async (email: string, password: string) => {
+export const signup = async (email: string, password: string):Promise<{success:boolean,message:string, userId:string}> => {
   try {
     const response = await publicClient.post('/api/auth/register', {
       email,
@@ -12,7 +13,7 @@ export const signup = async (email: string, password: string) => {
   }
 }
 
-export const sendOtp = async (email: string) => {
+export const sendOtp = async (email: string):Promise<{success:boolean,message:string, otpExpiresIn:number}> => {
   try {
     const response = await publicClient.post("/api/auth/getOTPByEmail", {
       email,
@@ -23,7 +24,7 @@ export const sendOtp = async (email: string) => {
   }
 }
 
-export const verifyOtp = async (email: string, otp: string) => {
+export const verifyOtp = async (email: string, otp: string):Promise<{success:boolean,message:string, data:OtpData}> => {
   try {
     const response = await publicClient.post("/api/auth/verifyOTP", {
       email,
@@ -35,7 +36,7 @@ export const verifyOtp = async (email: string, otp: string) => {
   }
 }
 
-export const signin = async (email: string, password: string) => {
+export const signin = async (email: string, password: string):Promise<{success:boolean,message:string, userId:string}> => {
   try {
     const response = await publicClient.post("/api/auth/login", {
       email,
@@ -50,14 +51,14 @@ export const signin = async (email: string, password: string) => {
 const isTokenExpired = (token: string | null): boolean => {
   if (!token) return true;
   try {
-    // Convert base64url → base64 then decode using atob (available in RN via polyfill)
+
     const base64Url = token.split(".")[1];
     const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
     const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
     const jsonPayload = atob(padded);
     const payload = JSON.parse(jsonPayload);
     const exp = payload.exp * 1000;
-    // consider about-to-expire within 30s as expired to proactively refresh
+
     return Date.now() >= exp - 30_000;
   } catch (e) {
     console.warn("Invalid token format", e);
@@ -65,12 +66,7 @@ const isTokenExpired = (token: string | null): boolean => {
   }
 };
 
-type newTokens = {
-  accessToken: string;
-  refreshToken: string;
-}
-
-export const refreshNewToken = async (accessToken: string | null, refreshToken: string | null): Promise<newTokens> => {
+export const refreshNewToken = async (accessToken: string | null, refreshToken: string | null): Promise<NewTokens> => {
   if (!accessToken || isTokenExpired(accessToken)) {
     if (!refreshToken) {
       console.warn("No refresh token available");
@@ -83,18 +79,6 @@ export const refreshNewToken = async (accessToken: string | null, refreshToken: 
         accessToken: response.data.accessToken,
         refreshToken: response.data.refreshToken,
       };
-      /* if (newTokens.accessToken && newTokens.refreshToken) {
-        await SecureStore.setItemAsync(
-          ACCESS_TOKEN_KEY,
-          newTokens.accessToken
-        );
-        await SecureStore.setItemAsync(
-          REFRESH_TOKEN_KEY,
-          newTokens.refreshToken
-        );
-        setAccessToken(newTokens.accessToken);
-        setRefreshToken(newTokens.refreshToken);
-      } */
       return newTokens;
     } catch (e) {
       console.error("Error refreshing token", e);
@@ -104,7 +88,7 @@ export const refreshNewToken = async (accessToken: string | null, refreshToken: 
   return { accessToken: accessToken || "", refreshToken: refreshToken || "" };
 };
 
-export const getNewToken = async (refreshToken: string) => {
+export const getNewToken = async (refreshToken: string):Promise<{success:boolean, message:string, data:OtpData}> => {
   try {
     const response = await publicClient.post("/api/auth/refresh", {
       refreshToken,
@@ -131,7 +115,7 @@ export const updateUserInfo = async (fullName: string, dob: string, gender: stri
   }
 }
 
-export const getUserProfile = async () => {
+export const getUserProfile = async ():Promise<UserProfile> => {
   try {
     const response = await privateClient.get("/api/user/profile");
     return response.data
@@ -175,6 +159,19 @@ export const uploadImage = async (image: string): Promise<{success: string, imag
     const response = await privateClient.post("/api/user/upload", formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getWeeklyGoal = async (option?:{date?:string}):Promise<{success:boolean,data:WeeklyGoal}> => {
+  try {
+    const response = await privateClient.get("/api/stats/weekly", {
+      params: {
+        date: option?.date,
       },
     });
     return response.data

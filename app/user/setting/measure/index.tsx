@@ -10,10 +10,10 @@ const Page = () => {
   const { units, setUnit, isLoaded } = useUnits();
   const { t } = useTranslation();
   const measureData = [
-    { key: "height", label: t("Chiều cao"), options: ["cm", "ft"] },
-    { key: "weight", label: t("Cân nặng"), options: ["kg", "g"] },
-    { key: "water", label: t("Lượng nước"), options: ["ml", "fl oz"] },
-    { key: "temperature", label: t("Nhiệt độ"), options: ["C", "F"] },
+    { key: "height", label: "Chiều cao", options: ["cm", "ft"] },
+    { key: "weight", label: "Cân nặng", options: ["kg", "g"] },
+    { key: "water", label: "Lượng nước", options: ["ml", "fl oz"] },
+    { key: "temperature", label: "Nhiệt độ", options: ["C", "F"] },
   ] as const;
 
   if (!isLoaded) {
@@ -51,7 +51,7 @@ const Page = () => {
                   setOpenDropdown(openDropdown === item.key ? null : item.key)
                 }
               >
-                <Text className="text-xl">{item.label}</Text>
+                <Text className="text-xl">{t(item.label)}</Text>
                 <View>
                   <Text className="text-xl text-cyan-blue">
                     {units[item.key]}

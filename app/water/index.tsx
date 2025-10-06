@@ -65,7 +65,6 @@ const Page = () => {
   const {
     data: waterStatus,
     isLoading: loadingWaterStatus,
-    isFetching: fetchingWaterStatus,
     refetch: refetchWaterStatus,
   } = useQuery({
     queryKey: ["waterStatus", { date: selectedDate }],
@@ -83,8 +82,6 @@ const Page = () => {
   const {
     data: weatherReport,
     isLoading: loadingWeather,
-    isFetching: fetchingWeather,
-    refetch: refetchWeather,
   } = useQuery({
     queryKey: ["weatherReport"],
     queryFn: async () => {
@@ -96,7 +93,6 @@ const Page = () => {
   const {
     data: waterWeeklyData,
     isLoading: loadingWeekly,
-    isFetching: fetchingWeekly,
     refetch: refetchWeekly,
   } = useQuery({
     queryKey: ["waterWeekly", { date: selectedDate }],
@@ -114,7 +110,6 @@ const Page = () => {
   const {
     data: waterReminderData,
     isLoading: loadingReminder,
-    isFetching: fetchingReminder,
     refetch: refetchReminder,
   } = useQuery({
     queryKey: ["waterReminder"],

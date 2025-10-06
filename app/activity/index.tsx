@@ -31,8 +31,6 @@ const Page = () => {
     const [showPolygon, setShowPolygon] = useState(false);
     const [isStart, setIsStart] = useState(false);
     const [isPause, setIsPause] = useState(false);
-    const isStartRef = useRef<boolean>(false);
-    const isPauseRef = useRef<boolean>(false);
     const [isLocked, setIsLocked] = useState(false);
     const [avgSpeed, setAvgSpeed] = useState(0);
     const [currentSpeed, setCurrentSpeed] = useState(0);
@@ -45,15 +43,17 @@ const Page = () => {
     const [currentMV, setCurrentMV] = useState(0);
     const [showCountdown, setShowCountdown] = useState(false);
     const [countdown, setCountdown] = useState(3);
+    const [stepCount, setStepCount] = useState(0);
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     //Refs
+    const isStartRef = useRef<boolean>(false);
+    const isPauseRef = useRef<boolean>(false);
     const startTimeRef = useRef<number | null>(null);
     const pauseStartTimeRef = useRef<number | null>(null);
     const totalPauseTimeRef = useRef<number>(0);
     const mvSumRef = useRef<number>(0);
     const mvCountRef = useRef<number>(0);
-    const [stepCount, setStepCount] = useState(0);
     const mapRef = useRef<MapView | null>(null);
     const subscriptionRef = useRef<Location.LocationSubscription | null>(null);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -71,6 +71,19 @@ const Page = () => {
     const thresholdRef = useRef<number>(0.02);
     const warmupCountRef = useRef<number>(0);
     const absNetEmaRef = useRef<number>(0);
+
+    const ensurePermission = async (): Promise<boolean> => {
+        if (hasPermission) return true;
+
+        const granted = await checkLocationPermission();
+        setHasPermission(granted);
+
+        if (granted) {
+            await requestActivityRecognitionPermission();
+        }
+
+        return granted;
+    };
 
     // Track app state changes
     useEffect(() => {
@@ -100,13 +113,13 @@ const Page = () => {
                 const currentTime = Date.now();
                 const lastStateTime = lastAppState ? parseInt(lastAppState) : 0;
                 
-                // If app was killed (more than 30 seconds since last state) or no last state, reset session
+                // If app was killed more than 30s then reset session 
                 if (wasActive && storedId && (currentTime - lastStateTime > 30000 || !lastAppState)) {
                     console.log('App was killed, resetting activity session');
                     await AsyncStorage.multiRemove(['activity_tracking_active', 'activity_session_id', 'last_app_state']);
                     return;
                 }
-                
+                // If app was killed less than 30s then get activity data
                 if (wasActive && storedId && (currentTime - lastStateTime <= 30000)) {
                     const sid = Number(storedId);
                     if (Number.isFinite(sid)) {
@@ -122,7 +135,6 @@ const Page = () => {
                             setPositions(convertedPositions);
                         }
                         sessionIdRef.current = sid;
-                        setSessionId(String(sid));
                         hasCreatedFirstSnapshotRef.current = true;
                         try {
                             const server = (data as any)?.data ?? data;
@@ -139,7 +151,6 @@ const Page = () => {
                             const stepCountNum = Number(server?.stepCount ?? 0) || 0;
                             const distanceMNum = Number(server?.distanceM ?? (Number(server?.distanceKm ?? 0) * 1000)) || 0;
                             
-                            // Calculate pause time and adjust elapsed/active time
                             const [appPauseTime, isPausedStr, pauseStartStr, totalPauseStr] = await AsyncStorage
                                 .multiGet(['app_pause_time', 'activity_is_paused', 'activity_pause_start', 'activity_total_pause'])
                                 .then(entries => entries.map(e => e?.[1] ?? null));
@@ -152,7 +163,6 @@ const Page = () => {
 
                             setElapsed(totalTimeNum);
                             setActiveTime(activeTimeNum);
-                            // Add pause time to total pause time
                             setTotalPauseTime(prev => prev + accumulatedPause);
                             totalPauseTimeRef.current += accumulatedPause;
                             setAvgSpeed(avgSpeedNum);
@@ -168,7 +178,7 @@ const Page = () => {
                             } catch { }
                         } catch { }
 
-                        // ensure permissions then restart sensors and GPS watchers
+                        // Ensure permission
                         try {
                             const ok = (await Location.getForegroundPermissionsAsync()).status === 'granted' || (await ensurePermission());
                             if (ok) {
@@ -176,9 +186,10 @@ const Page = () => {
                                 if (!subscriptionRef.current) {
                                     subscriptionRef.current = await Location.watchPositionAsync(
                                         {
+                                            //Continue tracking
                                             accuracy: Location.Accuracy.BestForNavigation,
-                                            timeInterval: 2000,
-                                            distanceInterval: 0,
+                                            timeInterval: 2000, // Update every 2s
+                                            distanceInterval: 0, // Update when move >= 0m
                                         },
                                         (loc) => {
                                             const coord: TrackedPoint = { latitude: loc.coords.latitude, longitude: loc.coords.longitude, time: loc.timestamp ?? Date.now() };
@@ -248,7 +259,7 @@ const Page = () => {
         };
     }, []);
 
-    // Timer effect for elapsed time
+    // useEffect for elapsed time
     useEffect(() => {
         if (isStart && !isPause && startTime) {
             timerRef.current = setInterval(() => {
@@ -273,6 +284,7 @@ const Page = () => {
     }, [isStart, isPause, startTime, pauseStartTime, totalPauseTime]);
 
     const resetAllState = () => {
+        // Reset state
         setStartTime(null);
         setElapsed(0);
         setTotalPauseTime(0);
@@ -308,20 +320,6 @@ const Page = () => {
             accelSubRef.current.remove();
             accelSubRef.current = null;
         }
-    };
-
-    // Đảm bảo có quyền: nếu chưa, yêu cầu tại trang này
-    const ensurePermission = async (): Promise<boolean> => {
-        if (hasPermission) return true;
-
-        const granted = await checkLocationPermission();
-        setHasPermission(granted);
-
-        if (granted) {
-            await requestActivityRecognitionPermission();
-        }
-
-        return granted;
     };
 
     const startAccelerometer = async () => {
@@ -397,7 +395,6 @@ const Page = () => {
             console.log('Expo Go detected; starting accelerometer');
             await startAccelerometer();
 
-            // mark tracking active in storage
             try {
                 await AsyncStorage.setItem('activity_tracking_active', 'true');
                 await AsyncStorage.multiRemove(['activity_is_paused', 'activity_pause_start', 'activity_total_pause', 'app_pause_time']).catch(() => {});
@@ -406,8 +403,8 @@ const Page = () => {
             subscriptionRef.current = await Location.watchPositionAsync(
                 {
                     accuracy: Location.Accuracy.BestForNavigation,
-                    timeInterval: 2000,
-                    distanceInterval: 0, // update when move >= 0m
+                    timeInterval: 2000, // Update every 2s
+                    distanceInterval: 0, // Update when move >= 0m
                 },
                 (loc) => {
                     const coord: TrackedPoint = { latitude: loc.coords.latitude, longitude: loc.coords.longitude, time: loc.timestamp ?? Date.now() };
@@ -453,7 +450,6 @@ const Page = () => {
     };
 
     const stopTracking = () => {
-
         let finalCalories = 0;
         if (mvCountRef.current > 0) {
             const avgMV = mvSumRef.current / mvCountRef.current;
@@ -488,7 +484,6 @@ const Page = () => {
         resetAllState();
         // clear persisted session
         sessionIdRef.current = null;
-        setSessionId(null);
         hasCreatedFirstSnapshotRef.current = false;
         AsyncStorage.removeItem('activity_tracking_active').catch(() => { });
         AsyncStorage.multiRemove(['activity_is_paused', 'activity_pause_start', 'activity_total_pause', 'app_pause_time']).catch(() => {});
@@ -502,7 +497,6 @@ const Page = () => {
                 totalPauseTimeRef.current += pauseDuration;
                 setPauseStartTime(null);
                 pauseStartTimeRef.current = null;
-                // Persist accumulated pause and clear pause start
                 AsyncStorage.multiSet([
                     ['activity_total_pause', String(totalPauseTimeRef.current)],
                     ['activity_is_paused', 'false']
@@ -513,7 +507,6 @@ const Page = () => {
             const now = Date.now();
             setPauseStartTime(now);
             pauseStartTimeRef.current = now;
-            // Persist pause start and mark paused
             AsyncStorage.multiSet([
                 ['activity_pause_start', String(now)],
                 ['activity_is_paused', 'true'],
@@ -567,16 +560,15 @@ const Page = () => {
     };
 
 
-    // Use accumulated ref for distance so resume shows immediately; keep positions-derived as fallback
+    // Calculate total distance
     const totalDistanceMeters = totalDistanceRef.current > 0 ? totalDistanceRef.current : calculateTotalDistance(positions);
-
     const polygonCoords = showPolygon && positions.length >= 3 ? [...positions, positions[0]] : undefined;
 
 
     // keep refs in sync to avoid stale closures inside sensor callbacks
     useEffect(() => { isStartRef.current = isStart; }, [isStart]);
     useEffect(() => { isPauseRef.current = isPause; }, [isPause]);
-    // live refs for frequently changing state used in logging
+    // Ref for log
     const positionsRef = useRef<TrackedPoint[]>([]);
     const stepCountRef = useRef<number>(0);
     const currentSpeedRef = useRef<number>(0);
@@ -587,14 +579,21 @@ const Page = () => {
     const sessionIdRef = useRef<number | null>(null);
     const lastSyncedLocationTimeRef = useRef<number>(0);
 
-    useEffect(() => { positionsRef.current = positions; }, [positions]);
+    /* useEffect(() => { positionsRef.current = positions; }, [positions]);
     useEffect(() => { stepCountRef.current = stepCount; }, [stepCount]);
     useEffect(() => { currentSpeedRef.current = currentSpeed; }, [currentSpeed]);
     useEffect(() => { maxSpeedRef.current = maxSpeed; }, [maxSpeed]);
-    useEffect(() => { currentMVRef.current = currentMV; }, [currentMV]);
+    useEffect(() => { currentMVRef.current = currentMV; }, [currentMV]); */
 
-    // Log activity snapshot every 5 seconds while tracking (stable interval)
-    const [sessionId, setSessionId] = useState<string | null>(null);
+    useEffect(() => {
+        positionsRef.current = positions;
+        stepCountRef.current = stepCount;
+        currentSpeedRef.current = currentSpeed;
+        maxSpeedRef.current = maxSpeed;
+        currentMVRef.current = currentMV;
+      }, [positions, stepCount, currentSpeed, maxSpeed, currentMV]);
+
+
     useEffect(() => {
         if (!(isStart && !isPause)) return;
 
@@ -651,7 +650,6 @@ const Page = () => {
                 const activeTimeNum = Number.isFinite(snapshot.activeTime) ? snapshot.activeTime / 1000 / 60 : 0; // Convert ms to minutes
 
                 if (!hasCreatedFirstSnapshotRef.current) {
-                    // mark created BEFORE awaiting to avoid duplicate create on next tick
                     hasCreatedFirstSnapshotRef.current = true;
                     const res = await saveActivityData(
                         'walk',
@@ -667,18 +665,16 @@ const Page = () => {
                         activeTimeNum,
                     );
                     console.log("data created");
-                    
+                
                     const createdId = (res as any)?.sessionId ?? (res as any)?.data?.sessionId ?? null;
                     if (createdId != null) {
                         sessionIdRef.current = Number(createdId);
-                        setSessionId(String(createdId));
 
                         try {
                             await AsyncStorage.setItem('activity_session_id', String(createdId));
                             await AsyncStorage.setItem('activity_tracking_active', 'true');
                         } catch { }
                     }
-                    // if backend failed but inserted, we keep the flag to avoid duplicates
                 } else if (sessionIdRef.current != null) {
                     const response = await updateActivityData(sessionIdRef.current, {
                         distanceKm,

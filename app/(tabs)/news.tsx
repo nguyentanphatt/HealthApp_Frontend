@@ -11,7 +11,7 @@ import utc from 'dayjs/plugin/utc';
 import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 // Configure dayjs with timezone plugins
 dayjs.extend(utc);
@@ -27,6 +27,7 @@ const News = () => {
   const [allBlogs, setAllBlogs] = useState<any[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const user = useUserStore((state) => state.user);
 
   const getCategoryLabel = (value: string) => {
@@ -65,6 +66,21 @@ const News = () => {
     placeholderData: keepPreviousData,
   });
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setPage(1);
+    setAllBlogs([]);
+    try {
+      if (type === 'user') {
+        await refetchByUserId();
+      } else {
+        await refetch();
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     const source = type === 'user' ? blogsByUserId : blogs;
     if (source) {
@@ -82,10 +98,9 @@ const News = () => {
       setHasMore(newBlogs.length === 10);
       setIsLoadingMore(false);
     }
-  }, [blogs, blogsByUserId, page, selectedSort.value, type]);
+  }, [blogs, blogsByUserId, page, selectedSort.value, type, refreshing]);
 
   const handleTagChange = (tag: { label: string, value: string }) => {
-    // Ignore if selecting the same tag
     if (selectedTag.value === tag?.value) return;
     setSelectedTag(tag);
     setPage(1);
@@ -93,7 +108,6 @@ const News = () => {
   };
 
   const handleSortChange = (sort: { label: string, value: string }) => {
-    // Ignore if selecting the same sort
     if (selectedSort.value === sort?.value) return;
     setSelectedSort(sort);
     setPage(1);
@@ -124,6 +138,14 @@ const News = () => {
         stickyHeaderIndices={[0]}
         contentContainerStyle={{ paddingBottom: 50 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#19B1FF"
+            colors={["#19B1FF"]}
+          />
+        }
         onScroll={({ nativeEvent }) => {
           const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
           const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;

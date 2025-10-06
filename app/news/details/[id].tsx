@@ -126,7 +126,6 @@ const NewsDetails = () => {
           {
             label: t('Xóa'),
             onPress: () => {
-              //deleteBlogMutation.mutate(id as string);
               openModal("delete", { confirmDelete: () => deleteBlogMutation.mutate(id as string) });
               setShowAction(false);
             },

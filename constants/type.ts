@@ -1,3 +1,19 @@
+export interface User {
+  userId: string;
+  email: string;
+  createdAt: string;
+}
+export interface OtpData {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+}
+
+export type NewTokens = {
+  accessToken: string;
+  refreshToken: string;
+}
+
 export interface WaterStatusResponse {
   success: boolean;
   data: WaterStatus;
@@ -40,9 +56,9 @@ export interface UpdateWaterDailyGoalResponse {
 export interface WeatherResponse {
   success: boolean;
   message: string;
-  temp:number;
-  humidity:number;
-  recommended:number
+  temp: number;
+  humidity: number;
+  recommended: number
 }
 
 export interface DailyIntake {
@@ -52,10 +68,10 @@ export interface DailyIntake {
 }
 
 export interface WaterWeeklyResponse {
-  success:boolean,
+  success: boolean,
   data: {
-    weekStart:string,
-    weekEnd:string,
+    weekStart: string,
+    weekEnd: string,
     dailyIntake: DailyIntake[]
   }
 }
@@ -70,12 +86,12 @@ export interface WaterReminder {
 
 export interface WaterReminderResponse {
   success: boolean;
-  message?:string;
+  message?: string;
   data: WaterReminder[];
 }
 
 export interface UpdateWaterReminderResponse {
-  success:boolean;
+  success: boolean;
   data: WaterReminder
 }
 
@@ -90,7 +106,7 @@ export interface FoodDetail {
   starch: number;
   imageUrl: string;
   time: string;
-  loggedAt?:string
+  loggedAt?: string
 }
 
 export interface FoodRecord {
@@ -164,83 +180,83 @@ export interface DeleteFoodRecordResponse {
 }
 
 export interface SleepHistory {
-  recordId:string,
-  startAt:string,
-  endedAt:string,
-  duration:number,
-  qualityScore:string,
+  recordId: string,
+  startAt: string,
+  endedAt: string,
+  duration: number,
+  qualityScore: string,
   attribute: string | null
 }
 
 export interface SleepStatus {
-  totalHours:number,
-  date:string,
-  history:SleepHistory[]
+  totalHours: number,
+  date: string,
+  history: SleepHistory[]
 }
 
 export interface SleepStatusResponse {
-  success:boolean,
+  success: boolean,
   data: SleepStatus
 }
 
 export interface CreateSleepRecord {
   recordsCreated: number,
   mainRecord: {
-    id:string,
-    startAt:string,
-    endedAt:string
+    id: string,
+    startAt: string,
+    endedAt: string
   }
 }
 
 export interface CreateSleepRecordResponse {
-  success:boolean,
-  message:string,
-  data:CreateSleepRecord
+  success: boolean,
+  message: string,
+  data: CreateSleepRecord
 }
 
 export interface UpdateSleepRecord {
-  id:string,
-  startAt:string,
-  endedAt:string,
-  qualityScore:number,
-  attribute:string
+  id: string,
+  startAt: string,
+  endedAt: string,
+  qualityScore: number,
+  attribute: string
 }
 
 export interface UpdateSleepRecordResponse {
-  success:boolean,
-  message:string,
+  success: boolean,
+  message: string,
   data: UpdateSleepRecord
 }
 
 export interface UserSetting {
-  userId:string,
-  height:string
-  weight:string,
-  water:string,
-  temp:string,
+  userId: string,
+  height: string
+  weight: string,
+  water: string,
+  temp: string,
 }
 
 export interface UserProfile {
-  userId:string,
-  fullName:string,
-  dob:string,
-  gender:string,
-  height:number,
-  weight:number,
-  imageUrl:string
+  userId: string,
+  fullName: string,
+  dob: string,
+  gender: string,
+  height: number,
+  weight: number,
+  imageUrl: string
 }
 
 export interface CreateBlog {
   id: number,
   title: string,
-  image:string,
-  content:string,
-  createAt:string,
-  updateAt:string,
-  userId:string
-  userName:string,
-  category:string
-  likes:number
+  image: string,
+  content: string,
+  createAt: string,
+  updateAt: string,
+  userId: string
+  userName: string,
+  category: string
+  likes: number
 }
 
 export interface GetBlogsResponse {
@@ -250,5 +266,24 @@ export interface GetBlogsResponse {
     page: number,
     totalPages: number,
     totalItems: number,
+  }
+}
+
+export interface WeeklyGoal {
+  weekStart: string,
+  weekEnd: string,
+  targets: {
+    water: number,
+    work: number,
+    sleep: number,
+    steps: number,
+    calories: number
+  },
+  current: {
+    water: number,
+    work: number,
+    sleep: number,
+    steps: number,
+    calories: number
   }
 }

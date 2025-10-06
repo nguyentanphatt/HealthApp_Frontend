@@ -138,7 +138,7 @@
   "Mới nhất": "Newest",
   "Cũ nhất": "Oldest",
   "Yêu thích ↑": "Favorite ↑",
-  "Độ yêu thích giảm": "Favorite ↓",
+  "Yêu thích ↓": "Favorite ↓",
   "Tất cả": "All",
   "Thêm bài viết": "Add post",
   "cập nhật thông tin cá nhân": "Update personal information",
@@ -148,5 +148,10 @@
   "Ảnh": "Image",
   "Cộng đồng": "Community",
   "Đang tải bài viết mới...": "Loading new posts...",
-  "Cá nhân": "Personal"
+  "Cá nhân": "Personal Blog",
+  "Cập nhật thông tin cá nhân": "Update personal information",
+  "Ảnh chủ đề": "Topic image",
+  "Bài viết": "Post",
+  "Tùy chọn": "Option",
+  "Xóa": "Delete"
 }

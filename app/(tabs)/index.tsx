@@ -3,11 +3,12 @@ import Card from "@/components/Card";
 import FunctionCard from "@/components/FunctionCard";
 import ProgressItem from "@/components/ProgressItem";
 import WaterVector from "@/components/vector/WaterVector";
-import { useUnits } from "@/context/unitContext";
+import WeeklyGoalItem from "@/components/WeeklyGoalItem";
+import { useUnits } from "@/hooks/useUnits";
 import { getAllActivities } from "@/services/activity";
 import { getFoodStatus } from "@/services/food";
 import { getSleepStatus } from "@/services/sleep";
-import { getUserProfile } from "@/services/user";
+import { getUserProfile, getWeeklyGoal } from "@/services/user";
 import { getWaterStatus } from "@/services/water";
 import { useModalStore } from "@/stores/useModalStore";
 import { useUserStore } from "@/stores/useUserStore";
@@ -28,28 +29,41 @@ const CALENDAR_HEIGHT = 140;
 
 export default function HomeScreen() {
   const setUser = useUserStore(state => state.setUser)
+  const { displayWater, units } = useUnits()
   const { openModal } = useModalStore();
   const { closeModal } = useModalStore();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [bgActive, setBgActive] = useState(false);
   const [selectedDate, setSelectedDate] = useState(0);
   const [sessionId, setSessionId] = useState("");
-  //const [openModal, setOpenModal] = useState(false);
   const queryClient = useQueryClient();
-  const { units } = useUnits()
   const { t } = useTranslation();
   const [showAll, setShowAll] = useState(false);
 
   const {
     data: activityData,
     isLoading: loadingActivityData,
-    refetch: refetchActivityData,
   } = useQuery({
     queryKey: ["activityData"],
     queryFn: () =>
       getAllActivities(),
     staleTime: 1000 * 60 * 5,
     select: (res) => res.data
+  });
+
+  const {
+    data: weeklyGoal,
+    isLoading: loadingWeeklyGoal,
+  } = useQuery({
+    queryKey: ["weeklyGoal", { date: selectedDate }],
+    queryFn: () =>
+      getWeeklyGoal(
+        selectedDate !== 0
+          ? { date: (selectedDate * 1000).toString() }
+          : undefined
+      ),
+    staleTime: 1000 * 60 * 5,
+    select: (res) => res.data,
   });
 
 
@@ -94,8 +108,6 @@ export default function HomeScreen() {
 
   const {
     data: waterStatus,
-    isLoading: loadingWaterStatus,
-    refetch: refetchWaterStatus,
   } = useQuery({
     queryKey: ["waterStatus", selectedDate],
     queryFn: () =>
@@ -138,7 +150,6 @@ export default function HomeScreen() {
     userProfileMutation.mutate()
   }, []);
 
-  // Set selectedDate to current date if it's 0
   useEffect(() => {
     if (selectedDate === 0) {
       const currentTimestamp = Math.floor(Date.now() / 1000);
@@ -176,9 +187,9 @@ export default function HomeScreen() {
       },
     },
   });
-  
 
-  const loading = loadingActivityData
+
+  const loading = loadingActivityData || loadingWeeklyGoal
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
@@ -222,10 +233,56 @@ export default function HomeScreen() {
         </Animated.View>
 
         <View className="flex-1 gap-2.5">
-          <Card title={t("Mục tiêu tuần")} setting icon="ellipsis-vertical">
-            <TouchableOpacity className="self-center flex-row items-center justify-center px-6 py-3 bg-cyan-blue rounded-full">
-              <Text className="text-white">{t("Đặt mục tiêu")}</Text>
-            </TouchableOpacity>
+          <Card title={t("Mục tiêu tuần")} setting icon="ellipsis-vertical"
+            settingsOptions={[
+              { title: t("Đặt mục tiêu"), href: "/user/goal/edit" },
+            ]}
+          >
+            <View className="flex flex-row items-start justify-between">
+              <View className="max-w-[45%] flex items-start justify-start gap-4">
+                <WeeklyGoalItem
+                  icon="glass-water-droplet"
+                  iconColor="#19B1FF"
+                  currentIntake={convertWater(weeklyGoal?.current.water ?? 0, units.water)}
+                  goalIntake={convertWater(weeklyGoal?.targets.water ?? 0, units.water)}
+                  unit={units.water}
+                />
+
+                <WeeklyGoalItem
+                  icon="bed"
+                  iconColor="#FF66F5"
+                  currentIntake={weeklyGoal?.current.sleep ?? 0}
+                  goalIntake={weeklyGoal?.targets.sleep ?? 0}
+                  unit={t("giờ")}
+                />
+
+                <WeeklyGoalItem
+                  icon="bowl-food"
+                  iconColor="#FFAE00"
+                  currentIntake={weeklyGoal?.current.calories ?? 0}
+                  goalIntake={weeklyGoal?.targets.calories ?? 0}
+                  unit={t("kcal")}
+                />
+
+              </View>
+              <View className="max-w-[45%] flex items-start justify-start gap-4">
+                <WeeklyGoalItem
+                  icon="clock"
+                  iconColor="#06F86F"
+                  currentIntake={weeklyGoal?.current.work ?? 0}
+                  goalIntake={weeklyGoal?.targets.work ?? 0}
+                  unit={t("giờ")}
+                />
+
+                <WeeklyGoalItem
+                  icon="person-running"
+                  iconColor="#FF0000"
+                  currentIntake={weeklyGoal?.current.steps ?? 0}
+                  goalIntake={weeklyGoal?.targets.steps ?? 0}
+                  unit={t("bước")}
+                />
+              </View>
+            </View>
           </Card>
 
           <Card title={t("Hoạt động hôm nay")}>

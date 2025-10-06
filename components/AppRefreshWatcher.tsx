@@ -41,7 +41,7 @@ const AppRefreshWatcher = () => {
                     await refresh();
                     console.log("➡️ Going to tabs");
                     if (pathname !== "/(tabs)") {
-                        router.replace("/news" as Href);
+                        router.replace("/(tabs)" as Href);
                     }
 
                     // interval refresh mỗi 5p

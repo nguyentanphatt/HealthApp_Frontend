@@ -25,10 +25,7 @@ const Page = () => {
     time: string;
     type: string;
   }>();
-
-  console.log("Time when go", time);
   const queryClient = useQueryClient();
-  
 
   const { units, displayWater, inputToBaseWater } = useUnits();
   const initAmount = Number(amount) || 250;
@@ -117,8 +114,8 @@ const Page = () => {
         openModal("action", {
           title: t("Dữ liệu chưa được lưu, bạn có muốn thoát ?"),
           options: [
-            { label: t("Thoát"), onPress: () => router.push("/water" as Href) },
-            { label: t("Lưu"), onPress: () => handleSave(Number(selectedAmount), selectedHour, selectedMinute, dateTimestamp.toString(), type) },
+            { label: t("Thoát"), onPress: () => router.push("/water" as Href), backgroundColor: "#ef4444", textColor: "white" },
+            { label: t("Lưu"), onPress: () => handleSave(Number(selectedAmount), selectedHour, selectedMinute, dateTimestamp.toString(), type), backgroundColor: "#19B1FF", textColor: "white" },
           ]
         });
         return true;
