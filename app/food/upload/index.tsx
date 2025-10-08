@@ -16,7 +16,7 @@ const Page = () => {
   const [selectedTag, setSelectedTag] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const options = [t("Sáng"), t("Trưa"), t("Tối"), t("Phụ"), t("Khác")];
+  const options = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -63,7 +63,9 @@ const Page = () => {
                 text1: `Ảnh ${i + 1} thành công`,
               });
             }
-            queryClient.invalidateQueries({ queryKey: ["foodStatus"] });
+            // Invalidate all food queries (any date key) so screens refetch
+            queryClient.invalidateQueries({ queryKey: ["foodStatus"], exact: false });
+            queryClient.invalidateQueries({ queryKey: ["foodWeekly"], exact: false });
           }
         } catch (err) {
           console.log(`Upload ảnh ${i + 1} thất bại:`, err);
@@ -123,7 +125,7 @@ const Page = () => {
                       <Text
                         className={`text-lg ${isSelectedTag ? "text-white" : "text-black"}`}
                       >
-                        {item}
+                        {t(item)}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -169,7 +171,7 @@ const Page = () => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={{ width: "100%", height: "100%" }}
-                      onPress={() => openModal("imageview", { uri: uri })}
+                    onPress={() => openModal("imageview", { uri: uri })}
                   >
                     <Image
                       source={{ uri }}

@@ -94,7 +94,6 @@ const News = () => {
       }
 
       setAllBlogs(merged);
-
       setHasMore(newBlogs.length === 10);
       setIsLoadingMore(false);
     }

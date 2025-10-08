@@ -80,7 +80,7 @@ const index = () => {
             router.push("/news");
         },
         onError: (error) => {
-            console.log("error", error);
+            console.log("error", error.message);
             Toast.show({
                 type: "error",
                 text1: "Thêm bài viết thất bại",
@@ -135,6 +135,8 @@ const index = () => {
                 content: contentTrimmed,
                 category: selectedTag.value,
             });
+            queryClient.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"), refetchType: 'active' });
+            router.push(`/news/details/${id}` as Href);
         }
     };
 
@@ -167,9 +169,9 @@ const index = () => {
                     <TouchableOpacity onPress={() => router.back()}>
                         <FontAwesome6 name="chevron-left" size={24} color="black" />
                     </TouchableOpacity>
-                    <Text className="text-2xl font-bold self-center">{id ? t("Sửa bài viết") : t("Thêm bài viết")}</Text>
+                    <Text className="text-2xl font-bold self-center ml-2">{id ? t("Sửa bài viết") : t("Thêm bài viết")}</Text>
                     <TouchableOpacity onPress={handleSave}>
-                        <Text className="text-2xl font-bold text-cyan-blue self-center">{id ? t("Sửa") : t("Lưu")}</Text>
+                        <Text className="text-xl font-bold text-cyan-blue self-center">{id ? t("Sửa") : t("Lưu")}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
