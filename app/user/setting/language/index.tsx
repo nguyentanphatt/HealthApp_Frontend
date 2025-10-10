@@ -1,8 +1,8 @@
+import { useUnits } from "@/context/unitContext";
 import i18n from "@/plugins/i18n";
 import { FontAwesome6 } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -13,7 +13,7 @@ type Option = {
 
 const Page = () => {
   const router = useRouter();
-  const [selected, setSelected] = useState<string>("vi");
+  const { units, setUnit, isLoaded } = useUnits();
   const { t } = useTranslation();
   const options: Option[] = [
     { label: t("Tiếng Việt"), value: "vi" },
@@ -21,19 +21,14 @@ const Page = () => {
   ];
 
   useEffect(() => {
-    const load = async () => {
-      const stored = await AsyncStorage.getItem("language");
-      if (stored === "en" || stored === "vi") {
-        setSelected(stored);
-        await i18n.changeLanguage(stored);
-      }
-    };
-    load();
-  }, []);
+    if (isLoaded) {
+      // Update i18n language when units are loaded
+      i18n.changeLanguage(units.language);
+    }
+  }, [units.language, isLoaded]);
 
-  const onSelect = async (lang: string) => {
-    setSelected(lang);
-    await AsyncStorage.setItem("language", lang);
+  const onSelect = async (lang: "vi" | "en") => {
+    setUnit("language", lang);
     await i18n.changeLanguage(lang);
   };
 
@@ -58,13 +53,13 @@ const Page = () => {
           {options.map((item, idx) => (
             <TouchableOpacity
               key={item.value}
-              onPress={() => onSelect(item.value)}
+              onPress={() => onSelect(item.value as "vi" | "en")}
               className="flex gap-4"
             >
               <View className="flex-row items-center justify-between">
                 <Text className="text-xl text-black">{item.label}</Text>
                 <View className="size-[20px] rounded-full border-2 border-black flex items-center justify-center">
-                  {selected === item.value && (
+                  {units.language === item.value && (
                     <View className="size-[10px] rounded-full bg-black" />
                   )}
                 </View>

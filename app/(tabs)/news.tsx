@@ -42,11 +42,15 @@ const News = () => {
       params.category = selectedTag.value;
     }
 
-    // Only pass heart sorting to backend; newest/oldest handled client-side
+    // Pass all sorting parameters to backend
     if (selectedSort.value === "favorite-increase") {
       params.heart = "asc";
     } else if (selectedSort.value === "favorite-decrease") {
       params.heart = "desc";
+    } else if (selectedSort.value === "newest") {
+      params.date = "desc";
+    } else if (selectedSort.value === "oldest") {
+      params.date = "asc";
     }
 
     return params;
@@ -86,12 +90,6 @@ const News = () => {
     if (source) {
       const newBlogs = source.blogs || [];
       let merged = page === 1 ? newBlogs : [...allBlogs, ...newBlogs];
-
-      if (selectedSort.value === "newest") {
-        merged = [...merged].sort((a, b) => new Date(b.createAt || b.createAt || b.create_at).getTime() - new Date(a.createAt || a.createAt || a.create_at).getTime());
-      } else if (selectedSort.value === "oldest") {
-        merged = [...merged].sort((a, b) => new Date(a.createAt || a.createAt || a.create_at).getTime() - new Date(b.createAt || b.createAt || b.create_at).getTime());
-      }
 
       setAllBlogs(merged);
       setHasMore(newBlogs.length === 10);

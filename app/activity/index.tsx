@@ -17,11 +17,15 @@ import {
 import { FontAwesome6 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import { Href, useRouter } from 'expo-router';
 import { Accelerometer } from 'expo-sensors';
+import * as TaskManager from "expo-task-manager";
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, AppState, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, Region } from "react-native-maps";
+
+const LOCATION_TASK = "BACKGROUND_RUNNING_TASK";
 
 const Page = () => {
     const router = useRouter();
@@ -106,6 +110,16 @@ const Page = () => {
 
     useEffect(() => {
         (async () => {
+            // Setup notification permissions
+            try {
+                const { status } = await Notifications.requestPermissionsAsync();
+                if (status !== 'granted') {
+                    console.log('Notification permission not granted');
+                }
+            } catch (error) {
+                console.error('Error requesting notification permissions:', error);
+            }
+
             // Check if app was killed and reset session if needed
             try {
                 const [activeStr, storedId, lastAppState] = await AsyncStorage.multiGet(['activity_tracking_active', 'activity_session_id', 'last_app_state']).then(entries => entries.map(e => e?.[1] ?? null));
@@ -397,8 +411,31 @@ const Page = () => {
 
             try {
                 await AsyncStorage.setItem('activity_tracking_active', 'true');
+                await AsyncStorage.setItem('activity_start_time', String(now));
                 await AsyncStorage.multiRemove(['activity_is_paused', 'activity_pause_start', 'activity_total_pause', 'app_pause_time']).catch(() => {});
             } catch { }
+
+            // Start background location service
+            try {
+                const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
+                if (backgroundStatus === 'granted') {
+                    await Location.startLocationUpdatesAsync(LOCATION_TASK, {
+                        accuracy: Location.Accuracy.BestForNavigation,
+                        timeInterval: 2000,
+                        distanceInterval: 0,
+                        foregroundService: {
+                            notificationTitle: "🏃 Đang chạy bộ",
+                            notificationBody: "Đang theo dõi hoạt động...",
+                            notificationColor: "#19B1FF",
+                        },
+                    });
+                    console.log('Background location service started');
+                } else {
+                    console.log('Background location permission not granted');
+                }
+            } catch (error) {
+                console.error('Error starting background location service:', error);
+            }
 
             subscriptionRef.current = await Location.watchPositionAsync(
                 {
@@ -449,7 +486,7 @@ const Page = () => {
         }
     };
 
-    const stopTracking = () => {
+    const stopTracking = async () => {
         let finalCalories = 0;
         if (mvCountRef.current > 0) {
             const avgMV = mvSumRef.current / mvCountRef.current;
@@ -482,10 +519,21 @@ const Page = () => {
             accelSubRef.current = null;
         }
         resetAllState();
-        // clear persisted session
         sessionIdRef.current = null;
         hasCreatedFirstSnapshotRef.current = false;
+        // Stop background location service
+        try {
+            const isRegistered = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK);
+            if (isRegistered) {
+                await Location.stopLocationUpdatesAsync(LOCATION_TASK);
+                console.log('Background location service stopped');
+            }
+        } catch (error) {
+            console.error('Error stopping background location service:', error);
+        }
+
         AsyncStorage.removeItem('activity_tracking_active').catch(() => { });
+        AsyncStorage.removeItem('activity_start_time').catch(() => { });
         AsyncStorage.multiRemove(['activity_is_paused', 'activity_pause_start', 'activity_total_pause', 'app_pause_time']).catch(() => {});
     };
 

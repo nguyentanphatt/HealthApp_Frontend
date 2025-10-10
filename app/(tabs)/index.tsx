@@ -4,6 +4,7 @@ import FunctionCard from "@/components/FunctionCard";
 import ProgressItem from "@/components/ProgressItem";
 import WaterVector from "@/components/vector/WaterVector";
 import WeeklyGoalItem from "@/components/WeeklyGoalItem";
+import { useUnits as useUnitsContext } from "@/context/unitContext";
 import { useUnits } from "@/hooks/useUnits";
 import { getAllActivities } from "@/services/activity";
 import { getFoodStatus } from "@/services/food";
@@ -29,7 +30,8 @@ const CALENDAR_HEIGHT = 140;
 
 export default function HomeScreen() {
   const setUser = useUserStore(state => state.setUser)
-  const { displayWater, units } = useUnits()
+  const { units } = useUnits()
+  const { setUnit } = useUnitsContext()
   const { openModal } = useModalStore();
   const { closeModal } = useModalStore();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -39,6 +41,21 @@ export default function HomeScreen() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
   const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    const loadTempLanguage = async () => {
+      try {
+        const tempLang = await AsyncStorage.getItem('temp_language');
+        if (tempLang === 'en' || tempLang === 'vi') {
+          setUnit('language', tempLang);
+          await AsyncStorage.removeItem('temp_language');
+        }
+      } catch (error) {
+        console.error('Error loading temp language:', error);
+      }
+    };
+    loadTempLanguage();
+  }, [setUnit]);
 
   const {
     data: activityData,

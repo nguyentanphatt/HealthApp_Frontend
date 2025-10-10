@@ -1,10 +1,12 @@
 import InputWithIcon from "@/components/InputWithIcon";
 import { images } from "@/constants/image";
+import i18n from "@/plugins/i18n";
 import { sendOtp, signup } from "@/services/user";
 import { validateConfirmPassword, validateEmail, validatePassword } from "@/utils/validate";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 
@@ -18,6 +20,21 @@ const Signup = () => {
     password: "",
     confirmPassword: ""
   });
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    const loadLanguage = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('temp_language');
+        if (stored === 'en' || stored === 'vi') {
+          await i18n.changeLanguage(stored);
+        }
+      } catch (error) {
+        console.error('Error loading language:', error);
+      }
+    };
+    loadLanguage();
+  }, []);
 
   const handleSignup = async() => {
     if (
@@ -39,7 +56,7 @@ const Signup = () => {
     else {
       Toast.show({
         type: 'error',
-        text1: 'Đăng ký thất bại',
+        text1: t("Đăng ký thất bại"),
         text2: response.message
       });
     }
@@ -55,7 +72,7 @@ const Signup = () => {
 
   return (
     <View className="font-lato-regular flex-1 items-center py-10 h-full">
-      <Text className="text-2xl font-bold text-center py-20">Đăng ký</Text>
+      <Text className="text-2xl font-bold text-center py-20">{t("Đăng ký")}</Text>
       <Image
         source={images.star}
         className="-z-10 absolute top-1/5 -right-[10%] w-[100px] h-[100px]"
@@ -72,26 +89,26 @@ const Signup = () => {
           onChangeText={setEmail}
           onBlur={() => {
             const emailError = validateEmail(email);
-            setErrorMessage((prev) => ({ ...prev, email: emailError }));
+            setErrorMessage((prev) => ({ ...prev, email: t(emailError) }));
           }}
           error={errorMessage.email}
         />
 
         <InputWithIcon
           icon="key"
-          placeholder="Mật khẩu"
+          placeholder={t("Mật khẩu")}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
           onBlur={() => {
             const passwordError = validatePassword(password);
-            setErrorMessage((prev) => ({ ...prev, password: passwordError }));
+            setErrorMessage((prev) => ({ ...prev, password: t(passwordError) }));
           }}
           error={errorMessage.password}
         />
         <InputWithIcon
           icon="key"
-          placeholder="Xác nhận mật khẩu"
+          placeholder={t("Xác nhận mật khẩu")}
           secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
@@ -102,7 +119,7 @@ const Signup = () => {
             );
             setErrorMessage((prev) => ({
               ...prev,
-              confirmPassword: confirmPasswordError,
+              confirmPassword: t(confirmPasswordError),
             }));
           }}
           error={errorMessage.confirmPassword}
@@ -111,11 +128,11 @@ const Signup = () => {
           className="flex items-center justify-center py-4 w-full bg-cyan-blue rounded-full"
           onPress={handleSignup}
         >
-          <Text className="text-white">Đăng ký</Text>
+          <Text className="text-white">{t("Đăng ký")}</Text>
         </TouchableOpacity>
         <View className="flex flex-row items-center justify-center gap-1">
           <View className="w-[100px] h-0.5 bg-gray-400" />
-          <Text>or</Text>
+          <Text>{t("hoặc")}</Text>
           <View className="w-[100px] h-0.5 bg-gray-400" />
         </View>
         <TouchableOpacity className="flex items-center justify-center p-4 rounded-md bg-white shadow-sm">
@@ -123,12 +140,12 @@ const Signup = () => {
         </TouchableOpacity>
         <View className="flex items-center gap-2">
           <Text className="text-black/50">
-            Đã có tài khoản ?{" "}
+            {t("Đã có tài khoản ?")}{" "}
             <Link href={"/auth/signin"} className="text-cyan-blue">
-              Đăng nhập
+              {t("Đăng nhập")}
             </Link>
           </Text>
-          <Text className="text-black/50">Duy trì trạng thái đăng xuất</Text>
+          <Text className="text-black/50">{t("Duy trì trạng thái đăng xuất")}</Text>
         </View>
       </View>
     </View>

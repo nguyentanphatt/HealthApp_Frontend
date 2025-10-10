@@ -129,6 +129,7 @@ export const updateUserSetting = async (option?: {
   weight?: string;
   water?: string;
   temp?: string;
+  lang?: string;
 }) => {
   try {
     const response = await privateClient.put("/api/user/settings", option || {});

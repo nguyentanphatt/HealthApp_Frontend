@@ -72,7 +72,11 @@ const index = () => {
             const timestamp = new Date().getTime();
             return createNewBlog(title, image, content, timestamp, category);
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ 
+                predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"), 
+                refetchType: 'active' 
+            });
             Toast.show({
                 type: "success",
                 text1: "Thêm bài viết thành công",
@@ -94,10 +98,15 @@ const index = () => {
             return updateBlog(id, title, image, content, category);
         },
         onSuccess: () => {
+            queryClient.invalidateQueries({ 
+                predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"), 
+                refetchType: 'active' 
+            });
             Toast.show({
                 type: "success",
                 text1: "Sửa bài viết thành công",
             });
+            router.push(`/news/details/${id}` as Href);
         },
         onError: (error) => {
             console.log("error", error);
@@ -126,8 +135,6 @@ const index = () => {
                 content: contentTrimmed,
                 category: selectedTag.value,
             });
-            queryClient.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"), refetchType: 'active' });
-            router.push(`/news/details/${id}` as Href);
         } else {
             createMutation.mutate({
                 title: titleTrimmed,
@@ -135,8 +142,6 @@ const index = () => {
                 content: contentTrimmed,
                 category: selectedTag.value,
             });
-            queryClient.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"), refetchType: 'active' });
-            router.push(`/news/details/${id}` as Href);
         }
     };
 

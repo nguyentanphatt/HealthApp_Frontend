@@ -234,6 +234,7 @@ export interface UserSetting {
   weight: string,
   water: string,
   temp: string,
+  language: string
 }
 
 export interface UserProfile {

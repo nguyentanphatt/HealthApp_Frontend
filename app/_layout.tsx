@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import Toast from "react-native-toast-message";
 import "../global.css";
 import "../plugins/i18n";
+import "../utils/activityNotification"; // Import to register background task
 
 SplashScreen.preventAutoHideAsync(); // ✅ keep splash until we say so
 

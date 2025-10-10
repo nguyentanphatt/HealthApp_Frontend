@@ -65,7 +65,7 @@ const NewsDetails = () => {
       >
         <View className="flex bg-[#f6f6f6] pt-16 py-10">
           <View className="flex flex-row items-center justify-between">
-            <TouchableOpacity onPress={() => router.back()} className='size-[24px] rounded-full bg-[#f6f6f6] flex items-center justify-center'>
+            <TouchableOpacity onPress={() => router.push(`/(tabs)/news` as Href)} className='size-[24px] rounded-full bg-[#f6f6f6] flex items-center justify-center'>
               <FontAwesome6 name="chevron-left" size={24} color="black" />
             </TouchableOpacity>
             <Text className="text-2xl font-bold  self-center">{t("Bài viết")}</Text>

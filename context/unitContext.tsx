@@ -7,6 +7,7 @@ type Units = {
   weight: "kg" | "g";
   water: "ml" | "fl oz";
   temperature: "C" | "F";
+  language: "vi" | "en";
 };
 
 const defaultUnits: Units = {
@@ -14,6 +15,7 @@ const defaultUnits: Units = {
   weight: "kg",
   water: "ml",
   temperature: "C",
+  language: "vi",
 };
 
 type UnitContextType = {
@@ -74,7 +76,8 @@ export const UnitProvider: React.FC<{ children: React.ReactNode }> = ({ children
         height: unitsToSave.height,
         weight: unitsToSave.weight,
         water: unitsToSave.water,
-        temp: unitsToSave.temperature
+        temp: unitsToSave.temperature,
+        lang: unitsToSave.language
       });
     } catch (error) {
       console.error('Error updating units to API:', error);
