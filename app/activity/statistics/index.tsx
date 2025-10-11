@@ -81,7 +81,7 @@ const Page = () => {
         // Ensure endTime is a string that can be parsed to a number, fallback to 0 if invalid
         const safeEndTime = typeof activityData.endTime === 'string' && activityData.endTime !== '' ? parseInt(activityData.endTime) : 0;
         try {
-          console.log('Attempting to save activity data...');
+          /* console.log('Attempting to save activity data...');
           console.log('startTime', safeStartTime);
           console.log('endTime', safeEndTime);
           console.log('distance', activityData.distance);
@@ -93,7 +93,7 @@ const Page = () => {
           console.log("activeTime", activityData.activeTime / 1000);
           console.log("sessionId", sessionId);
           
-          console.log('positions', activityData.positions );
+          console.log('positions', activityData.positions ); */
           
           if (sessionId) {
             // API 1: Update activity data
@@ -110,9 +110,9 @@ const Page = () => {
                 totalTime: activityData.elapsed / 1000,
                 activeTime: activityData.activeTime / 1000,
               });
-              console.log('✅ updateActivityData API success:', response);
+              //console.log('✅ updateActivityData API success:', response);
             } catch (error) {
-              console.error('❌ updateActivityData API failed:', error);
+              //console.error('❌ updateActivityData API failed:', error);
               throw error;
             }
 
@@ -121,9 +121,9 @@ const Page = () => {
               //const locations = await getAllLocations(sessionId);
               //console.log("locations", locations);
 
-              console.log('Calling deleteAllLocations API...');
+              //console.log('Calling deleteAllLocations API...');
               await deleteAllLocations(sessionId);
-              console.log('✅ deleteAllLocations API success');
+              //console.log('✅ deleteAllLocations API success');
             } catch (error) {
               console.error('❌ deleteAllLocations API failed:', error);
               throw error;
@@ -131,26 +131,26 @@ const Page = () => {
 
             // API 3: Save location
             try {
-              console.log('Calling saveLocation API...');
+              //console.log('Calling saveLocation API...');
               await saveLocation(sessionId, activityData.positions);
-              console.log('✅ saveLocation API success');
+              //console.log('✅ saveLocation API success');
             } catch (error) {
-              console.error('❌ saveLocation API failed:', error);
+              //console.error('❌ saveLocation API failed:', error);
               throw error;
             }
 
-            console.log('All APIs completed successfully!');
+            //console.log('All APIs completed successfully!');
             AsyncStorage.removeItem('activity_session_id').catch(() => {});
 
             queryClient.invalidateQueries({ queryKey: ["activityData"] });
           } 
 
         } catch (saveError) {
-          console.error('Failed to save activity data:', saveError);
+          //console.error('Failed to save activity data:', saveError);
         }
 
       } catch (error) {
-        console.error('Error loading activity data:', error);
+        //console.error('Error loading activity data:', error);
       }
     };
 

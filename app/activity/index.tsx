@@ -1,8 +1,6 @@
 import LockScreen from '@/components/LockScreen';
 import { getActivityById, getAllLocations, saveActivityData, saveLocation, updateActivityData } from '@/services/activity';
 import {
-    LatLng,
-    TrackedPoint,
     calculateActiveTime,
     calculateAverageSpeed,
     calculateTotalDistance,
@@ -11,21 +9,26 @@ import {
     formatDistance,
     formatSpeed,
     formatTime,
+    LatLng,
     requestActivityRecognitionPermission,
-    saveActivityDataToStorage
+    saveActivityDataToStorage,
+    TrackedPoint
 } from '@/utils/activityHelper';
+import {
+    restoreBackgroundData,
+    saveCurrentStateForBackground,
+    startBackgroundTracking,
+    stopBackgroundTracking
+} from '@/utils/backgroundTracking';
+import { notificationService, TrackingData } from '@/utils/notificationService';
 import { FontAwesome6 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from "expo-location";
-import * as Notifications from "expo-notifications";
 import { Href, useRouter } from 'expo-router';
 import { Accelerometer } from 'expo-sensors';
-import * as TaskManager from "expo-task-manager";
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, AppState, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, Region } from "react-native-maps";
-
-const LOCATION_TASK = "BACKGROUND_RUNNING_TASK";
 
 const Page = () => {
     const router = useRouter();
@@ -89,14 +92,70 @@ const Page = () => {
         return granted;
     };
 
+    // Create tracking data for notification
+    const getTrackingData = (): TrackingData => {
+        return {
+            elapsedTime: elapsed,
+            distance: totalDistanceRef.current,
+            stepCount: stepCount,
+            currentSpeed: currentSpeed,
+            avgSpeed: avgSpeed,
+            isPaused: isPause
+        };
+    };
+
     // Track app state changes
     useEffect(() => {
-        const handleAppStateChange = (nextAppState: string) => {
+        const handleAppStateChange = async (nextAppState: string) => {
             if (nextAppState === 'active') {
                 AsyncStorage.setItem('last_app_state', Date.now().toString());
+                
+                // Restore background data when app comes back to foreground
+                if (isStart && !isPause) {
+                    try {
+                        const backgroundData = await restoreBackgroundData();
+                        
+                        if (backgroundData.positions.length > 0) {
+                            setPositions(prev => [...prev, ...backgroundData.positions]);
+                        }
+                        
+                        if (backgroundData.distance > 0) {
+                            totalDistanceRef.current += backgroundData.distance;
+                        }
+                        
+                        if (backgroundData.mvSum > 0) {
+                            mvSumRef.current += backgroundData.mvSum;
+                        }
+                        
+                        if (backgroundData.mvCount > 0) {
+                            mvCountRef.current += backgroundData.mvCount;
+                        }
+                        
+                        if (backgroundData.stepCount > 0) {
+                            setStepCount(prev => prev + backgroundData.stepCount);
+                        }
+                        
+                        console.log('Background data restored successfully');
+                    } catch (err) {
+                        console.log('Error restoring background data:', err);
+                    }
+                }
             } else if (nextAppState === 'background' || nextAppState === 'inactive') {
-                // Save pause time when app goes to background
+                // Save current state when app goes to background
                 AsyncStorage.setItem('app_pause_time', Date.now().toString());
+                
+                if (isStart && !isPause) {
+                    try {
+                        await saveCurrentStateForBackground(
+                            mvSumRef.current,
+                            mvCountRef.current,
+                            stepCount,
+                            totalDistanceRef.current
+                        );
+                    } catch (err) {
+                        console.log('Error saving state for background:', err);
+                    }
+                }
             }
         };
 
@@ -106,20 +165,10 @@ const Page = () => {
         AsyncStorage.setItem('last_app_state', Date.now().toString());
 
         return () => subscription?.remove();
-    }, []);
+    }, [isStart, isPause]);
 
     useEffect(() => {
         (async () => {
-            // Setup notification permissions
-            try {
-                const { status } = await Notifications.requestPermissionsAsync();
-                if (status !== 'granted') {
-                    console.log('Notification permission not granted');
-                }
-            } catch (error) {
-                console.error('Error requesting notification permissions:', error);
-            }
-
             // Check if app was killed and reset session if needed
             try {
                 const [activeStr, storedId, lastAppState] = await AsyncStorage.multiGet(['activity_tracking_active', 'activity_session_id', 'last_app_state']).then(entries => entries.map(e => e?.[1] ?? null));
@@ -275,15 +324,18 @@ const Page = () => {
 
     // useEffect for elapsed time
     useEffect(() => {
-        if (isStart && !isPause && startTime) {
-            timerRef.current = setInterval(() => {
-                const now = Date.now();
-                const totalElapsed = now - startTime;
-                const currentPauseTime = pauseStartTime ? now - pauseStartTime : 0;
-                const totalPause = totalPauseTime + currentPauseTime;
-                setElapsed(totalElapsed);
-                setActiveTime(totalElapsed - totalPause);
-            }, 100);
+        if (isStart && !isPause && (startTime || startTimeRef.current)) {
+            const actualStartTime = startTime || startTimeRef.current;
+            if (actualStartTime) {
+                timerRef.current = setInterval(() => {
+                    const now = Date.now();
+                    const totalElapsed = now - actualStartTime;
+                    const currentPauseTime = pauseStartTime ? now - pauseStartTime : 0;
+                    const totalPause = totalPauseTime + currentPauseTime;
+                    setElapsed(totalElapsed);
+                    setActiveTime(totalElapsed - totalPause);
+                }, 100);
+            }
         } else {
             if (timerRef.current) {
                 clearInterval(timerRef.current);
@@ -406,36 +458,20 @@ const Page = () => {
             const now = Date.now();
             setStartTime(now);
             startTimeRef.current = now;
-            console.log('Expo Go detected; starting accelerometer');
             await startAccelerometer();
 
             try {
                 await AsyncStorage.setItem('activity_tracking_active', 'true');
-                await AsyncStorage.setItem('activity_start_time', String(now));
                 await AsyncStorage.multiRemove(['activity_is_paused', 'activity_pause_start', 'activity_total_pause', 'app_pause_time']).catch(() => {});
             } catch { }
 
-            // Start background location service
-            try {
-                const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-                if (backgroundStatus === 'granted') {
-                    await Location.startLocationUpdatesAsync(LOCATION_TASK, {
-                        accuracy: Location.Accuracy.BestForNavigation,
-                        timeInterval: 2000,
-                        distanceInterval: 0,
-                        foregroundService: {
-                            notificationTitle: "🏃 Đang chạy bộ",
-                            notificationBody: "Đang theo dõi hoạt động...",
-                            notificationColor: "#19B1FF",
-                        },
-                    });
-                    console.log('Background location service started');
-                } else {
-                    console.log('Background location permission not granted');
-                }
-            } catch (error) {
-                console.error('Error starting background location service:', error);
-            }
+            // Start background tracking
+            await startBackgroundTracking();
+
+            // Start live notification
+            await notificationService.startTrackingNotification();
+            await notificationService.startLiveUpdates(getTrackingData, 1000); // Update every 1 second for smooth counting
+
 
             subscriptionRef.current = await Location.watchPositionAsync(
                 {
@@ -512,6 +548,13 @@ const Page = () => {
             activeTime
         });
 
+        // Stop background tracking
+        await stopBackgroundTracking();
+
+        // Stop live notification
+        await notificationService.stopTrackingNotification();
+
+
         subscriptionRef.current?.remove();
         subscriptionRef.current = null;
         if (accelSubRef.current) {
@@ -519,25 +562,15 @@ const Page = () => {
             accelSubRef.current = null;
         }
         resetAllState();
+        // clear persisted session
         sessionIdRef.current = null;
         hasCreatedFirstSnapshotRef.current = false;
-        // Stop background location service
-        try {
-            const isRegistered = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK);
-            if (isRegistered) {
-                await Location.stopLocationUpdatesAsync(LOCATION_TASK);
-                console.log('Background location service stopped');
-            }
-        } catch (error) {
-            console.error('Error stopping background location service:', error);
-        }
-
         AsyncStorage.removeItem('activity_tracking_active').catch(() => { });
-        AsyncStorage.removeItem('activity_start_time').catch(() => { });
         AsyncStorage.multiRemove(['activity_is_paused', 'activity_pause_start', 'activity_total_pause', 'app_pause_time']).catch(() => {});
+        
     };
 
-    const handlePause = () => {
+    const handlePause = async () => {
         if (isPause) {
             if (pauseStartTime) {
                 const pauseDuration = Date.now() - pauseStartTime;
@@ -562,6 +595,16 @@ const Page = () => {
             ]).catch(() => {});
         }
         setIsPause(!isPause);
+        
+        // Update notification when pause state changes
+        if (notificationService.isNotificationActive()) {
+            if (isPause) {
+                notificationService.pauseTimer();
+            } else {
+                notificationService.resumeTimer();
+            }
+            await notificationService.updateTrackingNotification(getTrackingData());
+        }
     };
 
     const startCountdown = () => {
@@ -627,12 +670,6 @@ const Page = () => {
     const sessionIdRef = useRef<number | null>(null);
     const lastSyncedLocationTimeRef = useRef<number>(0);
 
-    /* useEffect(() => { positionsRef.current = positions; }, [positions]);
-    useEffect(() => { stepCountRef.current = stepCount; }, [stepCount]);
-    useEffect(() => { currentSpeedRef.current = currentSpeed; }, [currentSpeed]);
-    useEffect(() => { maxSpeedRef.current = maxSpeed; }, [maxSpeed]);
-    useEffect(() => { currentMVRef.current = currentMV; }, [currentMV]); */
-
     useEffect(() => {
         positionsRef.current = positions;
         stepCountRef.current = stepCount;
@@ -685,7 +722,7 @@ const Page = () => {
                 activeTime: currentActiveTime
             };
 
-            console.log('Activity snapshot', snapshot);
+            //console.log('Activity snapshot', snapshot);
 
             try {
                 isSyncingRef.current = true;
@@ -712,7 +749,7 @@ const Page = () => {
                         totalTimeNum,
                         activeTimeNum,
                     );
-                    console.log("data created");
+                    //console.log("data created");
                 
                     const createdId = (res as any)?.sessionId ?? (res as any)?.data?.sessionId ?? null;
                     if (createdId != null) {
@@ -734,7 +771,7 @@ const Page = () => {
                         activeTime: activeTimeNum,
                     });
 
-                    console.log("data updated in db", response);
+                    //console.log("data updated in db", response);
                     
                     const unsynced = positionsRef.current
                         .filter(p => p.time > lastSyncedLocationTimeRef.current)
@@ -881,6 +918,7 @@ const Page = () => {
             {isLocked && (
                 <LockScreen setIsLocked={setIsLocked} />
             )}
+
         </View>
     )
 }

@@ -22,6 +22,7 @@
     "dayjs": "^1.11.18",
     "eas-cli": "^16.19.1",
     "expo": "~53.0.22",
+    "expo-background-fetch": "^14.0.7",
     "expo-blur": "~14.1.5",
     "expo-checkbox": "~4.1.4",
     "expo-constants": "~17.1.7",
@@ -42,6 +43,7 @@
     "expo-status-bar": "~2.2.3",
     "expo-symbols": "~0.4.5",
     "expo-system-ui": "~5.0.11",
+    "expo-task-manager": "~13.1.6",
     "expo-web-browser": "~14.2.0",
     "i18next": "^25.5.2",
     "nativewind": "^4.1.23",
@@ -67,8 +69,7 @@
     "react-native-wheel-picker-expo": "^0.5.4",
     "tailwind-merge": "^3.3.1",
     "tailwind-variants": "^3.1.1",
-    "zustand": "^5.0.8",
-    "expo-task-manager": "~13.1.6"
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
