@@ -4,7 +4,8 @@ import ReminderList from "@/components/ReminderList";
 import WaterVector from "@/components/vector/WaterVector";
 import WaterHistory from "@/components/WaterHistory";
 import Weather from "@/components/Weather";
-import { useUnits } from "@/context/unitContext";
+import { WaterStatus, WeatherResponse } from "@/constants/type";
+import { useUnits } from "@/hooks/useUnits";
 import {
   getIp,
   getWaterReminder,
@@ -14,33 +15,33 @@ import {
   WaterWeekly,
   WeatherSuggest,
 } from "@/services/water";
-import { convertWater, toBaseWater } from "@/utils/convertMeasure";
+import { useModalStore } from "@/stores/useModalStore";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
-  Modal,
   ScrollView,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import Toast from "react-native-toast-message";
-import WheelPickerExpo from "react-native-wheel-picker-expo";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const Page = () => {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { units } = useUnits();
+  const { openModal } = useModalStore();
+  const { units, displayWater, inputToBaseWater } = useUnits();
   const queryClient = useQueryClient();
-  const [visible, setVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(
     params.selectedDate ? Number(params.selectedDate) : 0
   );
@@ -48,26 +49,25 @@ const Page = () => {
   const initialValue =
     units.water === "ml"
       ? 360
-      : Number(convertWater(360, units.water).toFixed(2));
+      : Number(displayWater(360).value.toFixed(2));
 
-  const [amount, setAmount] = useState(initialValue);
   const items =
     units.water === "ml"
       ? Array.from({ length: 100 }, (_, i) => {
-          const amount = (i + 1) * 10;
-          return { label: `${amount}`, amount };
-        })
+        const amount = (i + 1) * 10;
+        return { label: `${amount}`, amount };
+      })
       : Array.from({ length: (170 - 1) / 1 + 1 }, (_, i) => {
-          const amount = 1 + i * 1;
-          return { label: `${amount}`, amount };
-        });
+        const amount = 1 + i * 1;
+        return { label: `${amount}`, amount };
+      });
 
   const {
     data: waterStatus,
     isLoading: loadingWaterStatus,
     refetch: refetchWaterStatus,
   } = useQuery({
-    queryKey: ["waterStatus", selectedDate],
+    queryKey: ["waterStatus", { date: selectedDate }],
     queryFn: () =>
       getWaterStatus(
         selectedDate !== 0
@@ -75,13 +75,13 @@ const Page = () => {
           : undefined
       ),
     staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
     select: (res) => res.data,
   });
 
   const {
     data: weatherReport,
     isLoading: loadingWeather,
-    refetch: refetchWeather,
   } = useQuery({
     queryKey: ["weatherReport"],
     queryFn: async () => {
@@ -95,7 +95,7 @@ const Page = () => {
     isLoading: loadingWeekly,
     refetch: refetchWeekly,
   } = useQuery({
-    queryKey: ["waterWeekly", selectedDate],
+    queryKey: ["waterWeekly", { date: selectedDate }],
     queryFn: () =>
       WaterWeekly(
         selectedDate !== 0
@@ -103,6 +103,7 @@ const Page = () => {
           : undefined
       ),
     staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
     select: (res) => res.data.dailyIntake,
   });
 
@@ -115,6 +116,7 @@ const Page = () => {
     queryFn: () => getWaterReminder(),
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    placeholderData: keepPreviousData,
     select: (res) => res.data,
   });
 
@@ -123,53 +125,52 @@ const Page = () => {
     const prevTimestamp = currentTimestamp - 86400;
     const nextTimestamp = currentTimestamp + 86400;
 
-    queryClient.prefetchQuery({
-      queryKey: ["waterStatus", prevTimestamp],
-      queryFn: () =>
-        getWaterStatus({ date: (prevTimestamp * 1000).toString() }),
-      staleTime: 1000 * 60 * 5,
+    queryClient.invalidateQueries({
+      queryKey: ["waterStatus", { date: currentTimestamp }],
     });
-    queryClient.prefetchQuery({
-      queryKey: ["waterStatus", nextTimestamp],
-      queryFn: () =>
-        getWaterStatus({ date: (nextTimestamp * 1000).toString() }),
-      staleTime: 1000 * 60 * 5,
+    queryClient.invalidateQueries({
+      queryKey: ["waterWeekly", { date: currentTimestamp }],
     });
 
     queryClient.prefetchQuery({
-      queryKey: ["waterWeekly", prevTimestamp],
-      queryFn: () => WaterWeekly({ date: (prevTimestamp * 1000).toString() }),
-      staleTime: 1000 * 60 * 5,
+      queryKey: ["waterStatus", { date: prevTimestamp }],
+      queryFn: () =>
+        getWaterStatus({ date: (prevTimestamp * 1000).toString() }),
     });
     queryClient.prefetchQuery({
-      queryKey: ["waterWeekly", nextTimestamp],
-      queryFn: () => WaterWeekly({ date: (nextTimestamp * 1000).toString() }),
-      staleTime: 1000 * 60 * 5,
+      queryKey: ["waterStatus", { date: nextTimestamp }],
+      queryFn: () =>
+        getWaterStatus({ date: (nextTimestamp * 1000).toString() }),
+    });
+
+    queryClient.prefetchQuery({
+      queryKey: ["waterWeekly", { date: prevTimestamp }],
+      queryFn: () =>
+        WaterWeekly({ date: (prevTimestamp * 1000).toString() }),
+    });
+    queryClient.prefetchQuery({
+      queryKey: ["waterWeekly", { date: nextTimestamp }],
+      queryFn: () =>
+        WaterWeekly({ date: (nextTimestamp * 1000).toString() }),
     });
 
     if (selectedDate === 0) {
       const todayTimestamp = Math.floor(Date.now() / 1000);
       queryClient.prefetchQuery({
-        queryKey: ["waterWeekly", todayTimestamp],
+        queryKey: ["waterWeekly", { date: todayTimestamp }],
         queryFn: () =>
           WaterWeekly({ date: (todayTimestamp * 1000).toString() }),
-        staleTime: 1000 * 60 * 5,
       });
     }
 
     queryClient.prefetchQuery({
       queryKey: ["waterReminder"],
       queryFn: () => getWaterReminder(),
-      staleTime: 1000 * 60 * 5,
-      gcTime: 1000 * 60 * 10,
     });
   }, [selectedDate, queryClient]);
 
-  const loading =
-    loadingWaterStatus || loadingWeather || loadingWeekly || loadingReminder;
-
   const handleConfirm = async (amount: number, time: string) => {
-    const valueInMl = units.water === "ml" ? amount : toBaseWater(amount, units.water); 
+    const valueInMl = inputToBaseWater(amount);
     try {
       await saveWaterRecord(valueInMl, time);
       refetchWaterStatus();
@@ -195,13 +196,13 @@ const Page = () => {
     }
   };
 
-  if (
-    loading ||
-    !waterStatus ||
-    !weatherReport ||
-    !waterWeeklyData ||
-    !waterReminderData
-  ) {
+  const isInitialLoading =
+    (loadingWaterStatus && !waterStatus) ||
+    (loadingWeather && !weatherReport) ||
+    (loadingWeekly && !waterWeeklyData) ||
+    (loadingReminder && !waterReminderData);
+
+  if (isInitialLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator size="large" color="#000" />
@@ -209,23 +210,22 @@ const Page = () => {
     );
   }
 
-  const filtered = waterStatus.history.sort(
+  const filtered = waterStatus?.history.sort(
     (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
   );
 
   const percent =
-    ((waterStatus.currentIntake ?? 0) / (waterStatus.dailyGoal ?? 1)) * 100;
+    ((waterStatus?.currentIntake ?? 0) / (waterStatus?.dailyGoal ?? 1)) * 100;
 
-  const data = waterWeeklyData.map((item) => ({
-    value: convertWater(item.totalMl, units.water),
+  const data = waterWeeklyData?.map((item) => ({
+    value: displayWater(item.totalMl).value,
     label: item.dayOfWeek,
   }));
 
   const baseLabels = [0, 500, 1000, 1500, 2000];
   const yAxisLabelTexts = baseLabels.map((val) =>
-    convertWater(val, units.water).toString()
+    displayWater(val).value.toString()
   );
-
   return (
     <ScrollView
       className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
@@ -238,7 +238,7 @@ const Page = () => {
           <TouchableOpacity onPress={() => router.push("/(tabs)")}>
             <FontAwesome6 name="chevron-left" size={24} color="black" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">Nước</Text>
+          <Text className="text-2xl font-bold  self-center">{t("Nước")}</Text>
           <View style={{ width: 24 }} />
         </View>
         <CalendarSwiper
@@ -263,8 +263,7 @@ const Page = () => {
             animated={true}
           />
           <Text className="absolute top-2 right-2 text-black text-lg">
-            - {convertWater(waterStatus?.dailyGoal || 0, units.water)}{" "}
-            {units.water}
+            - {displayWater(waterStatus?.dailyGoal ?? 0).formatted}
           </Text>
         </View>
         <View className="flex-1 justify-between ml-1">
@@ -276,22 +275,22 @@ const Page = () => {
             }
           >
             <InfoCard
-              title="Mục tiêu"
+              title={t("Mục tiêu")}
               content={
-                `${convertWater(waterStatus?.dailyGoal || 0, units.water)} ${units.water}` ||
-                `${convertWater(2000, units.water)} ${units.water}`
+                displayWater(waterStatus?.dailyGoal ?? 0).formatted ||
+                displayWater(2000).formatted
               }
             />
           </TouchableOpacity>
           <InfoCard
-            title="Tiến độ"
+            title={t("Tiến độ")}
             content={
-              `${convertWater(waterStatus?.currentIntake || 0, units.water)} ` ||
-              `${convertWater(0, units.water)} ${units.water}`
+              displayWater(waterStatus?.currentIntake || 0).formatted ||
+              displayWater(0).formatted
             }
             subcontent={
-              ` / ${convertWater(waterStatus?.dailyGoal || 0, units.water)} ${units.water}` ||
-              `${convertWater(2000, units.water)} ${units.water}`
+              ` / ${displayWater(waterStatus?.dailyGoal || 0).formatted}` ||
+              displayWater(2000).formatted
             }
           />
           <TouchableOpacity
@@ -299,69 +298,24 @@ const Page = () => {
             className="flex flex-row items-center justify-center gap-2.5 bg-white p-2 rounded-md shadow-md h-[70px]"
           >
             <FontAwesome6 name="calendar" size={24} color="black" />
-            <Text className="text-xl">Nhắc nhở tôi</Text>
+            <Text className="text-xl">{t("Nhắc nhở tôi")}</Text>
           </TouchableOpacity>
         </View>
       </View>
       <View className="flex items-center justify-center py-4">
         <TouchableOpacity
           className="self-center flex-row items-center justify-center w-[70%] py-3 bg-cyan-blue rounded-full"
-          onPress={() => setVisible(true)}
+          onPress={() => openModal("waterwheel", {
+            title: `${t("Lượng nước uống")} (${units.water})`,
+            items: items,
+            initialValue: initialValue,
+            currentDate: currentDate,
+            handleConfirm: handleConfirm,
+          })}
         >
-          <Text className="text-xl text-white">Thêm</Text>
+          <Text className="text-xl text-white">{t("Thêm")}</Text>
         </TouchableOpacity>
       </View>
-      <Modal
-        visible={visible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setVisible(false)}
-        className="flex-1"
-      >
-        <View className="flex-1 items-center justify-center bg-black/30">
-          <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
-            <Text className="text-2xl font-bold mb-4">
-              Lượng nước uống ({units.water})
-            </Text>
-            <WheelPickerExpo
-              height={240}
-              width={250}
-              initialSelectedIndex={items.findIndex((i) => i.amount === initialValue)}
-              items={items.map((item) => ({
-                label: item.label,
-                value: item.amount,
-              }))}
-              selectedStyle={{
-                borderColor: "gray",
-                borderWidth: 0.5,
-              }}
-              renderItem={({ label }) => {
-                return (
-                  <Text
-                    style={{
-                      fontSize: 28,
-                      fontWeight: "500",
-                    }}
-                  >
-                    {label}
-                  </Text>
-                );
-              }}
-              onChange={({ item }) => setAmount(item.value)}
-            />
-
-            <TouchableOpacity
-              onPress={() => {
-                handleConfirm(amount, currentDate.toString());
-                setVisible(false);
-              }}
-              className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
-            >
-              <Text className="text-xl text-black font-bold ">Thêm</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       {waterReminderData &&
         (() => {
@@ -380,21 +334,20 @@ const Page = () => {
         })()}
       {percent >= 25 && (
         <Text className="text-lg text-center text-black/60 py-2">
-          {" "}
-          Bạn đã hoàn thành {percent.toFixed(0)}% mục tiêu đề ra{" "}
+          {t("Bạn đã hoàn thành")} {percent.toFixed(0)}% {t("mục tiêu đề ra")}
         </Text>
       )}
-      {filtered.length > 0 && (
+      {filtered && filtered.length > 0 && (
         <Text className="font-bold text-lg text-black/60 pb-2">
-          Lịch sử hôm nay
+          {t("Lịch sử hôm nay")}
         </Text>
       )}
-      <WaterHistory filtered={filtered} />
+      <WaterHistory filtered={filtered ?? []} />
 
       <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4 mt-4">
         <View>
-          <Text className="font-bold text-xl">Tiến trình của bạn</Text>
-          <Text className="text-black/60">Hãy giữ phong độ nào !</Text>
+          <Text className="font-bold text-xl">{t("Tiến trình của bạn")}</Text>
+          <Text className="text-black/60">{t("Hãy giữ phong độ nào !")}</Text>
         </View>
         <ScrollView
           horizontal
@@ -407,7 +360,7 @@ const Page = () => {
             frontColor="#00BFFF"
             noOfSections={3}
             yAxisLabelTexts={yAxisLabelTexts}
-            maxValue={convertWater(2000, units.water)}
+            maxValue={displayWater(2000).value}
             xAxisLabelTextStyle={{ color: "black" }}
             yAxisTextStyle={{ color: "black" }}
           />
@@ -416,10 +369,10 @@ const Page = () => {
 
       <Weather
         handleUpdateGoal={() =>
-          handleUpdateGoal(weatherReport.recommended, Date.now().toString())
+          handleUpdateGoal(weatherReport?.recommended ?? 0, Date.now().toString())
         }
-        weatherReport={weatherReport}
-        waterStatus={waterStatus}
+        weatherReport={weatherReport as WeatherResponse}
+        waterStatus={waterStatus as WaterStatus}
       />
     </ScrollView>
   );

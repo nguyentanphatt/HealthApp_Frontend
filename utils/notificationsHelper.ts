@@ -2,7 +2,7 @@ import { WaterReminder } from "@/constants/type";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
-import { convertISOToTimestamp } from "./convertISOtoTimestamp";
+import { convertISOToTimestamp } from "./convertTime";
 
 
 // Khởi tạo categories (nút action)

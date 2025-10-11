@@ -1,14 +1,15 @@
 import { WaterRecords } from "@/constants/type";
-import { useUnits } from "@/context/unitContext";
-import { convertWater } from "@/utils/convertMeasure";
+import { useUnits } from "@/hooks/useUnits";
 import { Href, useRouter } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Text, TouchableOpacity, View } from "react-native";
 import InfoCard from "./InfoCard";
 
 const WaterHistory = ({ filtered }: { filtered: WaterRecords[] }) => {
   const router = useRouter();
-  const {units} = useUnits()
+  const {units, displayWater} = useUnits()
+  const { t } = useTranslation();
   const [showAll, setShowAll] = useState(false);
   const displayedData = showAll ? filtered : filtered.slice(0, 3);
   const formatTime = (isoString: string) => {
@@ -32,7 +33,7 @@ const WaterHistory = ({ filtered }: { filtered: WaterRecords[] }) => {
         >
           <InfoCard
             title={formatTime(item.time)}
-            content={`${convertWater(item.amount, units.water)} ${units.water}`}
+            content={`${displayWater(item.amount).formatted}`}
           />
         </TouchableOpacity>
       ))}
@@ -40,7 +41,7 @@ const WaterHistory = ({ filtered }: { filtered: WaterRecords[] }) => {
       {filtered.length > 3 && (
         <TouchableOpacity onPress={() => setShowAll(!showAll)} className="py-5">
           <Text className="text-lg text-center text-black/60 font-semibold">
-            {showAll ? "Ẩn bớt" : "Xem thêm"}
+            {showAll ? t("Ẩn bớt") : t("Xem thêm")}
           </Text>
         </TouchableOpacity>
       )}

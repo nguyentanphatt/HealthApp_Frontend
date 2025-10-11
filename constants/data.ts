@@ -33,3 +33,102 @@ export const introductionData = [
     blurBg: images.blur04,
   },
 ];
+
+export const nutritionFields = [
+  { label: "Chất đạm", key: "protein" },
+  { label: "Chất béo", key: "fat" },
+  { label: "Chất xơ", key: "fiber" },
+  { label: "Tinh bột", key: "starch" },
+];
+
+export const meals = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
+
+export const options = [
+  {
+    id: 1,
+    label: "Tất cả",
+    value: "all",
+  },
+  {
+    id: 2,
+    label: "Nước",
+    value: "water",
+  },
+  {
+    id: 3,
+    label: "Thức ăn",
+    value: "food",
+  },
+
+  {
+    id: 4,
+    label: "Vận động",
+    value: "fitness",
+  },
+
+  {
+    id: 5,
+    label: "Giấc ngủ",
+    value: "sleep",
+  },
+
+  {
+    id: 6,
+    label: "Khác",
+    value: "other",
+  },
+]
+
+export const categoryBlog = [
+  {
+    id: 1,
+    label: "Nước",
+    value: "water",
+  },
+  {
+    id: 2,
+    label: "Thức ăn",
+    value: "food",
+  },
+
+  {
+    id: 3,
+    label: "Vận động",
+    value: "fitness",
+  },
+
+  {
+    id: 4,
+    label: "Giấc ngủ",
+    value: "sleep",
+  },
+
+  {
+    id: 5,
+    label: "Khác",
+    value: "other",
+  },
+]
+
+export const sortOptions = [
+  {
+    id: 1,
+    label: "Mới nhất",
+    value: "newest",
+  },
+  {
+    id: 2,
+    label: "Cũ nhất",
+    value: "oldest",
+  },
+  {
+    id: 3,
+    label: "Yêu thích ↑",
+    value: "favorite-increase",
+  },
+  {
+    id: 4,
+    label: "Yêu thích ↓",
+    value: "favorite-decrease",
+  },
+]

@@ -1,21 +1,21 @@
 import { submitFoodRecord } from "@/services/food";
+import { useModalStore } from "@/stores/useModalStore";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 const Page = () => {
   const router = useRouter();
-  const params = useLocalSearchParams();
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState(
-    params.selectedDate ? Number(params.selectedDate) : 0
-  );
+  const { t } = useTranslation();
+  const { openModal } = useModalStore();
   const [selectedTag, setSelectedTag] = useState("");
   const [images, setImages] = useState<string[]>([]);
-  const [previewUri, setPreviewUri] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const options = ["Sáng", "Trưa", "Tối", "Phụ", "Khác"];
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -43,6 +43,7 @@ const Page = () => {
 
   const sendToBackend = async (uris: string[], tag: string) => {
     try {
+      setIsUploading(true);
       console.log("Sending to backend:", uris, tag);
 
       for (let i = 0; i < uris.length; i++) {
@@ -54,7 +55,7 @@ const Page = () => {
               Toast.show({
                 type: "error",
                 text1: `Ảnh ${i + 1} sai`,
-                text2: "Vui lòng chọn ảnh về bữa ăn",
+                text2: t("Vui lòng chọn ảnh về bữa ăn"),
               });
             } else {
               Toast.show({
@@ -62,27 +63,28 @@ const Page = () => {
                 text1: `Ảnh ${i + 1} thành công`,
               });
             }
-            queryClient.invalidateQueries({ queryKey: ["foodStatus"] });
+            // Invalidate all food queries (any date key) so screens refetch
+            queryClient.invalidateQueries({ queryKey: ["foodStatus"], exact: false });
+            queryClient.invalidateQueries({ queryKey: ["foodWeekly"], exact: false });
           }
         } catch (err) {
           console.log(`Upload ảnh ${i + 1} thất bại:`, err);
           Toast.show({
             type: "error",
             text1: `Ảnh ${i + 1} lỗi`,
-            text2: "Không thể upload ảnh này",
+            text2: t("Không thể upload ảnh này"),
           });
         }
 
-        // Rate limit: chờ 500ms giữa các request
         if (i < uris.length - 1) {
           await delay(300);
         }
       }
-
-      // Sau khi upload xong hết thì redirect
       router.push("/food");
     } catch (err) {
       console.error("Lỗi chung khi upload:", err);
+    } finally {
+      setIsUploading(false);
     }
   };
   return (
@@ -98,13 +100,13 @@ const Page = () => {
             <TouchableOpacity onPress={() => router.back()}>
               <FontAwesome6 name="chevron-left" size={24} color="black" />
             </TouchableOpacity>
-            <Text className="text-2xl font-bold self-center">Hình ảnh</Text>
+            <Text className="text-2xl font-bold self-center">{t("Hình ảnh")}</Text>
             <View style={{ width: 24 }} />
           </View>
         </View>
         <View className="flex gap-5">
           <View>
-            <Text className="font-bold text-xl pt-5 pb-2">Loại bữa ăn</Text>
+            <Text className="font-bold text-xl pt-5 pb-2">{t("Loại bữa ăn")}</Text>
             <View className="flex-row gap-3">
               <FlatList
                 data={options}
@@ -123,7 +125,7 @@ const Page = () => {
                       <Text
                         className={`text-lg ${isSelectedTag ? "text-white" : "text-black"}`}
                       >
-                        {item}
+                        {t(item)}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -135,7 +137,7 @@ const Page = () => {
             <View className="size-20 flex items-center justify-center bg-cyan-blue/20 rounded-full">
               <FontAwesome6 name="image" color="black" size={24} />
             </View>
-            <Text className="text-xl text-center">Chọn ảnh</Text>
+            <Text className="text-xl text-center">{t("Chọn ảnh")}</Text>
           </View>
 
           <View className="flex flex-row items-center justify-center gap-5">
@@ -144,18 +146,18 @@ const Page = () => {
               className="self-center flex-row items-center justify-center gap-5 w-[40%] bg-white py-3 rounded-md shadow-md"
             >
               <FontAwesome6 name="upload" color="#19B1FF" size={20} />
-              <Text className="text-xl text-black ">Thư viện</Text>
+              <Text className="text-xl text-black ">{t("Thư viện")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={takePhoto}
               className="self-center flex-row items-center justify-center gap-5 w-[40%] bg-white py-3 rounded-md shadow-md"
             >
               <FontAwesome6 name="camera" color="#19B1FF" size={20} />
-              <Text className="text-xl text-black ">Chụp ảnh</Text>
+              <Text className="text-xl text-black ">{t("Chụp ảnh")}</Text>
             </TouchableOpacity>
           </View>
           <View className="py-2">
-            {images.length > 0 && <Text>Ảnh đã chọn ({images.length})</Text>}
+            {images.length > 0 && <Text>{t("Ảnh đã chọn")} ({images.length})</Text>}
             <View className="flex-row items-center gap-4 py-2">
               {images.map((uri, idx) => (
                 <View key={idx} className="w-32 h-32 rounded-md relative">
@@ -169,7 +171,7 @@ const Page = () => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={{ width: "100%", height: "100%" }}
-                    onPress={() => setPreviewUri(uri)}
+                    onPress={() => openModal("imageview", { uri: uri })}
                   >
                     <Image
                       source={{ uri }}
@@ -182,21 +184,6 @@ const Page = () => {
           </View>
         </View>
       </ScrollView>
-      {previewUri && (
-        <View className="absolute inset-0 bg-black/80 justify-center items-center z-50">
-          <TouchableOpacity
-            className="absolute top-10 right-10 z-10 "
-            onPress={() => setPreviewUri(null)}
-          >
-            <FontAwesome6 name="x" size={20} color="white" />
-          </TouchableOpacity>
-          <Image
-            source={{ uri: previewUri }}
-            className="w-[90%] h-[70%]"
-            resizeMode="contain"
-          />
-        </View>
-      )}
       {images.length > 0 && (
         <View className="absolute bottom-10 left-0 right-0 p-4 bg-[#f6f6f6]">
           <TouchableOpacity
@@ -205,8 +192,23 @@ const Page = () => {
             }}
             className="self-center flex-row items-center justify-center w-[45%] bg-cyan-blue py-3 rounded-md shadow-md"
           >
-            <Text className="text-xl text-white font-bold ">Tải ảnh lên</Text>
+            <Text className="text-xl text-white font-bold ">{t("Tải ảnh lên")}</Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+
+      {isUploading && (
+        <View className="absolute inset-0 bg-black/50 justify-center items-center z-50">
+          <View className="bg-white rounded-lg p-6 flex items-center justify-center w-[90%] h-[300px]">
+            <ActivityIndicator size="large" color="#19B1FF" />
+            <Text className="text-2xl font-bold mt-4 text-center">
+              {t("AI đang phân tích...")}
+            </Text>
+            <Text className="text-lg text-gray-600 mt-2 text-center">
+              {t("Vui lòng chờ trong giây lát")}
+            </Text>
+          </View>
         </View>
       )}
     </View>

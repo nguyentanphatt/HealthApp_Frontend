@@ -1,10 +1,12 @@
 import { images } from "@/constants/image";
-import useAuthStorage from "@/hooks/useAuthStorage";
+import i18n from "@/plugins/i18n";
 import { sendOtp, verifyOtp } from "@/services/user";
+import { useAuthStore } from "@/stores/useAuthStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
 import Toast from "react-native-toast-message";
@@ -14,7 +16,21 @@ const Verify = () => {
   const [type, setType] = useState("");
   const [otp, setOtp] = useState("");
   const [timeLeft, setTimeLeft] = useState(5 * 60);
-  const { saveAuthData } = useAuthStorage()
+  const setTokens = useAuthStore(state => state.setTokens)
+  const { t } = useTranslation(); 
+  useEffect(() => {
+    const loadLanguage = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('temp_language');
+        if (stored === 'en' || stored === 'vi') {
+          await i18n.changeLanguage(stored);
+        }
+      } catch (error) {
+        console.error('Error loading language:', error);
+      }
+    };
+    loadLanguage();
+  }, []);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -41,6 +57,8 @@ const Verify = () => {
         setType(type);
         await AsyncStorage.removeItem("email");
         await AsyncStorage.removeItem("type");
+        // Send OTP after setting email
+        sendOtp(storedEmail);
       }
     };
     loadEmail();
@@ -50,7 +68,8 @@ const Verify = () => {
     try {
      const response = await verifyOtp(email, otp);
      if(response.success){
-      await saveAuthData(response.data)
+      //await saveAuthData(response.data)
+      setTokens(response.data.accessToken, response.data.refreshToken)
       if(type === 'signup'){
         Toast.show({
           type: "success",
@@ -64,7 +83,7 @@ const Verify = () => {
         });
         router.push("/(tabs)");
       }
-      
+
      } 
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
@@ -80,7 +99,7 @@ const Verify = () => {
       await sendOtp(email)
       Toast.show({
         type: "success",
-        text1: "Đã gửi lại mã OTP",
+        text1: t("Đã gửi lại mã OTP"),
       });
     } catch (error) {
       throw error
@@ -90,9 +109,9 @@ const Verify = () => {
   return (
     <View className="font-lato-regular flex-1 items-center py-10 h-full">
       <View className="py-20">
-        <Text className="text-2xl font-bold text-center">Xác thực OTP</Text>
+        <Text className="text-2xl font-bold text-center">{t("Xác thực OTP")}</Text>
         <Text className="text-center text-black/50 mt-2">
-          Chúng tôi đã gửi OTP qua mail của bạn
+          {t("Chúng tôi đã gửi OTP qua mail của bạn")}
         </Text>
       </View>
       <Image
@@ -131,14 +150,14 @@ const Verify = () => {
         </View>
         <TouchableOpacity onPress={resend}>
           <Text className="text-cyan-blue text-center" >
-            Gửi lại OTP
+            {t("Gửi lại OTP")}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           className="flex items-center justify-center py-4 w-full bg-cyan-blue rounded-full"
           onPress={() => handleVerify(otp)}
         >
-          <Text className="text-white">Xác thực</Text>
+          <Text className="text-white">{t("Xác thực")}</Text>
         </TouchableOpacity>
       </View>
     </View>

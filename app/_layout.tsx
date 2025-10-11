@@ -1,85 +1,28 @@
+import AppRefreshWatcher from "@/components/AppRefreshWatcher";
+import GlobalModal from "@/components/GlobalModal";
 import { UnitProvider } from "@/context/unitContext";
-import useAuthStorage from "@/hooks/useAuthStorage";
 import { useNotifications } from "@/hooks/useNotification";
 import { registerForPushNotificationsAsync } from "@/utils/notificationsHelper";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Font from "expo-font";
-import { Href, Stack, useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import Toast from "react-native-toast-message";
 import "../global.css";
+import "../plugins/i18n";
+import "../utils/activityNotification"; // Import to register background task
 
 SplashScreen.preventAutoHideAsync(); // ✅ keep splash until we say so
 
 export default function RootLayout() {
   useNotifications();
-  const router = useRouter();
   const [loaded] = Font.useFonts({
     "Lato-Regular": require("../assets/fonts/Lato-Regular.ttf"),
     "Lato-Bold": require("../assets/fonts/Lato-Bold.ttf"),
   });
-
-  const { checkAndRefreshToken, loadStoredAuth } = useAuthStorage();
   const queryClient = new QueryClient();
-
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | undefined;
-
-    const init = async () => {
-      try {
-        const hasSeen = await AsyncStorage.getItem("hasSeenIntroduction");
-        console.log("🔍 hasSeenIntroduction:", hasSeen);
-
-        if (!hasSeen) {
-          console.log("➡️ Going to introduction");
-          router.replace("/introduction");
-          return;
-        }
-
-        const storedAccess = await SecureStore.getItemAsync("access_token");
-        const storedRefresh = await SecureStore.getItemAsync("refresh_token");
-        console.log("🔍 Access token:", storedAccess ? "EXISTS" : "NULL");
-        console.log("🔍 Refresh token:", storedRefresh ? "EXISTS" : "NULL");
-        console.log("Access token", storedAccess);
-        
-        await loadStoredAuth();
-        if (storedAccess && storedRefresh) {
-          console.log("➡️ Going to tabs");
-          await checkAndRefreshToken(storedAccess, storedRefresh);
-          router.replace("/water" as Href);
-
-          interval = setInterval(async () => {
-            const a = await SecureStore.getItemAsync("access_token");
-            const r = await SecureStore.getItemAsync("refresh_token");
-            if (a && r) {
-              await checkAndRefreshToken(a, r);
-            }
-          }, 5 * 60 * 1000);
-        } else {
-          console.log("➡️ Going to auth/signin");
-          router.replace("/auth/signin");
-        }
-      } catch (e) {
-        console.log("❌ Error in init:", e);
-        router.replace("/auth/signin");
-      } finally {
-        // ✅ Hide splash after everything is ready
-        setTimeout(() => {
-          SplashScreen.hideAsync();
-        }, 300); // small delay for smooth transition
-      }
-    };
-
-    init();
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, []);
 
   useEffect(() => {
     (async () => {
@@ -93,6 +36,8 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <UnitProvider>
+        <AppRefreshWatcher />
+        <GlobalModal />
         <StatusBar hidden />
         <Stack
           screenOptions={{

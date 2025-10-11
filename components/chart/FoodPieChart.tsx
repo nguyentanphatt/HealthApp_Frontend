@@ -1,9 +1,11 @@
 import { FoodDetail } from "@/constants/type";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
 
 const FoodPieChart = ({data}: {data:FoodDetail[]}) => {
+  const { t } = useTranslation();
   const [actualData, setActualData] = useState([
     { value: 0, color: "#009FFF", gradientCenterColor: "#006DFF", text: "0%" }, // Protein
     { value: 0, color: "#93FCF8", gradientCenterColor: "#3BE9DE", text: "0%" }, // Tinh bột
@@ -69,7 +71,7 @@ const FoodPieChart = ({data}: {data:FoodDetail[]}) => {
 
   return (
     <View className="bg-white rounded-md shadow-md p-4 mt-10">
-      <Text className="font-bold text-xl mb-5">Tỉ lệ dinh dưỡng</Text>
+      <Text className="font-bold text-xl mb-5">{t("Tỉ lệ dinh dưỡng")}</Text>
       <View className="flex flex-row items-center justify-between">
         <View>
           <PieChart
@@ -83,7 +85,7 @@ const FoodPieChart = ({data}: {data:FoodDetail[]}) => {
             showValuesAsLabels
             showGradient
           />
-          <Text className="text-lg text-center">Đề xuất</Text>
+          <Text className="text-lg text-center">{t("Đề xuất")}</Text>
         </View>
         <View>
           <PieChart
@@ -105,21 +107,21 @@ const FoodPieChart = ({data}: {data:FoodDetail[]}) => {
             showValuesAsLabels
             showGradient
           />
-          <Text className="text-lg text-center">Thực tế</Text>
+          <Text className="text-lg text-center">{t("Thực tế")}</Text>
         </View>
       </View>
       <View className="flex-row items-center justify-center gap-7 pt-10">
         <View className="flex-row items-center gap-2">
           <View className="size-4 rounded-full bg-[#009FFF]" />
-          <Text>Chất đạm</Text>
+          <Text>{t("Chất đạm")}</Text>
         </View>
         <View className="flex-row items-center gap-2">
           <View className="size-4 rounded-full bg-[#93FCF8]" />
-          <Text>Tinh bột</Text>
+          <Text>{t("Tinh bột")}</Text>
         </View>
         <View className="flex-row items-center gap-2">
           <View className="size-4 rounded-full bg-[#BDB2FA]" />
-          <Text>Chất béo</Text>
+          <Text>{t("Chất béo")}</Text>
         </View>
       </View>
     </View>

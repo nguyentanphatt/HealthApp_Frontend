@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
 import { BarChart } from "react-native-gifted-charts";
@@ -6,10 +7,11 @@ import { BarChart } from "react-native-gifted-charts";
 const FoodBarChart = ({data}: {
   data: { value: number; label: string }[];
 }) => {
+  const { t } = useTranslation();
   return (
     <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4 mt-4">
       <View>
-        <Text className="font-bold text-xl">Tiến trình của bạn</Text>
+        <Text className="font-bold text-xl">{t("Tiến trình của bạn")}</Text>
       </View>
       <ScrollView
         horizontal

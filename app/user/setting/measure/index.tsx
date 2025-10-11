@@ -2,18 +2,28 @@ import { useUnits } from "@/context/unitContext";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 const Page = () => {
   const router = useRouter();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const { units, setUnit } = useUnits();
-
+  const { units, setUnit, isLoaded } = useUnits();
+  const { t } = useTranslation();
   const measureData = [
     { key: "height", label: "Chiều cao", options: ["cm", "ft"] },
     { key: "weight", label: "Cân nặng", options: ["kg", "g"] },
     { key: "water", label: "Lượng nước", options: ["ml", "fl oz"] },
     { key: "temperature", label: "Nhiệt độ", options: ["C", "F"] },
   ] as const;
+
+  if (!isLoaded) {
+    return (
+      <View className="flex-1 bg-[#f6f6f6] items-center justify-center">
+        <ActivityIndicator size="large" color="#19B1FF" />
+        <Text className="text-lg text-gray-600 mt-4">Loading</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -27,7 +37,7 @@ const Page = () => {
           <TouchableOpacity onPress={() => router.back()}>
             <FontAwesome6 name="chevron-left" size={24} color="black" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">Đơn vị đo</Text>
+          <Text className="text-2xl font-bold  self-center">{t("Đơn vị đo")}</Text>
           <View style={{ width: 24 }} />
         </View>
       </View>
@@ -41,7 +51,7 @@ const Page = () => {
                   setOpenDropdown(openDropdown === item.key ? null : item.key)
                 }
               >
-                <Text className="text-xl">{item.label}</Text>
+                <Text className="text-xl">{t(item.label)}</Text>
                 <View>
                   <Text className="text-xl text-cyan-blue">
                     {units[item.key]}

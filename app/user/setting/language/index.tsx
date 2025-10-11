@@ -1,6 +1,9 @@
+import { useUnits } from "@/context/unitContext";
+import i18n from "@/plugins/i18n";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 type Option = {
@@ -10,11 +13,24 @@ type Option = {
 
 const Page = () => {
   const router = useRouter();
-  const [selected, setSelected] = useState<string>("vi");
+  const { units, setUnit, isLoaded } = useUnits();
+  const { t } = useTranslation();
   const options: Option[] = [
-    { label: "Tiếng Việt", value: "vi" },
-    { label: "Tiếng Anh", value: "en" },
+    { label: t("Tiếng Việt"), value: "vi" },
+    { label: t("Tiếng Anh"), value: "en" },
   ];
+
+  useEffect(() => {
+    if (isLoaded) {
+      // Update i18n language when units are loaded
+      i18n.changeLanguage(units.language);
+    }
+  }, [units.language, isLoaded]);
+
+  const onSelect = async (lang: "vi" | "en") => {
+    setUnit("language", lang);
+    await i18n.changeLanguage(lang);
+  };
 
   return (
     <ScrollView
@@ -28,7 +44,7 @@ const Page = () => {
           <TouchableOpacity onPress={() => router.back()}>
             <FontAwesome6 name="chevron-left" size={24} color="black" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">Ngôn ngữ</Text>
+          <Text className="text-2xl font-bold  self-center">{t("Ngôn ngữ")}</Text>
           <View style={{ width: 24 }} />
         </View>
       </View>
@@ -37,13 +53,13 @@ const Page = () => {
           {options.map((item, idx) => (
             <TouchableOpacity
               key={item.value}
-              onPress={() => setSelected(item.value)}
+              onPress={() => onSelect(item.value as "vi" | "en")}
               className="flex gap-4"
             >
               <View className="flex-row items-center justify-between">
                 <Text className="text-xl text-black">{item.label}</Text>
                 <View className="size-[20px] rounded-full border-2 border-black flex items-center justify-center">
-                  {selected === item.value && (
+                  {units.language === item.value && (
                     <View className="size-[10px] rounded-full bg-black" />
                   )}
                 </View>

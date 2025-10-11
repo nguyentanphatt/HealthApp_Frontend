@@ -1,10 +1,11 @@
-import { useUnits } from "@/context/unitContext";
+import { useUnits } from "@/hooks/useUnits";
 import { createWaterReminder } from "@/services/water";
-import { convertWater, toBaseWater } from "@/utils/convertMeasure";
+import { convertWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Text,
   TextInput,
@@ -16,9 +17,9 @@ import WheelPickerExpo from "react-native-wheel-picker-expo";
 
 const Page = () => {
   const router = useRouter();
-  const {units} = useUnits()
+  const {units, inputToBaseWater} = useUnits()
   const queryClient = useQueryClient();
-
+  const { t } = useTranslation();
   const initialValue =
       units.water === "ml"
         ? 360
@@ -40,10 +41,10 @@ const Page = () => {
 
   const times = 9;
   const repeatedHours = Array.from({ length: times }).flatMap(() => hours);
-  const middleHoursIndex = Math.floor(times / 2) * hours.length;
+  //const middleHoursIndex = Math.floor(times / 2) * hours.length;
 
   const repeatedMinutes = Array.from({ length: times }).flatMap(() => minutes);
-  const middleMinutesIndex = Math.floor(times / 2) * minutes.length;
+  //const middleMinutesIndex = Math.floor(times / 2) * minutes.length;
 
   const handleSave = async (
     amount: number,
@@ -59,8 +60,8 @@ const Page = () => {
 	   newTime.setDate(newTime.getDate()+1);
 	 }
   const timestamp = newTime.getTime();
-  const valueInMl = units.water === "ml" ? amount : toBaseWater(amount, units.water); 
-	console.log("Saved:", {
+    const valueInMl = inputToBaseWater(amount); 
+    console.log("Saved:", {
     amount: valueInMl,
     time: newTime,
     hour,
@@ -91,11 +92,11 @@ const Page = () => {
         <TouchableOpacity onPress={() => router.back()}>
           <FontAwesome6 name="chevron-left" size={24} color="black" />
         </TouchableOpacity>
-        <Text className="text-2xl font-bold self-center">Thêm nhắc nhở</Text>
+        <Text className="text-2xl font-bold self-center">{t("Thêm nhắc nhở")}</Text>
         <View style={{ width: 24 }} />
       </View>
       <View className="flex items-center justify-center bg-white p-2 rounded-md shadow-md mb-1">
-        <Text className="text-xl font-bold">Lượng nước ({units.water})</Text>
+        <Text className="text-xl font-bold">{t("Lượng nước")} ({units.water})</Text>
         <View className="border-b-2 border-black max-w-[200px] h-[50px]">
           <TextInput
             className="text-2xl font-bold"
@@ -106,7 +107,7 @@ const Page = () => {
         </View>
       </View>
 
-      <Text className="text-xl font-bold">Thời gian</Text>
+      <Text className="text-xl font-bold">{t("Thời gian")}</Text>
       <View className="flex flex-row items-center justify-center bg-white rounded-md shadow-md p-4">
         <WheelPickerExpo
           height={240}
@@ -165,7 +166,7 @@ const Page = () => {
           onPress={() => handleSave(Number(selectedAmount), selectedHour-7, selectedMinute)}
           className="flex-row items-center justify-center w-[50%] bg-cyan-blue py-3 rounded-md shadow-md"
         >
-          <Text className="text-xl text-white font-bold ">Thêm nhắc nhở</Text>
+          <Text className="text-xl text-white font-bold ">{t("Thêm nhắc nhở")}</Text>
         </TouchableOpacity>
       </View>
     </View>

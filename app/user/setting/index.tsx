@@ -1,23 +1,25 @@
 import { FontAwesome6 } from "@expo/vector-icons";
 import { Href, useRouter } from "expo-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 
 const Page = () => {
   const router = useRouter();
   const [isEnabled, setIsEnabled] = useState(false);
+  const { t } = useTranslation();
   const overallData = [
     {
-      settingName: "Chế độ tối",
+      settingName: t("Chế độ tối"),
       isSwitch: true,
     },
     {
-      settingName: "Ngôn ngữ",
+      settingName: t("Ngôn ngữ"),
       isSwitch: false,
       href: '/user/setting/language'
     },
     {
-      settingName: "Đơn vị đo",
+      settingName: t("Đơn vị đo"),
       isSwitch: false,
       href: '/user/setting/measure'
     },
@@ -25,19 +27,24 @@ const Page = () => {
 
   const privateData = [
     {
-      settingName: "Thông tin vị trí",
+      settingName: t("Thông tin vị trí"),
       isSwitch: true,
     },
     {
-      settingName: "Thông tin bảo mật",
+      settingName: t("Thông tin bảo mật"),
       isSwitch: false,
     },
     {
-      settingName: "Quyền",
+      settingName: t("Quyền"),
       isSwitch: false,
     },
     {
-      settingName: "Xóa dữ liệu cá nhân",
+      settingName: t("Cập nhật thông tin cá nhân"),
+      isSwitch: false,
+      href: '/user/setting/info'
+    },
+    {
+      settingName: t("Xóa dữ liệu cá nhân"),
       isSwitch: false,
     },
   ];
@@ -55,17 +62,17 @@ const Page = () => {
           >
             <FontAwesome6 name="chevron-left" size={24} color="black" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">Cài đặt</Text>
+          <Text className="text-2xl font-bold  self-center">{t("Cài đặt")}</Text>
           <View style={{ width: 24 }} />
         </View>
       </View>
       <View className="flex gap-4 py-8">
-        <Text className="text-lg text-black/60">Chung</Text>
+        <Text className="text-lg text-black/60">{t("Chung")}</Text>
         <View className="flex w-full gap-4 bg-white rounded-md shadow-md p-4">
           {overallData.map((item, idx) => (
             <View key={idx} className="flex gap-4">
               <TouchableOpacity
-                className="flex-row items-center justify-between"
+                className="flex-row items-center justify-between h-[30px]"
                 onPress={() => router.push(item.href as Href)}
               >
                 <Text className="text-xl">{item.settingName}</Text>
@@ -87,11 +94,11 @@ const Page = () => {
           ))}
         </View>
 
-        <Text className="text-lg text-black/60">Riêng tư</Text>
+        <Text className="text-lg text-black/60">{t("Riêng tư")}</Text>
         <View className="flex w-full gap-4 bg-white rounded-md shadow-md p-4">
           {privateData.map((item, idx) => (
             <View key={idx} className="flex gap-4">
-              <View className="flex-row items-center justify-between">
+              <TouchableOpacity onPress={() => router.push(item.href as Href)} className="flex-row items-center justify-between h-[30px]">
                 <Text className="text-xl">{item.settingName}</Text>
                 {item.isSwitch && (
                   <Switch
@@ -103,7 +110,7 @@ const Page = () => {
                     className="scale-125"
                   />
                 )}
-              </View>
+              </TouchableOpacity>
               {idx === privateData.length - 1 ? null : (
                 <View className="w-full h-0.5 bg-black/40" />
               )}
