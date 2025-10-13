@@ -132,3 +132,76 @@ export const sortOptions = [
     value: "favorite-decrease",
   },
 ]
+
+export const workQuestions = [
+  {
+    id: 1,
+    question: "Mục tiêu chính khi bạn tập luyện là gì?",
+    answers: [
+      {
+        id: 1,
+        answer: "Giảm căng thẳng, tăng sự linh hoạt",
+      },
+      {
+        id: 2,
+        answer: "Tăng cơ, cải thiện sức mạnh",
+      },
+      {
+        id: 3,
+        answer: "Cải thiện sức bền và tim mạch",
+      },
+      {
+        id: 4,
+        answer: "Giảm cân, kiểm soát vóc dáng",
+      },
+      {
+        id: 5,
+        answer: "Khác",
+      }
+    ]
+  },
+  {
+    id: 2,
+    question: "Bạn thích kiểu vận động nào nhất?",
+    answers: [
+      {
+        id: 1,
+        answer: "Động tác chậm, tập trung vào hơi thở",
+      },
+      {
+        id: 2,
+        answer: "Chuyển động nhanh, nhiều năng lượng",
+      },
+      {
+        id: 3,
+        answer: "Dùng tạ hoặc kháng lực",
+      },
+      {
+        id: 4,
+        answer: "Bài tập có nhịp điệu, theo nhạc",
+      },
+      {
+        id: 5,
+        answer: "Khác",
+      }
+    ]
+  },
+  {
+    id: 3,
+    question: "Bạn có dụng cụ tập không?",
+    answers: [
+      {
+        id: 1,
+        answer: "Không có dụng cụ",
+      },
+      {
+        id: 2,
+        answer: "Có một vài dụng cụ nhỏ (dây kháng lực, tạ tay, thảm tập, v.v.)",
+      },
+      {
+        id: 3,
+        answer: "Có đầy đủ dụng cụ (tạ đòn, máy tập, ghế tập, v.v.)",
+      }
+    ]
+  }
+]
