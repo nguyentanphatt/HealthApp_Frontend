@@ -1,10 +1,10 @@
 import FilterSelector from '@/components/FilterSelector';
 import { options, sortOptions } from '@/constants/data';
 import { images } from '@/constants/image';
-import { getBlogs, getBlogsByUserId } from '@/services/blog';
+import { getBlogs, getBlogsByUserId, likeBlog } from '@/services/blog';
 import { useUserStore } from '@/stores/useUserStore';
 import { FontAwesome6 } from '@expo/vector-icons';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
@@ -29,7 +29,7 @@ const News = () => {
   const [hasMore, setHasMore] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const user = useUserStore((state) => state.user);
-
+  const queryClient = useQueryClient();
   const getCategoryLabel = (value: string) => {
     const opt = options.find(o => o.value === value);
     return opt ? opt.label : value;
@@ -117,6 +117,20 @@ const News = () => {
       setPage(prev => prev + 1);
     }
   };
+
+  const likeBlogMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return likeBlog(id);
+    },
+    onSuccess: (res) => {
+      if (res.success) {
+        queryClient.invalidateQueries({ predicate: (q: any) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"), refetchType: 'active' });
+      }
+    },
+    onError: (err) => {
+      console.log("Error liking blog:", err);
+    },
+  });
 
   const initialLoading = (type === 'user' ? isLoadingByUserId : isLoading) && page === 1;
   if (initialLoading) {
@@ -209,8 +223,12 @@ const News = () => {
                   <TouchableOpacity className="mt-4" onPress={() => router.push(`/news/details/${item.id}` as Href)}>
                     <Text className="text-cyan-blue font-semibold">{t("Xem thêm")}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity className="mt-2 flex-row items-center justify-center gap-2">
-                    <FontAwesome6 name="heart" size={20} color="red" />
+                  <TouchableOpacity className="mt-2 flex-row items-center justify-center gap-2" onPress={() => likeBlogMutation.mutate(item.id)}>
+                    {item.liked ? (
+                      <Image source={images.heart} className='w-[20px] h-[20px]' width={20} height={20} />
+                    ) : (
+                      <FontAwesome6 name="heart" size={20} color="red" />
+                    )}
                     <Text className="text-red-400 font-semibold w-[20px] text-center">{item.likes}</Text>
                   </TouchableOpacity>
                 </View>

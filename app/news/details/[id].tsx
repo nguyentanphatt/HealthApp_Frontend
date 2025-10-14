@@ -1,6 +1,6 @@
 import ActionModal from '@/components/modal/ActionModal';
 import { images } from '@/constants/image';
-import { deleteBlog, getBlogById } from '@/services/blog';
+import { deleteBlog, getBlogById, likeBlog } from '@/services/blog';
 import { useModalStore } from '@/stores/useModalStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { FontAwesome6 } from '@expo/vector-icons';
@@ -44,6 +44,20 @@ const NewsDetails = () => {
     },
     onError: (err) => {
       console.log("Error deleting blog:", err);
+    },
+  });
+
+  const likeBlogMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return likeBlog(id);
+    },
+    onSuccess: (res) => {
+      if (res.success) {
+        queryClient.invalidateQueries({ predicate: (q: any) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"), refetchType: 'active' });
+      }
+    },
+    onError: (err) => {
+      console.log("Error liking blog:", err);
     },
   });
 
@@ -101,12 +115,11 @@ const NewsDetails = () => {
         <FontAwesome6 name="share" size={24} color="white" />
       </TouchableOpacity>
       <TouchableOpacity
-        onPress={() => setIsLiked(!isLiked)}
+        onPress={() => likeBlogMutation.mutate(blog[0]?.id)}
         className='absolute bottom-8 right-4 w-[60px] h-[60px] flex items-center justify-center bg-red-400 rounded-full'>
         {isLiked === false ? <FontAwesome6 name="heart" size={24} color="white" /> : (
           <View className='flex items-center justify-center'>
             <Image source={images.heart} className='w-[25px] h-[22px]' width={24} height={24} />
-            <Text className='text-white'>{blog[0]?.likes}</Text>
           </View>
         )}
       </TouchableOpacity>

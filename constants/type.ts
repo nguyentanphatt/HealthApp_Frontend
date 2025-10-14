@@ -257,7 +257,8 @@ export interface CreateBlog {
   userId: string
   userName: string,
   category: string
-  likes: number
+  likes: number,
+  liked: boolean
 }
 
 export interface GetBlogsResponse {
