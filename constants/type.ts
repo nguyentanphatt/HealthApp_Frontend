@@ -289,3 +289,13 @@ export interface WeeklyGoal {
     calories: number
   }
 }
+
+export interface VideoType {
+  videoId: string;
+  publishedAt: string;
+  channelId: string;
+  channelTitle: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+}

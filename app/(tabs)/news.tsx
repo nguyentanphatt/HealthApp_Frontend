@@ -42,7 +42,6 @@ const News = () => {
       params.category = selectedTag.value;
     }
 
-    // Pass all sorting parameters to backend
     if (selectedSort.value === "favorite-increase") {
       params.heart = "asc";
     } else if (selectedSort.value === "favorite-decrease") {
@@ -122,13 +121,73 @@ const News = () => {
     mutationFn: async (id: number) => {
       return likeBlog(id);
     },
-    onSuccess: (res) => {
-      if (res.success) {
-        queryClient.invalidateQueries({ predicate: (q: any) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"), refetchType: 'active' });
-      }
+    onMutate: async (blogId: number) => {
+      await queryClient.cancelQueries({ predicate: (q: any) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId") });
+
+      const previousBlogs = queryClient.getQueriesData({ predicate: (q: any) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId") });
+
+      queryClient.setQueriesData(
+        { predicate: (q: any) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId") },
+        (old: any) => {
+          if (!old) return old;
+          
+          const updatedBlogs = old.blogs?.map((blog: any) => {
+            if (blog.id === blogId) {
+              return {
+                ...blog,
+                liked: !blog.liked,
+                likes: blog.liked ? blog.likes - 1 : blog.likes + 1
+              };
+            }
+            return blog;
+          });
+
+          return {
+            ...old,
+            blogs: updatedBlogs
+          };
+        }
+      );
+
+      setAllBlogs(prevBlogs => 
+        prevBlogs.map(blog => {
+          if (blog.id === blogId) {
+            return {
+              ...blog,
+              liked: !blog.liked,
+              likes: blog.liked ? blog.likes - 1 : blog.likes + 1
+            };
+          }
+          return blog;
+        })
+      );
+
+      return { previousBlogs };
     },
-    onError: (err) => {
+    onError: (err, blogId, context) => {
+      if (context?.previousBlogs) {
+        context.previousBlogs.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      
+      setAllBlogs(prevBlogs => 
+        prevBlogs.map(blog => {
+          if (blog.id === blogId) {
+            return {
+              ...blog,
+              liked: !blog.liked,
+              likes: blog.liked ? blog.likes + 1 : blog.likes - 1
+            };
+          }
+          return blog;
+        })
+      );
+      
       console.log("Error liking blog:", err);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ predicate: (q: any) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId") });
     },
   });
 
@@ -197,6 +256,12 @@ const News = () => {
           </View>
         </View>
 
+        {allBlogs.length === 0 && (
+          <View className="py-4 items-center">
+            <Text className="text-cyan-blue">{t("Không có bài viết")}</Text>
+          </View>
+        )}
+
         {allBlogs.map((item, idx) => (
           <TouchableOpacity className=' py-2.5' key={idx} onPress={() => router.push(`/news/details/${item.id}` as Href)}>
             <View className='relative bg-white rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4'>
@@ -225,7 +290,9 @@ const News = () => {
                   </TouchableOpacity>
                   <TouchableOpacity className="mt-2 flex-row items-center justify-center gap-2" onPress={() => likeBlogMutation.mutate(item.id)}>
                     {item.liked ? (
-                      <Image source={images.heart} className='w-[20px] h-[20px]' width={20} height={20} />
+                      <View className='w-[20px] h-[20px] flex items-center justify-center'>
+                        <Image source={images.heart} className='w-[17px] h-[15px]' width={20} height={20} />
+                      </View>
                     ) : (
                       <FontAwesome6 name="heart" size={20} color="red" />
                     )}

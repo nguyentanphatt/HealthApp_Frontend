@@ -30,13 +30,13 @@ const QuestionFlow = ({ onComplete }: QuestionFlowProps) => {
     newAnswers[currentQuestionIndex] = answerId;
     setSelectedAnswers(newAnswers);
 
-    setTimeout(() => {
+    /* setTimeout(() => {
       if (isLastQuestion) {
         onComplete(newAnswers);
       } else {
         nextQuestion();
       }
-    }, 500);
+    }, 500); */
   };
 
   const nextQuestion = () => {
@@ -47,6 +47,14 @@ const QuestionFlow = ({ onComplete }: QuestionFlowProps) => {
     }).start(() => {
       setCurrentQuestionIndex(prev => prev + 1);
     });
+  };
+
+  const handleComplete = () => {
+    if (isLastQuestion) {
+      onComplete(selectedAnswers);
+    } else {
+      nextQuestion();
+    }
   };
 
   const prevQuestion = () => {
@@ -150,7 +158,7 @@ const QuestionFlow = ({ onComplete }: QuestionFlowProps) => {
           </Text>
         </TouchableOpacity>
 
-        {!isLastQuestion && (
+        {!isLastQuestion ? (
           <TouchableOpacity
             onPress={nextQuestion}
             disabled={selectedAnswers[currentQuestionIndex] === undefined}
@@ -167,6 +175,13 @@ const QuestionFlow = ({ onComplete }: QuestionFlowProps) => {
             }`}>
               Tiếp
             </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={handleComplete}
+            className={`px-6 py-3 rounded-full bg-cyan-blue`}
+          >
+            <Text className={`text-lg text-white`}>Hoàn thành</Text>
           </TouchableOpacity>
         )}
       </View>

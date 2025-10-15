@@ -1,26 +1,91 @@
 import QuestionFlow from '@/components/QuestionFlow';
-import React, { useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { workQuestions } from '@/constants/data';
+import { workoutSurvey } from '@/services/workout';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Href, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from 'react-native';
 
 const Work = () => {
+  const router = useRouter();
   const [showQuestions, setShowQuestions] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [initializing, setInitializing] = useState(true);
+  const { t } = useTranslation();
 
-  const handleQuestionComplete = (answers: number[]) => {
-    console.log('Answers:', answers);
-    Alert.alert(
-      'Hoàn thành!',
-      'Cảm ơn bạn đã hoàn thành khảo sát. Chúng tôi sẽ tạo kế hoạch tập luyện phù hợp với bạn.',
-      [
-        {
-          text: 'OK',
-          onPress: () => setShowQuestions(false)
+  useEffect(() => {
+    (async () => {
+      try {
+        const existing = await AsyncStorage.getItem('workout_category');
+        if (existing) {
+          router.replace('/work/list' as Href);
+          return;
         }
-      ]
-    );
+      } finally {
+        setInitializing(false);
+      }
+    })();
+  }, []);
+  const handleQuestionComplete = async (answers: number[]) => {
+    try {
+      setAnalyzing(true);
+      const payload = {
+        questions: workQuestions.map((q, index) => ({
+          id: String(q.id ?? index + 1),
+          question: q.question,
+          answer: q.answers.find(a => a.id === answers[index])?.answer ?? ''
+        }))
+      };
+      console.log("payload", payload);
+      
+
+      const res = await workoutSurvey(payload);
+      setAnalyzing(false);
+      console.log("res", res);
+      
+      if (res?.success && res?.category) {
+        setShowQuestions(false);
+        await AsyncStorage.setItem('workout_category', res.category);
+        router.push('/work/list' as Href);
+      } else {
+        Alert.alert('Có lỗi', 'Không nhận được kết quả. Vui lòng thử lại.');
+      }
+    } catch (error) {
+      setAnalyzing(false);
+      console.log("error", error);
+      
+      Alert.alert('Có lỗi', 'Không thể phân tích khảo sát. Vui lòng thử lại.');
+    }
   };
 
+  if (initializing) {
+    return (
+      <View className='flex-1 items-center justify-center bg-white'>
+        <ActivityIndicator size="large" color="#19B1FF" />
+      </View>
+    );
+  }
+
   if (showQuestions) {
-    return <QuestionFlow onComplete={handleQuestionComplete} />;
+    return (
+      <View className='flex-1'>
+        <QuestionFlow onComplete={handleQuestionComplete} />
+        {analyzing && (
+          <View className="absolute inset-0 bg-black/50 justify-center items-center z-50">
+          <View className="bg-white rounded-lg p-6 flex items-center justify-center w-[90%] h-[300px]">
+            <ActivityIndicator size="large" color="#19B1FF" />
+            <Text className="text-2xl font-bold mt-4 text-center">
+              {t("AI đang phân tích...")}
+            </Text>
+            <Text className="text-lg text-gray-600 mt-2 text-center">
+              {t("Vui lòng chờ trong giây lát")}
+            </Text>
+          </View>
+        </View>
+        )}
+      </View>
+    );
   }
 
   return (
