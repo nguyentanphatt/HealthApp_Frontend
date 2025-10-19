@@ -44,6 +44,7 @@
     "expo-symbols": "~0.4.5",
     "expo-system-ui": "~5.0.11",
     "expo-task-manager": "~13.1.6",
+    "expo-video": "^3.0.11",
     "expo-web-browser": "~14.2.0",
     "i18next": "^25.5.2",
     "nativewind": "^4.1.23",

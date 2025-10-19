@@ -46,7 +46,6 @@ const Card = ({title, subtitle, setting = false, icon, children, settingsOptions
             </TouchableOpacity>
             {isMenuOpen && (
               <>
-                {/* Backdrop inside card bounds to capture outside taps within the card */}
                 <TouchableOpacity
                   className="absolute inset-0"
                   activeOpacity={1}

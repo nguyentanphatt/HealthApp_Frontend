@@ -44,9 +44,9 @@ const Work = () => {
       setAnalyzing(false);
       console.log("res", res);
       
-      if (res?.success && res?.category) {
+      if (res?.success || res?.category) {
         setShowQuestions(false);
-        await AsyncStorage.setItem('workout_category', res.category);
+        await AsyncStorage.setItem('workout_category', 'true');
         router.push('/work/list' as Href);
       } else {
         Alert.alert('Có lỗi', 'Không nhận được kết quả. Vui lòng thử lại.');
