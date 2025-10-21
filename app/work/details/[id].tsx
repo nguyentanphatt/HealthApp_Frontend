@@ -5,7 +5,8 @@ import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { WebView } from 'react-native-webview';
+
+import YoutubePlayer from "react-native-youtube-iframe";
 
 const Page = () => {
     const { id } = useLocalSearchParams();
@@ -97,25 +98,10 @@ const Page = () => {
                 <View className="w-[30px] rounded-full bg-[#f6f6f6]" />
             </View>
             <View className='bg-black rounded-lg overflow-hidden' style={{ aspectRatio: 16 / 9 }}>
-                <WebView
-                    source={{
-                        uri: `https://www.youtube.com/embed/${video.video.videoId}?autoplay=1&rel=0&modestbranding=1&showinfo=0&controls=1&fs=1`
-                    }}
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: 'transparent'
-                    }}
-                    allowsFullscreenVideo={true}
-                    mediaPlaybackRequiresUserAction={false}
-                    javaScriptEnabled={true}
-                    domStorageEnabled={true}
-                    startInLoadingState={true}
-                    scalesPageToFit={false}
-                    scrollEnabled={false}
-                    bounces={false}
-                    showsHorizontalScrollIndicator={false}
-                    showsVerticalScrollIndicator={false}
+                <YoutubePlayer
+                    height={250}
+                    play={false}
+                    videoId={video.video.videoId}
                 />
             </View>
 
@@ -138,9 +124,8 @@ const Page = () => {
                 </View>
 
                 <TouchableOpacity
-                    className={`self-center flex-row items-center justify-center w-[70%] py-3 rounded-full ${
-                        isWorkoutActive ? 'bg-red-500' : 'bg-cyan-blue'
-                    }`}
+                    className={`self-center flex-row items-center justify-center w-[70%] py-3 rounded-full ${isWorkoutActive ? 'bg-red-500' : 'bg-cyan-blue'
+                        }`}
                     onPress={isWorkoutActive ? handleStopWorkout : handleStartWorkout}
                 >
                     <Text className="text-xl text-white">
