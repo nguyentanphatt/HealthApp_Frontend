@@ -1,35 +1,17 @@
 import { VideoType } from '@/constants/type';
-import { getWorkoutVideo } from '@/services/workout';
+import { getWorkoutVideo, resetWorkoutVideo } from '@/services/workout';
 import { FontAwesome6 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Href, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
 
 const index = () => {
-    const [category, setCategory] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
     const [openMenu, setOpenMenu] = useState(false);
     const { t } = useTranslation();
     const router = useRouter();
-
-    useEffect(() => {
-        (async () => {
-            try {
-                const value = await AsyncStorage.getItem('workout_category');
-                if (!value) {
-                    console.log('Không có category');
-                }
-                console.log('category', value);
-                setCategory(value);
-            } finally {
-                setLoading(false);
-            }
-        })();
-    }, [])
-
     const {
         data,
         isLoading: loadingVideo,
@@ -38,7 +20,7 @@ const index = () => {
         isFetchingNextPage,
         refetch: refetchVideo,
     } = useInfiniteQuery({
-        queryKey: ["videos", category],
+        queryKey: ["videos"],
         queryFn: ({ pageParam = 1 }) =>
             getWorkoutVideo({ page: pageParam as number, limit: 6 }),
         initialPageParam: 1,
@@ -47,13 +29,14 @@ const index = () => {
             return allPages.length + 1;
         },
         staleTime: 1000 * 60 * 5,
-        enabled: !!category,
+        gcTime: 0,
+        refetchOnMount: true,
+        refetchOnWindowFocus: true, 
     });
 
     const videos = data?.pages.flatMap((page: any) => page.videos) ?? [];
-    console.log("videos", videos);
     
-    if (loading) {
+    if (loadingVideo) {
         return (
             <View className='flex-1 items-center justify-center'>
                 <ActivityIndicator size="large" color="#19B1FF" />
@@ -88,9 +71,10 @@ const index = () => {
                         style={{ elevation: 5 }}
                     >
                         <TouchableOpacity
-                            onPress={() => {
+                            onPress={async () => {
                                 setOpenMenu(false);
                                 AsyncStorage.removeItem('workout_category');
+                                await resetWorkoutVideo();
                                 router.push('/(tabs)/work' as Href);
                             }}
                             className="py-2"

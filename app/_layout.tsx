@@ -13,7 +13,7 @@ import Toast from "react-native-toast-message";
 import "../global.css";
 import "../plugins/i18n";
 
-SplashScreen.preventAutoHideAsync(); // ✅ keep splash until we say so
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   useNotifications();

@@ -23,10 +23,8 @@ import dayjs from "dayjs";
 import { Href, router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Animated, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Animated, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { tv } from "tailwind-variants";
-const HEADER_HEIGHT = 100;
-const CALENDAR_HEIGHT = 140;
 
 export default function HomeScreen() {
   const setUser = useUserStore(state => state.setUser)
@@ -216,26 +214,13 @@ export default function HomeScreen() {
   }
   return (
     <View className="flex-1 px-4 font-lato-regular">
-      <Animated.ScrollView
+      <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingTop: HEADER_HEIGHT,
-          paddingBottom: 40,
-        }}
         stickyHeaderIndices={[0]}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
-        scrollEventThrottle={16}
       >
-        <Animated.View
-          style={[
-            bgActive && { backgroundColor: "#f6f6f6" },
-            { paddingTop: 40 },
-            { zIndex: 10 },
-          ]}
+        <View
+          className="bg-[#f6f6f6] pt-16"
         >
           <CalendarSwiper
             selectedDate={
@@ -247,7 +232,7 @@ export default function HomeScreen() {
               setSelectedDate(Number((timestamp / 1000).toFixed(0)));
             }}
           />
-        </Animated.View>
+        </View>
 
         <View className="flex-1 gap-2.5">
           <Card title={t("Mục tiêu tuần")} setting icon="ellipsis-vertical"
@@ -406,37 +391,9 @@ export default function HomeScreen() {
           )}
 
         </View>
-      </Animated.ScrollView>
+      </ScrollView>
 
-      <Animated.View
-        style={{
-          position: "absolute",
-          top: 40,
-          left: 0,
-          right: 0,
-          height: HEADER_HEIGHT,
-          justifyContent: "center",
-          alignItems: "center",
-          opacity: scrollY.interpolate({
-            inputRange: [0, HEADER_HEIGHT],
-            outputRange: [1, 0],
-            extrapolate: "clamp",
-          }),
-          transform: [
-            {
-              translateY: scrollY.interpolate({
-                inputRange: [0, HEADER_HEIGHT],
-                outputRange: [0, -20],
-                extrapolate: "clamp",
-              }),
-            },
-          ],
-          pointerEvents: "none",
-          zIndex: 1,
-        }}
-      >
-        <Text className="text-3xl font-bold">HealthCare</Text>
-      </Animated.View>
+      
     </View>
   );
 }

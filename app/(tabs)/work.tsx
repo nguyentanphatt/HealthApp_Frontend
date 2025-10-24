@@ -2,6 +2,7 @@ import QuestionFlow from '@/components/QuestionFlow';
 import { workQuestions } from '@/constants/data';
 import { workoutSurvey } from '@/services/workout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQueryClient } from '@tanstack/react-query';
 import { Href, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +14,7 @@ const Work = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const { t } = useTranslation();
-
+  const queryClient = useQueryClient();
   useEffect(() => {
     (async () => {
       try {
@@ -46,8 +47,10 @@ const Work = () => {
       
       if (res?.success || res?.category) {
         setShowQuestions(false);
+        queryClient.invalidateQueries({ queryKey: ['videos'] });
         await AsyncStorage.setItem('workout_category', 'true');
         router.push('/work/list' as Href);
+
       } else {
         Alert.alert('Có lỗi', 'Không nhận được kết quả. Vui lòng thử lại.');
       }

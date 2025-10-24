@@ -34,6 +34,7 @@ const WaterHistory = ({ filtered }: { filtered: WaterRecords[] }) => {
           <InfoCard
             title={formatTime(item.time)}
             content={`${displayWater(item.amount).formatted}`}
+            icon="droplet"
           />
         </TouchableOpacity>
       ))}

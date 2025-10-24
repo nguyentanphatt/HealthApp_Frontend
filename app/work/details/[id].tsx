@@ -22,11 +22,6 @@ const Page = () => {
         queryFn: () => getWorkoutVideoById(id as string),
     });
 
-    // Debug logs
-    console.log("video data:", video);
-    console.log("videoId:", video?.video?.videoId);
-
-    // Timer effect
     useEffect(() => {
         if (isWorkoutActive) {
             intervalRef.current = setInterval(() => {
@@ -52,7 +47,6 @@ const Page = () => {
         };
     }, [isWorkoutActive]);
 
-    // Custom format time function for seconds
     const formatTimeFromSeconds = (seconds: number) => {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);

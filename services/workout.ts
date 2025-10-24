@@ -37,3 +37,12 @@ export const getWorkoutVideoById = async (id: string): Promise<{success: boolean
         throw error;
     }
 }
+
+export const resetWorkoutVideo = async ():Promise<{success: boolean, message: string}> => {
+    try {
+        const response = await privateClient.delete('/api/workout/reset');
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
