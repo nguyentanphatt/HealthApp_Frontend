@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
 
-const index = () => {
+const WorkoutVideo = () => {
     const [openMenu, setOpenMenu] = useState(false);
     const { t } = useTranslation();
     const router = useRouter();
@@ -40,7 +40,6 @@ const index = () => {
         return (
             <View className='flex-1 items-center justify-center'>
                 <ActivityIndicator size="large" color="#19B1FF" />
-                <Text className='mt-3'>Đang tải...</Text>
             </View>
         )
     }
@@ -133,4 +132,4 @@ const index = () => {
     )
 }
 
-export default index
+export default WorkoutVideo

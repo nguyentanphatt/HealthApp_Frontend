@@ -758,6 +758,7 @@ const Page = () => {
             ) : (
                 <MapView
                     ref={mapRef}
+                    //provider={PROVIDER_GOOGLE}
                     style={{ width: '100%', height: isStart ? '50%' : '60%', marginTop: isStart ? 20 : 50 }}
                     scrollEnabled={!isLocked}
                     zoomEnabled={!isLocked}

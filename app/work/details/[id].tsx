@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 
 import YoutubePlayer from "react-native-youtube-iframe";
 
@@ -67,7 +67,7 @@ const Page = () => {
     if (isLoading) {
         return (
             <View className='flex-1 items-center justify-center'>
-                <Text>Loading video...</Text>
+                <ActivityIndicator size="large" color="#19B1FF" />
             </View>
         );
     }
@@ -75,7 +75,7 @@ const Page = () => {
     if (!video?.video?.videoId) {
         return (
             <View className='flex-1 items-center justify-center'>
-                <Text>No video found</Text>
+                <Text>{t("Không tìm thấy video")}</Text>
             </View>
         );
     }

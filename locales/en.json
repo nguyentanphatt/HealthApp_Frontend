@@ -183,5 +183,19 @@
   "Xác thực OTP": "Verify OTP",
   "Chúng tôi đã gửi OTP qua mail của bạn": "We have sent OTP to your email",
   "Gửi lại OTP": "Resend OTP",
-  "Xác thực": "Verify"
+  "Xác thực": "Verify",
+  "Không tìm thấy video": "No video found",
+  "Chi tiết bài tập": "Workout details",
+  "Khảo sát tập luyện": "Workout survey",
+  "Bắt đầu khảo sát": "Start survey",
+  "Đề xuất luyện tập": "Workout suggestion",
+  "Đặt lại mục tiêu": "Reset goal",
+  "Đang tải video...": "Loading video...",
+  "Đang tải thêm...": "Loading more...",
+  "Không có video phù hợp": "No suitable video",
+  "Bạn đã hoàn thành khảo sát": "You have completed the survey",
+  "Hãy trả lời một vài câu hỏi để chúng tôi có thể tạo kế hoạch tập luyện phù hợp nhất với bạn": "Please answer a few questions to help us create the most suitable workout plan for you",
+  "Có lỗi": "Error",
+  "Không nhận được kết quả. Vui lòng thử lại.": "No result received. Please try again.",
+  "Không thể phân tích khảo sát. Vui lòng thử lại.": "Cannot analyze survey. Please try again."
 }

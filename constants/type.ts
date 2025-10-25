@@ -299,3 +299,25 @@ export interface VideoType {
   description: string;
   thumbnail: string;
 }
+
+export interface Activity {
+  sessionId: string;
+  startTime: number;
+  endTime: number;
+  distanceKm: number;
+  stepCount: number;
+  kcal: number;
+  avgSpeed: number;
+  activeTime: number;
+  userId: string;
+  type: string;
+  maxSpeed: number;
+  totalTime: number;
+  routeId: number;
+}
+
+export interface TrackedPoint {
+  latitude: number;
+  longitude: number;
+  time: number;
+}

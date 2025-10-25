@@ -1,9 +1,10 @@
 import QuestionFlow from '@/components/QuestionFlow';
+import WorkoutVideo from '@/components/WorkoutVideo';
 import { workQuestions } from '@/constants/data';
 import { workoutSurvey } from '@/services/workout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
-import { Href, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from 'react-native';
@@ -13,6 +14,7 @@ const Work = () => {
   const [showQuestions, setShowQuestions] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [initializing, setInitializing] = useState(true);
+  const [finished, setFinished] = useState(false);
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   useEffect(() => {
@@ -20,7 +22,8 @@ const Work = () => {
       try {
         const existing = await AsyncStorage.getItem('workout_category');
         if (existing) {
-          router.replace('/work/list' as Href);
+          setFinished(true);
+
           return;
         }
       } finally {
@@ -39,26 +42,25 @@ const Work = () => {
         }))
       };
       console.log("payload", payload);
-      
+
 
       const res = await workoutSurvey(payload);
       setAnalyzing(false);
       console.log("res", res);
-      
+      setFinished(true);
       if (res?.success || res?.category) {
         setShowQuestions(false);
-        queryClient.invalidateQueries({ queryKey: ['videos'] });
+        await queryClient.invalidateQueries({ queryKey: ['videos'] });
         await AsyncStorage.setItem('workout_category', 'true');
-        router.push('/work/list' as Href);
 
       } else {
-        Alert.alert('Có lỗi', 'Không nhận được kết quả. Vui lòng thử lại.');
+        Alert.alert(t("Có lỗi"), t("Không nhận được kết quả. Vui lòng thử lại."));
       }
     } catch (error) {
       setAnalyzing(false);
       console.log("error", error);
-      
-      Alert.alert('Có lỗi', 'Không thể phân tích khảo sát. Vui lòng thử lại.');
+
+      Alert.alert(t("Có lỗi"), t("Không thể phân tích khảo sát. Vui lòng thử lại."));
     }
   };
 
@@ -76,16 +78,16 @@ const Work = () => {
         <QuestionFlow onComplete={handleQuestionComplete} />
         {analyzing && (
           <View className="absolute inset-0 bg-black/50 justify-center items-center z-50">
-          <View className="bg-white rounded-lg p-6 flex items-center justify-center w-[90%] h-[300px]">
-            <ActivityIndicator size="large" color="#19B1FF" />
-            <Text className="text-2xl font-bold mt-4 text-center">
-              {t("AI đang phân tích...")}
-            </Text>
-            <Text className="text-lg text-gray-600 mt-2 text-center">
-              {t("Vui lòng chờ trong giây lát")}
-            </Text>
+            <View className="bg-white rounded-lg p-6 flex items-center justify-center w-[90%] h-[300px]">
+              <ActivityIndicator size="large" color="#19B1FF" />
+              <Text className="text-2xl font-bold mt-4 text-center">
+                {t("AI đang phân tích...")}
+              </Text>
+              <Text className="text-lg text-gray-600 mt-2 text-center">
+                {t("Vui lòng chờ trong giây lát")}
+              </Text>
+            </View>
           </View>
-        </View>
         )}
       </View>
     );
@@ -93,20 +95,22 @@ const Work = () => {
 
   return (
     <View className='flex-1 bg-white'>
-      <View className='flex-1 justify-center items-center px-6'>
-        <Text className='text-3xl font-bold text-center mb-4 text-gray-800'>
-          Khảo sát tập luyện
-        </Text>
-        <Text className='text-lg text-center text-gray-600 mb-8'>
-          Hãy trả lời một vài câu hỏi để chúng tôi có thể tạo kế hoạch tập luyện phù hợp nhất với bạn
-        </Text>
-        <TouchableOpacity 
-          className='bg-cyan-blue px-8 py-4 rounded-full'
-          onPress={() => setShowQuestions(true)}
-        >
-          <Text className='text-white text-lg font-semibold'>Bắt đầu khảo sát</Text>
-        </TouchableOpacity>
-      </View>
+      {finished ? <WorkoutVideo /> :
+        <View className='flex-1 justify-center items-center px-6'>
+          <Text className='text-3xl font-bold text-center mb-4 text-gray-800'>
+            {t("Khảo sát tập luyện")}
+          </Text>
+          <Text className='text-lg text-center text-gray-600 mb-8'>
+            {t("Hãy trả lời một vài câu hỏi để chúng tôi có thể tạo kế hoạch tập luyện phù hợp nhất với bạn")}
+          </Text>
+          <TouchableOpacity
+            className='bg-cyan-blue px-8 py-4 rounded-full'
+            onPress={() => setShowQuestions(true)}
+          >
+            <Text className='text-white text-lg font-semibold'>{t("Bắt đầu khảo sát")}</Text>
+          </TouchableOpacity>
+        </View>
+      }
     </View>
   );
 }

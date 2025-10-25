@@ -114,6 +114,27 @@ export const formatDateTimeRange = (startTime: number | null, endTime: string | 
 };
 
 //format activity date and time range
+export const formatTimeRange = (startTime: number | null, endTime: string | number) => {
+    const startDate = new Date(startTime || 0);
+    const endDate = new Date(endTime);
+
+    const startTimeStr = startDate.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    const endTimeStr = endDate.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    return `${startTimeStr} - ${endTimeStr}`;
+
+};
+
+//format activity date and time range
 export const formatActivityDateTimeRange = (startTime: number | null, endTime: number | string | null) => {
     const startDate = startTime ? new Date(startTime) : new Date();
     let endTimeValue = endTime;

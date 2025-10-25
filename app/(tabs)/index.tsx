@@ -1,9 +1,11 @@
+import ActivityCard from "@/components/ActivityCard";
 import CalendarSwiper from "@/components/CalendarSwiper";
 import Card from "@/components/Card";
 import FunctionCard from "@/components/FunctionCard";
 import ProgressItem from "@/components/ProgressItem";
 import WaterVector from "@/components/vector/WaterVector";
 import WeeklyGoalItem from "@/components/WeeklyGoalItem";
+import { Activity } from "@/constants/type";
 import { useUnits as useUnitsContext } from "@/context/unitContext";
 import { useUnits } from "@/hooks/useUnits";
 import { getAllActivities } from "@/services/activity";
@@ -11,11 +13,11 @@ import { getFoodStatus } from "@/services/food";
 import { getSleepStatus } from "@/services/sleep";
 import { getUserProfile, getWeeklyGoal } from "@/services/user";
 import { getWaterStatus } from "@/services/water";
+import { getWorkoutVideo } from "@/services/workout";
 import { useModalStore } from "@/stores/useModalStore";
 import { useUserStore } from "@/stores/useUserStore";
-import { formatDistance } from "@/utils/activityHelper";
 import { convertWater } from "@/utils/convertMeasure";
-import { convertTimestampVNtoTimestamp, formatDateTimeRange } from "@/utils/convertTime";
+import { convertTimestampVNtoTimestamp } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -119,6 +121,12 @@ export default function HomeScreen() {
       queryFn: () => getAllActivities(),
       staleTime: 1000 * 60 * 5,
     });
+
+    queryClient.prefetchQuery({
+      queryKey: ["videos"],
+      queryFn: () => getWorkoutVideo({ page: 1, limit: 6 }),
+      staleTime: 1000 * 60 * 5,
+    });
   }, []);
 
   const {
@@ -214,26 +222,23 @@ export default function HomeScreen() {
   }
   return (
     <View className="flex-1 px-4 font-lato-regular">
+      <View className="bg-[#f6f6f6] pt-16">
+        <CalendarSwiper
+          selectedDate={
+            selectedDate
+              ? dayjs.unix(selectedDate).format("YYYY-MM-DD")
+              : dayjs().format("YYYY-MM-DD")
+          }
+          onDateChange={(date, timestamp) => {
+            setSelectedDate(Number((timestamp / 1000).toFixed(0)));
+          }}
+        />
+      </View>
+
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[0]}
       >
-        <View
-          className="bg-[#f6f6f6] pt-16"
-        >
-          <CalendarSwiper
-            selectedDate={
-              selectedDate
-                ? dayjs.unix(selectedDate).format("YYYY-MM-DD")
-                : dayjs().format("YYYY-MM-DD")
-            }
-            onDateChange={(date, timestamp) => {
-              setSelectedDate(Number((timestamp / 1000).toFixed(0)));
-            }}
-          />
-        </View>
-
         <View className="flex-1 gap-2.5">
           <Card title={t("Mục tiêu tuần")} setting icon="ellipsis-vertical"
             settingsOptions={[
@@ -370,16 +375,8 @@ export default function HomeScreen() {
           {filteredActivityData.length > 0 && (
             <Text className="text-xl text-black/60 text-center">{t("Buổi tập hôm nay")}</Text>
           )}
-          {displayedActivityData.map((activity: any, index: number) => (
-            <TouchableOpacity key={activity.sessionId || index} onPress={() => router.push(`/activity/history/${activity.sessionId}` as Href)} className="flex-1 flex-col p-4 items-center gap-2 bg-white shadow-md rounded-md">
-              <Text className="text-xl text-black/60">{formatDateTimeRange(activity.startTime, activity.endTime)}</Text>
-              <Text className="text-2xl font-bold">{formatDistance(activity.distanceKm)}</Text>
-              <View className="flex-row gap-4 mt-2">
-                <Text className="text-sm text-black/60">{t("Bước")}: {activity.stepCount || 0}</Text>
-                <Text className="text-sm text-black/60">Kcal: {activity.kcal || 0}</Text>
-                <Text className="text-sm text-black/60">{t("Tốc độ TB")}: {activity.avgSpeed || 0} km/h</Text>
-              </View>
-            </TouchableOpacity>
+          {displayedActivityData.map((activity: Activity, index: number) => (
+            <ActivityCard key={activity.sessionId || index} activity={activity} index={index} />
           ))}
 
           {filteredActivityData.length > 3 && (
@@ -393,7 +390,7 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      
+
     </View>
   );
 }
