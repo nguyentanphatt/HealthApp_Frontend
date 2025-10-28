@@ -169,3 +169,19 @@ export const formatActivityDateTimeRange = (startTime: number | null, endTime: n
 
     return `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
 };
+
+//format date to dd - dd tháng mm or dd/mm - dd/mm
+export const formatDateStatistics = (start: string, end: string) => {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  
+  if (startDate.getMonth() === endDate.getMonth()) {
+    return `${startDate.getDate()} - ${endDate.getDate()} tháng ${startDate.getMonth() + 1}`;
+  } else {
+    const startMonth = (startDate.getMonth() + 1).toString().padStart(2, '0');
+    const endMonth = (endDate.getMonth() + 1).toString().padStart(2, '0');
+    const startDay = startDate.getDate().toString().padStart(2, '0');
+    const endDay = endDate.getDate().toString().padStart(2, '0');
+    return `${startDay}/${startMonth} - ${endDay}/${endMonth}`;
+  }
+}

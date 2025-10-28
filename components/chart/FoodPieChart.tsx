@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
 
-const FoodPieChart = ({data}: {data:FoodDetail[]}) => {
+const FoodPieChart = ({ data }: { data: FoodDetail[] }) => {
   const { t } = useTranslation();
   const [actualData, setActualData] = useState([
     { value: 0, color: "#009FFF", gradientCenterColor: "#006DFF", text: "0%" }, // Protein
@@ -76,16 +76,14 @@ const FoodPieChart = ({data}: {data:FoodDetail[]}) => {
         <View>
           <PieChart
             data={pieData01}
-            showText
             textColor="black"
             radius={80}
-            textSize={20}
-            strokeWidth={2}
+            textSize={24}
+            strokeWidth={1}
             strokeColor="#333"
             showValuesAsLabels
             showGradient
           />
-          <Text className="text-lg text-center">{t("Đề xuất")}</Text>
         </View>
         <View>
           <PieChart
@@ -94,34 +92,64 @@ const FoodPieChart = ({data}: {data:FoodDetail[]}) => {
                 ? emptyActualData
                 : actualData
             }
-            showText={
-              actualData.every((item) => item.value === 0)
-                ? false
-                : true
-            }
             textColor="black"
             radius={80}
             textSize={20}
-            strokeWidth={2}
+            strokeWidth={1}
             strokeColor="#333"
             showValuesAsLabels
             showGradient
           />
-          <Text className="text-lg text-center">{t("Thực tế")}</Text>
         </View>
       </View>
       <View className="flex-row items-center justify-center gap-7 pt-10">
-        <View className="flex-row items-center gap-2">
-          <View className="size-4 rounded-full bg-[#009FFF]" />
-          <Text>{t("Chất đạm")}</Text>
+        <View className="flex-1 pr-4">
+          <Text className="font-semibold text-center mb-2">{t("Đề xuất")}</Text>
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-row items-center gap-2">
+              <View className="size-4 rounded-full bg-[#009FFF]" />
+              <Text>{t("Chất đạm")}</Text>
+            </View>
+            <Text>{pieData01[0].text}</Text>
+          </View>
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-row items-center gap-2">
+              <View className="size-4 rounded-full bg-[#93FCF8]" />
+              <Text>{t("Tinh bột")}</Text>
+            </View>
+            <Text>{pieData01[1].text}</Text>
+          </View>
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-2">
+              <View className="size-4 rounded-full bg-[#BDB2FA]" />
+              <Text>{t("Chất béo")}</Text>
+            </View>
+            <Text>{pieData01[2].text}</Text>
+          </View>
         </View>
-        <View className="flex-row items-center gap-2">
-          <View className="size-4 rounded-full bg-[#93FCF8]" />
-          <Text>{t("Tinh bột")}</Text>
-        </View>
-        <View className="flex-row items-center gap-2">
-          <View className="size-4 rounded-full bg-[#BDB2FA]" />
-          <Text>{t("Chất béo")}</Text>
+        <View className="flex-1 pl-4">
+          <Text className="font-semibold text-center mb-2">{t("Thực tế")}</Text>
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-row items-center gap-2">
+              <View className="size-4 rounded-full bg-[#009FFF]" />
+              <Text>{t("Chất đạm")}</Text>
+            </View>
+            <Text>{actualData[0].text}</Text>
+          </View>
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-row items-center gap-2">
+              <View className="size-4 rounded-full bg-[#93FCF8]" />
+              <Text>{t("Tinh bột")}</Text>
+            </View>
+            <Text>{actualData[1].text}</Text>
+          </View>
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-2">
+              <View className="size-4 rounded-full bg-[#BDB2FA]" />
+              <Text>{t("Chất béo")}</Text>
+            </View>
+            <Text>{actualData[2].text}</Text>
+          </View>
         </View>
       </View>
     </View>

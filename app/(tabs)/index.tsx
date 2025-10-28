@@ -11,6 +11,7 @@ import { useUnits } from "@/hooks/useUnits";
 import { getAllActivities } from "@/services/activity";
 import { getFoodStatus } from "@/services/food";
 import { getSleepStatus } from "@/services/sleep";
+import { weeklyReport } from "@/services/statistics";
 import { getUserProfile, getWeeklyGoal } from "@/services/user";
 import { getWaterStatus } from "@/services/water";
 import { getWorkoutVideo } from "@/services/workout";
@@ -125,6 +126,12 @@ export default function HomeScreen() {
     queryClient.prefetchQuery({
       queryKey: ["videos"],
       queryFn: () => getWorkoutVideo({ page: 1, limit: 6 }),
+      staleTime: 1000 * 60 * 5,
+    });
+
+    queryClient.prefetchQuery({
+      queryKey: ["reportData"],
+      queryFn: () => weeklyReport(),
       staleTime: 1000 * 60 * 5,
     });
   }, []);
@@ -246,7 +253,7 @@ export default function HomeScreen() {
             ]}
           >
             <View className="flex flex-row items-start justify-between">
-              <View className="max-w-[45%] flex items-start justify-start gap-4">
+              <View className="max-w-[50%] flex items-start justify-start gap-4">
                 <WeeklyGoalItem
                   icon="glass-water-droplet"
                   iconColor="#19B1FF"
@@ -272,7 +279,7 @@ export default function HomeScreen() {
                 />
 
               </View>
-              <View className="max-w-[45%] flex items-start justify-start gap-4">
+              <View className="max-w-[50%] flex items-start justify-start gap-4">
                 <WeeklyGoalItem
                   icon="clock"
                   iconColor="#06F86F"

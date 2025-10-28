@@ -35,10 +35,11 @@ export const formatSpeed = (speedMs: number) => {
 
 // Format distance
 export const formatDistance = (distanceMeters: number): string => {
-    if (distanceMeters >= 1000) {
-        return `${(distanceMeters / 1000).toFixed(2)} km`;
+    const meters = distanceMeters * 1000;
+    if (meters >= 1000) {
+        return `${(meters / 1000).toFixed(2)} km`;
     } else {
-        return `${Math.round(distanceMeters)} m`;
+        return `${Math.round(meters)} m`;
     }
 };
 

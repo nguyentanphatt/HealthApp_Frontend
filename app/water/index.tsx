@@ -303,18 +303,25 @@ const Page = () => {
         </View>
       </View>
       <View className="flex items-center justify-center py-4">
-        <TouchableOpacity
-          className="self-center flex-row items-center justify-center w-[70%] py-3 bg-cyan-blue rounded-full"
-          onPress={() => openModal("waterwheel", {
-            title: `${t("Lượng nước uống")} (${units.water})`,
-            items: items,
-            initialValue: initialValue,
-            currentDate: currentDate,
-            handleConfirm: handleConfirm,
-          })}
-        >
-          <Text className="text-xl text-white">{t("Thêm")}</Text>
-        </TouchableOpacity>
+        {(() => {
+          const isToday = selectedDate === 0 || dayjs.unix(selectedDate).isSame(dayjs(), 'day');
+          return (
+            <TouchableOpacity
+              disabled={!isToday}
+              accessibilityState={{ disabled: !isToday }}
+              className={`self-center flex-row items-center justify-center w-[70%] py-3 rounded-full ${isToday ? 'bg-cyan-blue' : 'bg-gray-300'}`}
+              onPress={isToday ? () => openModal("waterwheel", {
+                title: `${t("Lượng nước uống")} (${units.water})`,
+                items: items,
+                initialValue: initialValue,
+                currentDate: currentDate,
+                handleConfirm: handleConfirm,
+              }) : undefined}
+            >
+              <Text className="text-xl text-white">{t("Thêm")}</Text>
+            </TouchableOpacity>
+          )
+        })()}
       </View>
 
       {waterReminderData &&

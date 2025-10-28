@@ -112,15 +112,7 @@ const Page = () => {
     {} as Record<string, typeof foodStatus.history>
   );
 
-  console.log("groupedByTag", groupedByTag);
-  
-
   const filteredHistory = foodStatus?.history.filter((item) => item.name !== "Invalid") ?? [];
-
-  console.log("foodStatus", foodStatus);
-  console.log("filteredHistory", filteredHistory);
-  
-  
 
   const loading = loadingFoodStatus || loadingWeekly || loadingFoodStatus || loadingWeekly;
 
@@ -136,6 +128,8 @@ const Page = () => {
     value: item.totalCalories,
     label: item.dayOfWeek,
   }));
+
+  const isEmpty = data?.every((item) => item.value === 0);
 
   return (
     <ScrollView
@@ -193,8 +187,8 @@ const Page = () => {
           return null;
         })}
       </View>
-      <FoodPieChart data={filteredHistory} />
-      <FoodBarChart data={data ?? []} />
+      <FoodPieChart data={filteredHistory} /> 
+      {isEmpty ? null : <FoodBarChart data={data ?? []} />}
     </ScrollView>
   );
 };

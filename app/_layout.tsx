@@ -33,26 +33,27 @@ export default function RootLayout() {
   if (!loaded) return null; // Splash stays while loading fonts
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <UnitProvider>
-        <AppRefreshWatcher />
-        <GlobalModal />
-        <StatusBar hidden />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: "#f6f6f6" },
-          }}
-        >
-          <Stack.Screen name="introduction" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="auth/signin" />
-          <Stack.Screen name="water/index" />
-          <Stack.Screen name="water/edit/index" />
-          <Stack.Screen name="food/index" />
-        </Stack>
-        <Toast swipeable visibilityTime={3000} topOffset={50} />
-      </UnitProvider>
-    </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+
+        <UnitProvider>
+          <AppRefreshWatcher />
+          <GlobalModal />
+          <StatusBar hidden />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: "#f6f6f6" },
+            }}
+          >
+            <Stack.Screen name="introduction" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="auth/signin" />
+            <Stack.Screen name="water/index" />
+            <Stack.Screen name="water/edit/index" />
+            <Stack.Screen name="food/index" />
+          </Stack>
+          <Toast swipeable visibilityTime={3000} topOffset={50} />
+        </UnitProvider>
+      </QueryClientProvider>
   );
 }

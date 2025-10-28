@@ -8,7 +8,7 @@ const WeeklyGoalItem = ({ icon, iconColor, currentIntake, goalIntake, unit }: { 
             <View className="size-10 rounded-full flex items-center justify-center">
                 <FontAwesome6 name={icon} size={24} color={iconColor} />
             </View>
-            <Text className="text-black text-3xl font-bold">{currentIntake}<Text className="text-black/60 text-xl font-normal"> / {goalIntake} {unit ? unit : ""}</Text></Text>
+            <Text className="text-black text-2xl font-bold">{currentIntake}<Text className="text-black/60 text-lg font-normal"> / {goalIntake} {unit ? unit : ""}</Text></Text>
         </View>
     )
 }

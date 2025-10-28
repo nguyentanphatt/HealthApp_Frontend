@@ -321,3 +321,107 @@ export interface TrackedPoint {
   longitude: number;
   time: number;
 }
+
+export interface WeeklyData {
+  weekStart: string;
+  weekEnd: string;
+  water: number;
+  sleep: number;
+  steps: number;
+  calories: number;
+}
+
+export interface ReportData {
+  currentWeek: WeeklyData;
+  previousWeek: WeeklyData;
+  difference: {
+    water: {
+      value: number;
+      percentage: number;
+    },
+    sleep: {
+      value: number;
+      percentage: number;
+    },
+    steps: {
+      value: number;
+      percentage: number;
+    },
+    calories: {
+      value: number;
+      percentage: number;
+    }
+  }
+}
+
+export interface FoodWeekly {
+  weekStart: string;
+  weekEnd: string;
+  currentWeekCalories: number;
+  previousWeekCalories: number;
+  caloriesDifference: {
+    value: number;
+    percentage: number;
+  };
+  averageNutrition: {
+    protein: number;
+    fiber: number;
+    fat: number;
+    starch: number;
+  };
+  balancedDays: [{
+    date: string;
+    dayOfWeek: string;
+    protein: number;
+    fiber: number;
+    fat: number;
+    starch: number;
+    isBalanced: boolean;
+  }];
+  balancedDaysCount: number;
+}
+
+export interface DailySleep {
+  date: string;
+  dayOfWeek: string;
+  totalHours: number;
+}
+
+export interface SleepWeekly {
+  weekStart: string;
+  weekEnd: string;
+  totalSleepHours: number;
+  averageBedtime: string;
+  averageWakeTime: string;
+  longestSleep: {
+    date: string;
+    hours: number;
+    startTime: string;
+    endTime: string;
+  };
+  dailySleep: DailySleep[];
+}
+
+export interface WorkoutWeekly {
+  weekStart: string,
+  weekEnd: string,
+  summary: {
+      totalSessions: number,
+      totalCalories: number,
+      totalTime: number,
+      totalDistance: number
+  },
+  bestSession: {
+      duration: number,
+      calories: number,
+      distance: number,
+      avgSpeed: number
+  },
+  comparison: {
+      steps: { current: number, previous: number, difference: number, percentage: number },
+      distance: { current: number, previous: number, difference: number, percentage: number },
+      time: { current: number, previous: number, difference: number, percentage: number }
+  },
+  dailyCalories: { date: string, dayOfWeek: string, totalCalories: number }[],
+  dailySteps: { date: string, dayOfWeek: string, totalSteps: number }[]
+}

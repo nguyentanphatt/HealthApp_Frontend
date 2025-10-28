@@ -102,7 +102,7 @@ const Page = () => {
               const response = await updateActivityData(sessionId, {
                 startTime: safeStartTime,
                 endTime: safeEndTime,
-                distanceKm: activityData.distance,
+                distanceKm: activityData.distance / 1000,
                 stepCount: activityData.stepCount,
                 avgSpeed: activityData.avgSpeed,
                 maxSpeed: activityData.maxSpeed,

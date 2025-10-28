@@ -455,6 +455,7 @@ const Page = () => {
     };
 
     const stopTracking = async () => {
+        AsyncStorage.removeItem('activity_session_id');
         let finalCalories = 0;
         if (mvCountRef.current > 0) {
             const avgMV = mvSumRef.current / mvCountRef.current;
