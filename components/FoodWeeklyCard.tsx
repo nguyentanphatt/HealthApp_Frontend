@@ -54,7 +54,7 @@ const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
                 <>
                     <View className="flex-row justify-between items-center mb-4">
                         <View>
-                            <Text className="font-bold text-lg text-black">
+                            <Text className="font-bold text-xl text-black">
                                 {t("Báo cáo dinh dưỡng")}
                             </Text>
                         </View>

@@ -218,15 +218,6 @@ export default function HomeScreen() {
     },
   });
 
-
-  const loading = loadingActivityData || loadingWeeklyGoal
-  if (loading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#000" />
-      </View>
-    );
-  }
   return (
     <View className="flex-1 px-4 font-lato-regular">
       <View className="bg-[#f6f6f6] pt-16">
@@ -252,51 +243,53 @@ export default function HomeScreen() {
               { title: t("Đặt mục tiêu"), href: "/user/goal/edit" },
             ]}
           >
-            <View className="flex flex-row items-start justify-between">
-              <View className="max-w-[50%] flex items-start justify-start gap-4">
-                <WeeklyGoalItem
-                  icon="glass-water-droplet"
-                  iconColor="#19B1FF"
-                  currentIntake={convertWater(weeklyGoal?.current.water ?? 0, units.water)}
-                  goalIntake={convertWater(weeklyGoal?.targets.water ?? 0, units.water)}
-                  unit={units.water}
-                />
+            {loadingWeeklyGoal ? <ActivityIndicator size="large" color="#000" /> : <>
+              <View className="flex flex-row items-start justify-between">
+                <View className="max-w-[50%] flex items-start justify-start gap-4">
+                  <WeeklyGoalItem
+                    icon="glass-water-droplet"
+                    iconColor="#19B1FF"
+                    currentIntake={convertWater(weeklyGoal?.current.waterDaily ?? 0, units.water)}
+                    goalIntake={convertWater(weeklyGoal?.targets.waterDaily ?? 0, units.water)}
+                    unit={units.water}
+                  />
 
-                <WeeklyGoalItem
-                  icon="bed"
-                  iconColor="#FF66F5"
-                  currentIntake={weeklyGoal?.current.sleep ?? 0}
-                  goalIntake={weeklyGoal?.targets.sleep ?? 0}
-                  unit={t("giờ")}
-                />
+                  <WeeklyGoalItem
+                    icon="bed"
+                    iconColor="#FF66F5"
+                    currentIntake={weeklyGoal?.current.sleep ?? 0}
+                    goalIntake={weeklyGoal?.targets.sleep ?? 0}
+                    unit={t("giờ")}
+                  />
 
-                <WeeklyGoalItem
-                  icon="bowl-food"
-                  iconColor="#FFAE00"
-                  currentIntake={weeklyGoal?.current.calories ?? 0}
-                  goalIntake={weeklyGoal?.targets.calories ?? 0}
-                  unit={t("kcal")}
-                />
+                  <WeeklyGoalItem
+                    icon="bowl-food"
+                    iconColor="#FFAE00"
+                    currentIntake={weeklyGoal?.current.calories ?? 0}
+                    goalIntake={weeklyGoal?.targets.calories ?? 0}
+                    unit={t("kcal")}
+                  />
 
+                </View>
+                <View className="max-w-[50%] flex items-start justify-start gap-4">
+                  <WeeklyGoalItem
+                    icon="clock"
+                    iconColor="#06F86F"
+                    currentIntake={weeklyGoal?.current.work ?? 0}
+                    goalIntake={weeklyGoal?.targets.work ?? 0}
+                    unit={t("giờ")}
+                  />
+
+                  <WeeklyGoalItem
+                    icon="person-running"
+                    iconColor="#FF0000"
+                    currentIntake={weeklyGoal?.current.steps ?? 0}
+                    goalIntake={weeklyGoal?.targets.steps ?? 0}
+                    unit={t("bước")}
+                  />
+                </View>
               </View>
-              <View className="max-w-[50%] flex items-start justify-start gap-4">
-                <WeeklyGoalItem
-                  icon="clock"
-                  iconColor="#06F86F"
-                  currentIntake={weeklyGoal?.current.work ?? 0}
-                  goalIntake={weeklyGoal?.targets.work ?? 0}
-                  unit={t("giờ")}
-                />
-
-                <WeeklyGoalItem
-                  icon="person-running"
-                  iconColor="#FF0000"
-                  currentIntake={weeklyGoal?.current.steps ?? 0}
-                  goalIntake={weeklyGoal?.targets.steps ?? 0}
-                  unit={t("bước")}
-                />
-              </View>
-            </View>
+            </>}
           </Card>
 
           <Card title={t("Hoạt động hôm nay")}>
@@ -379,20 +372,22 @@ export default function HomeScreen() {
               <FontAwesome6 name="angles-right" size={28} color="black" />
             </View>
           </TouchableOpacity>
-          {filteredActivityData.length > 0 && (
-            <Text className="text-xl text-black/60 text-center">{t("Buổi tập hôm nay")}</Text>
-          )}
-          {displayedActivityData.map((activity: Activity, index: number) => (
-            <ActivityCard key={activity.sessionId || index} activity={activity} index={index} />
-          ))}
+          {loadingActivityData ? <ActivityIndicator size="large" color="#000" /> : <>
+            {filteredActivityData.length > 0 && (
+              <Text className="text-xl text-black/60 text-center">{t("Buổi tập hôm nay")}</Text>
+            )}
+            {displayedActivityData.map((activity: Activity, index: number) => (
+              <ActivityCard key={activity.sessionId || index} activity={activity} index={index} />
+            ))}
 
-          {filteredActivityData.length > 3 && (
-            <TouchableOpacity onPress={() => setShowAll(!showAll)} className="py-5 items-center">
-              <Text className="text-lg text-center text-black/60 font-semibold">
-                {showAll ? t("Ẩn bớt") : t("Xem thêm")}
-              </Text>
-            </TouchableOpacity>
-          )}
+            {filteredActivityData.length > 3 && (
+              <TouchableOpacity onPress={() => setShowAll(!showAll)} className="py-5 items-center">
+                <Text className="text-lg text-center text-black/60 font-semibold">
+                  {showAll ? t("Ẩn bớt") : t("Xem thêm")}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </>}
 
         </View>
       </ScrollView>

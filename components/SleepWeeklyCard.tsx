@@ -1,12 +1,11 @@
 import { SleepWeekly } from '@/constants/type'
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Text, View } from 'react-native'
 import { BarChart } from 'react-native-gifted-charts'
 
 const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
     const { t } = useTranslation();
-    const [tooltip, setTooltip] = useState<{ x: number; y: number; item: SleepWeekly['dailySleep'][number] } | null>(null);
     const actual = propsData;
 
     const hoursArray = (actual.dailySleep || []).map(d => d.totalHours);
@@ -14,15 +13,12 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
     const barData = actual.dailySleep.map((d) => ({
         value: d.totalHours,
         label: d.dayOfWeek,
+        date: d.date,
+        hours: d.totalHours,
         frontColor: d.date === actual.longestSleep?.date && d.totalHours > 0 ? '#60a5fa' : (d.totalHours > 0 ? '#93C5FD' : '#e5e7eb'),
-        onPress: (_item: any, _index: number, x: number, y: number) => setTooltip({ x, y, item: d })
     }));
 
-    useEffect(() => {
-        if (!tooltip) return;
-        const t = setTimeout(() => setTooltip(null), 3000);
-        return () => clearTimeout(t);
-    }, [tooltip]);
+    
 
     return (
         <View className="bg-white p-4 rounded-2xl shadow-md w-full">
@@ -39,7 +35,7 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
                 <>
                     <View className="flex-row justify-between items-center mb-3">
                         <View>
-                            <Text className="font-bold text-lg text-black">{t("Báo cáo giấc ngủ")}</Text>
+                            <Text className="font-bold text-xl text-black">{t("Báo cáo giấc ngủ")}</Text>
                         </View>
                     </View>
 
@@ -71,7 +67,7 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
                     </View>
                     <View className="my-4">
                         <Text className="font-semibold text-black mb-2">{t("Giấc ngủ theo ngày")}</Text>
-                        <View className="items-center mb-4 bg-gray-50 rounded-xl p-3">
+                        <View className="relative items-center mb-4 bg-gray-50 rounded-xl p-3">
                             <BarChart
                                 data={barData}
                                 barWidth={26}
@@ -83,17 +79,13 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
                                 maxValue={maxHours}
                                 barBorderRadius={6}
                                 isAnimated
+                                renderTooltip={(item: any) => (
+                                    <View className="bg-white rounded-lg shadow-lg p-2 border border-gray-200">
+                                        <Text className="text-gray-700 text-xs">{item.label} • {item.date}</Text>
+                                        <Text className="text-black text-sm font-semibold">{(item.hours ?? 0).toFixed(1)}h</Text>
+                                    </View>
+                                )}
                             />
-
-                            {tooltip && (
-                                <View
-                                    className="absolute bg-white rounded-lg shadow-lg p-2 border border-gray-200"
-                                    style={{ left: tooltip.x + 16, top: tooltip.y - 58 }}
-                                >
-                                    <Text className="text-gray-700 text-xs">{tooltip.item.dayOfWeek} • {tooltip.item.date}</Text>
-                                    <Text className="text-black text-sm font-semibold">{tooltip.item.totalHours.toFixed(1)}h</Text>
-                                </View>
-                            )}
                         </View>
                     </View>
 

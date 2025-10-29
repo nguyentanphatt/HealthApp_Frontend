@@ -1,7 +1,8 @@
 import FoodWeeklyCard from '@/components/FoodWeeklyCard';
 import SleepWeeklyCard from '@/components/SleepWeeklyCard';
+import WaterWeeklyCard from '@/components/WaterWeeklyCard';
 import WorkoutWeeklyCard from '@/components/WorkoutWeeklyCard';
-import { foodWeekly, sleepWeekly, workoutWeekly } from '@/services/statistics';
+import { foodWeekly, sleepWeekly, waterWeekly, workoutWeekly } from '@/services/statistics';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
@@ -44,6 +45,13 @@ const Statistic = () => {
         staleTime: 1000 * 60 * 5,
     });
 
+    const { data: waterWeeklyData, isLoading: isLoadingWaterWeeklyData } = useQuery({
+        queryKey: ["waterWeeklyData", weekStart.valueOf()],
+        queryFn: () => waterWeekly({ date: weekStart.valueOf() }),
+        select: (res) => res.data,
+        staleTime: 1000 * 60 * 5,
+    })
+
     useEffect(() => {
         const prevStart = weekStart.subtract(7, 'day').valueOf();
         const nextStart = weekStart.add(7, 'day').valueOf();
@@ -59,6 +67,10 @@ const Statistic = () => {
             queryKey: ["workoutWeeklyData", prevStart],
             queryFn: () => workoutWeekly({ date: prevStart })
         });
+        queryClient.prefetchQuery({
+            queryKey: ["waterWeeklyData", prevStart],
+            queryFn: () => waterWeekly({ date: prevStart })
+        });
         if (!isAtCurrentWeek) {
             queryClient.prefetchQuery({
                 queryKey: ["foodWeeklyData", nextStart],
@@ -72,14 +84,14 @@ const Statistic = () => {
                 queryKey: ["workoutWeeklyData", nextStart],
                 queryFn: () => workoutWeekly({ date: nextStart })
             });
+            queryClient.prefetchQuery({
+                queryKey: ["waterWeeklyData", nextStart],
+                queryFn: () => waterWeekly({ date: nextStart })
+            });
         }
     }, [weekStart, queryClient, isAtCurrentWeek]);
 
-    
-
-
-
-    if (isLoadingFoodWeeklyData || isLoadingSleepWeeklyData || isLoadingWorkoutWeeklyData || !foodWeeklyData || !sleepWeeklyData || !workoutWeeklyData) {
+    if (isLoadingFoodWeeklyData || isLoadingSleepWeeklyData || isLoadingWorkoutWeeklyData || isLoadingWaterWeeklyData || !foodWeeklyData || !sleepWeeklyData || !workoutWeeklyData || !waterWeeklyData) {
         return (
             <View className='flex-1 items-center justify-center'>
                 <ActivityIndicator size="large" color="#1D9BF0" />
@@ -126,6 +138,7 @@ const Statistic = () => {
                 <FoodWeeklyCard data={foodWeeklyData} />
                 <SleepWeeklyCard data={sleepWeeklyData} />
                 <WorkoutWeeklyCard data={workoutWeeklyData} />
+                <WaterWeeklyCard data={waterWeeklyData} />
             </View>
         </ScrollView>
     )

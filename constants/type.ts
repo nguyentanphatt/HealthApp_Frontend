@@ -275,14 +275,14 @@ export interface WeeklyGoal {
   weekStart: string,
   weekEnd: string,
   targets: {
-    water: number,
+    waterDaily: number,
     work: number,
     sleep: number,
     steps: number,
     calories: number
   },
   current: {
-    water: number,
+    waterDaily: number,
     work: number,
     sleep: number,
     steps: number,
@@ -406,22 +406,74 @@ export interface WorkoutWeekly {
   weekStart: string,
   weekEnd: string,
   summary: {
-      totalSessions: number,
-      totalCalories: number,
-      totalTime: number,
-      totalDistance: number
+    totalSessions: number,
+    totalCalories: number,
+    totalTime: number,
+    totalDistance: number,
+    totalSteps: number
   },
   bestSession: {
-      duration: number,
-      calories: number,
-      distance: number,
-      avgSpeed: number
+    duration: number,
+    calories: number,
+    distance: number,
+    avgSpeed: number
   },
   comparison: {
-      steps: { current: number, previous: number, difference: number, percentage: number },
-      distance: { current: number, previous: number, difference: number, percentage: number },
-      time: { current: number, previous: number, difference: number, percentage: number }
+    steps: { 
+      current: number, 
+      previous: number, 
+      difference: number, 
+      percentage: number 
+    },
+    distance: { 
+      current: number, 
+      previous: number, 
+      difference: number, 
+      percentage: number },
+    time: { 
+      current: number, 
+      previous: number, 
+      difference: number, 
+      percentage: number 
+    }
   },
-  dailyCalories: { date: string, dayOfWeek: string, totalCalories: number }[],
-  dailySteps: { date: string, dayOfWeek: string, totalSteps: number }[]
+  dailyCalories: { 
+    date: string, 
+    dayOfWeek: string, 
+    totalCalories: number 
+  }[],
+  dailySteps: { 
+    date: string, 
+    dayOfWeek: string, 
+    totalSteps: number 
+  }[]
+}
+
+export interface WaterWeekly {
+  weekStart: string,
+  weekEnd: string,
+  totalWaterIntake: number,
+  previousWeekWaterIntake: number,
+  waterDifference: {
+    value: number,
+    percentage: number
+  },
+  currentGoal: number,
+  previousGoal: number,
+  goalDifference: {
+    value: number,
+    percentage: number
+  },
+  highestDay:{
+    date: string,
+    dayOfWeek: string,
+    totalMl: number
+  },
+  daysWithWater: number,
+  daysWithoutWater: number,
+  dailyIntake: {
+    date: string,
+    dayOfWeek: string,
+    totalMl: number
+  }[]
 }

@@ -22,14 +22,16 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
     const stepsBar = data.dailySteps.map(d => ({
         value: d.totalSteps,
         label: d.dayOfWeek,
+        date: d.date,
+        steps: d.totalSteps,
         frontColor: d.totalSteps > 0 ? '#34d399' : '#e5e7eb',
-        onPress: (_it: any, _idx: number, x: number, y: number) => setStepTip({ x, y, item: d })
     }));
     const caloriesBar = data.dailyCalories.map(d => ({
         value: d.totalCalories,
         label: d.dayOfWeek,
+        date: d.date,
+        calories: d.totalCalories,
         frontColor: d.totalCalories > 0 ? '#60a5fa' : '#e5e7eb',
-        onPress: (_it: any, _idx: number, x: number, y: number) => setCalTip({ x, y, item: d })
     }));
 
     const hasAnyCalories = (data.dailyCalories || []).some(d => d.totalCalories > 0);
@@ -74,7 +76,7 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
         <View className="bg-white p-4 rounded-2xl shadow-md w-full">
             <View className="flex-row justify-between items-center mb-3">
                 <View>
-                    <Text className="font-bold text-lg text-black">{t("Báo cáo hoạt động")}</Text>
+                    <Text className="font-bold text-xl text-black">{t("Báo cáo hoạt động")}</Text>
                 </View>
                 <View className="items-end">
                     <Text className="text-black font-semibold text-base">{data.summary.totalSessions}</Text>
@@ -91,6 +93,9 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
                 </View>
                 <View className="bg-amber-50 px-3 py-2 rounded-lg">
                     <Text className="text-amber-700 font-semibold">{t("Calo")}: {data.summary.totalCalories} kcal</Text>
+                </View>
+                <View className="bg-red-50 px-3 py-2 rounded-lg">
+                    <Text className="text-red-700 font-semibold">{t("Bước chân")}: {data.summary.totalSteps} bước</Text>
                 </View>
             </View>
 
@@ -129,7 +134,7 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
 
             <View className="mb-6">
                 <Text className="font-semibold text-black mb-2">{t("Bước chân theo ngày")}</Text>
-                <View className="items-center bg-gray-50 rounded-xl p-3">
+                <View className="relative items-center bg-gray-50 rounded-xl p-3">
                     <BarChart
                         data={stepsBar}
                         barWidth={24}
@@ -141,20 +146,20 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
                         maxValue={maxSteps}
                         barBorderRadius={6}
                         isAnimated
+                        renderTooltip={(item: any) => (
+                            <View className="bg-white rounded-lg shadow-lg p-2 border border-gray-200">
+                                <Text className="text-gray-700 text-xs">{item.label} • {item.date}</Text>
+                                <Text className="text-black text-sm font-semibold">{item.steps} {t("bước")}</Text>
+                            </View>
+                        )}
                     />
-                    {stepTip && (
-                        <View className="absolute bg-white rounded-lg shadow-lg p-2 border border-gray-200" style={{ left: stepTip.x + 16, top: stepTip.y - 58 }}>
-                            <Text className="text-gray-700 text-xs">{stepTip.item.dayOfWeek} • {stepTip.item.date}</Text>
-                            <Text className="text-black text-sm font-semibold">{stepTip.item.totalSteps} bước</Text>
-                        </View>
-                    )}
                 </View>
             </View>
 
             <View>
                 <Text className="font-semibold text-black mb-2">{t("Calo theo ngày")}</Text>
                 {hasAnyCalories ? (
-                    <View className="items-center bg-gray-50 rounded-xl p-3">
+                    <View className="relative items-center bg-gray-50 rounded-xl p-3">
                         <BarChart
                             data={caloriesBar}
                             barWidth={24}
@@ -166,13 +171,13 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
                             maxValue={maxCalories}
                             barBorderRadius={6}
                             isAnimated
+                            renderTooltip={(item: any) => (
+                                <View className="bg-white rounded-lg shadow-lg p-2 border border-gray-200">
+                                    <Text className="text-gray-700 text-xs">{item.label} • {item.date}</Text>
+                                    <Text className="text-black text-sm font-semibold">{item.calories} kcal</Text>
+                                </View>
+                            )}
                         />
-                        {calTip && (
-                            <View className="absolute bg-white rounded-lg shadow-lg p-2 border border-gray-200" style={{ left: calTip.x + 16, top: calTip.y - 58 }}>
-                                <Text className="text-gray-700 text-xs">{calTip.item.dayOfWeek} • {calTip.item.date}</Text>
-                                <Text className="text-black text-sm font-semibold">{calTip.item.totalCalories} kcal</Text>
-                            </View>
-                        )}
                     </View>
                 ) : (
                     <View className="bg-gray-50 rounded-xl p-3 items-center">

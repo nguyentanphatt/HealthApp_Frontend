@@ -1,6 +1,6 @@
 import StatisticWeeklyCard from "@/components/StatisticWeeklyCard";
 import { images } from "@/constants/image";
-import { foodWeekly, sleepWeekly, weeklyReport, workoutWeekly } from "@/services/statistics";
+import { foodWeekly, sleepWeekly, waterWeekly, weeklyReport, workoutWeekly } from "@/services/statistics";
 import { useUserStore } from "@/stores/useUserStore";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,6 +42,10 @@ const Profile = () => {
     queryClient.prefetchQuery({
       queryKey: ["workoutWeeklyData", weekStartMs],
       queryFn: () => workoutWeekly({ date: weekStartMs })
+    });
+    queryClient.prefetchQuery({
+      queryKey: ["waterWeeklyData", weekStartMs],
+      queryFn: () => waterWeekly({ date: weekStartMs })
     });
   }, [queryClient]);
   
