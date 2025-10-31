@@ -83,7 +83,7 @@ const Page = () => {
     return (
         <View className='flex-1 relative bg-[#f6f6f6] pt-12 px-4'>
             <View className="flex flex-row items-center justify-between pb-8">
-                <TouchableOpacity onPress={() => (router.push('/work/list' as Href))} className="w-[30px]">
+                <TouchableOpacity onPress={() => (router.push('/(tabs)/work' as Href))} className="w-[30px]">
                     <FontAwesome6 name="chevron-left" size={24} color="black" />
                 </TouchableOpacity>
                 <Text className="text-2xl font-bold text-center py-5">

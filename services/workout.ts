@@ -14,7 +14,7 @@ export const workoutSurvey = async (
 }
 
 
-export const getWorkoutVideo = async (params: {page?: number, limit?: number}): Promise<{success: boolean, videos: VideoType[]}> =>{
+export const getWorkoutVideo = async (params: {page?: number, limit?: number}): Promise<{success: boolean, videos: VideoType[], pagination?: { currentPage: number, totalPages: number, totalVideos: number, hasNext: boolean, hasPrev: boolean }}> =>{
     try {
         const response = await privateClient.get('/api/workout/videos', {
             params

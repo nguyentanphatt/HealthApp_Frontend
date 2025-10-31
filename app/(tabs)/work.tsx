@@ -63,6 +63,7 @@ const Work = () => {
       Alert.alert(t("Có lỗi"), t("Không thể phân tích khảo sát. Vui lòng thử lại."));
     }
   };
+  
 
   if (initializing) {
     return (
