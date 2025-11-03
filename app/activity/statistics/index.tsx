@@ -1,6 +1,6 @@
 import ActivityResult from '@/components/ActivityResult'
 import { deleteAllLocations, saveLocation, updateActivityData } from '@/services/activity'
-import { TrackedPoint, formatDistance, formatTime } from '@/utils/activityHelper'
+import { TrackedPoint, formatDistanceRT, formatTime } from '@/utils/activityHelper'
 import { formatActivityDateTimeRange } from '@/utils/convertTime'
 import { FontAwesome6 } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -65,8 +65,6 @@ const Page = () => {
         };
 
         setData(activityData);
-
-        // Fit map to show all positions
         if (activityData.positions && activityData.positions.length > 0) {
           setTimeout(() => {
             mapRef.current?.fitToCoordinates(activityData.positions, {
@@ -76,27 +74,11 @@ const Page = () => {
           }, 1000);
         }
 
-        // Ensure startTime is a number, fallback to 0 if null
         const safeStartTime = activityData.startTime !== null ? activityData.startTime : 0;
-        // Ensure endTime is a string that can be parsed to a number, fallback to 0 if invalid
         const safeEndTime = typeof activityData.endTime === 'string' && activityData.endTime !== '' ? parseInt(activityData.endTime) : 0;
         try {
-          /* console.log('Attempting to save activity data...');
-          console.log('startTime', safeStartTime);
-          console.log('endTime', safeEndTime);
-          console.log('distance', activityData.distance);
-          console.log('stepCount', activityData.stepCount);
-          console.log('avgSpeed', activityData.avgSpeed);
-          console.log('maxSpeed', activityData.maxSpeed);
-          console.log('caloriesBurned', activityData.caloriesBurned);
-          console.log("totalTime", activityData.elapsed / 1000);
-          console.log("activeTime", activityData.activeTime / 1000);
-          console.log("sessionId", sessionId);
-          
-          console.log('positions', activityData.positions ); */
-          
+
           if (sessionId) {
-            // API 1: Update activity data
             try {
               console.log('Calling updateActivityData API...');
               const response = await updateActivityData(sessionId, {
@@ -110,47 +92,32 @@ const Page = () => {
                 totalTime: activityData.elapsed / 1000,
                 activeTime: activityData.activeTime / 1000,
               });
-              //console.log('✅ updateActivityData API success:', response);
             } catch (error) {
-              //console.error('❌ updateActivityData API failed:', error);
               throw error;
             }
 
-            // API 2: Delete all locations
             try {
-              //const locations = await getAllLocations(sessionId);
-              //console.log("locations", locations);
-
-              //console.log('Calling deleteAllLocations API...');
               await deleteAllLocations(sessionId);
-              //console.log('✅ deleteAllLocations API success');
             } catch (error) {
               console.error('❌ deleteAllLocations API failed:', error);
               throw error;
             }
 
-            // API 3: Save location
             try {
-              //console.log('Calling saveLocation API...');
               await saveLocation(sessionId, activityData.positions);
-              //console.log('✅ saveLocation API success');
             } catch (error) {
-              //console.error('❌ saveLocation API failed:', error);
               throw error;
             }
 
-            //console.log('All APIs completed successfully!');
-            AsyncStorage.removeItem('activity_session_id').catch(() => {});
+            AsyncStorage.removeItem('activity_session_id').catch(() => { });
 
             queryClient.invalidateQueries({ queryKey: ["activityData"] });
-          } 
+          }
 
         } catch (saveError) {
-          //console.error('Failed to save activity data:', saveError);
         }
 
       } catch (error) {
-        //console.error('Error loading activity data:', error);
       }
     };
 
@@ -167,7 +134,11 @@ const Page = () => {
       showsVerticalScrollIndicator={false}
     >
       <View className="flex flex-row items-center justify-between bg-[#f6f6f6] pt-16 pb-10">
-        <TouchableOpacity onPress={() => router.push("/(tabs)")}>
+        <TouchableOpacity onPress={() => {
+          queryClient.invalidateQueries({ queryKey: ["activityData"] });
+          router.push("/(tabs)")
+
+        }}>
           <FontAwesome6 name="chevron-left" size={24} color="black" />
         </TouchableOpacity>
         <Text className="text-2xl font-bold  self-center">Kết quả</Text>
@@ -182,7 +153,7 @@ const Page = () => {
           </View>
         </View>
         <Text className="text-3xl text-black font-bold text-center">
-          {formatDistance(data?.distance || 0)}
+          {formatDistanceRT(data?.distance || 0)}
         </Text>
       </View>
 
@@ -267,9 +238,6 @@ const Page = () => {
             </>
           )}
         </MapView>
-      </View>
-
-      <View className="bg-white rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4 h-[300px]">
       </View>
     </ScrollView>
   )

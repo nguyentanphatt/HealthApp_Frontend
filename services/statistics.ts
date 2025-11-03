@@ -1,4 +1,4 @@
-import { FoodWeekly, ReportData, SleepWeekly, WaterWeekly, WorkoutWeekly } from "@/constants/type";
+import { FoodWeekly, ReportData, SleepWeekly, WaterWeekly, WorkoutDaily, WorkoutWeekly } from "@/constants/type";
 import { privateClient } from "./client";
 
 export const weeklyReport = async (params?:{date?:number}):Promise<{success: boolean, data: ReportData}> => {
@@ -56,6 +56,19 @@ export const workoutWeekly = async (params?:{date?:number}):Promise<{success: bo
 export const waterWeekly = async (params?:{date?:number}):Promise<{success: boolean, data: WaterWeekly}> => {
     try {
         const response = await privateClient.get("/api/stats/waterdetail", {
+            params: {
+                date: params?.date,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const workoutDaily = async (params?:{date?:number}):Promise<{success: boolean, data: WorkoutDaily}> => {
+    try {
+        const response = await privateClient.get("/api/stats/daily", {
             params: {
                 date: params?.date,
             },

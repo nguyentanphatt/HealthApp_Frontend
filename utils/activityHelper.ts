@@ -43,6 +43,14 @@ export const formatDistance = (distanceMeters: number): string => {
     }
 };
 
+export const formatDistanceRT = (distanceMeters: number): string => {
+    if (distanceMeters >= 1000) {
+        return `${(distanceMeters / 1000).toFixed(2)} km`;
+    } else {
+        return `${Math.round(distanceMeters)} m`;
+    }
+}
+
 // Calo
 export const calculateCaloriesFromMV = (mv: number, intervalMs: number = 30): number => {
     // EE = 4.83 × MV + 122.02 (kcal/h)

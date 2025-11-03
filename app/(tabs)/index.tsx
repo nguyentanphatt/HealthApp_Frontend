@@ -11,14 +11,13 @@ import { useUnits } from "@/hooks/useUnits";
 import { getAllActivities } from "@/services/activity";
 import { getFoodStatus } from "@/services/food";
 import { getSleepStatus } from "@/services/sleep";
-import { weeklyReport } from "@/services/statistics";
+import { weeklyReport, workoutDaily } from "@/services/statistics";
 import { getUserProfile, getWeeklyGoal } from "@/services/user";
 import { getWaterStatus } from "@/services/water";
 import { getWorkoutVideo } from "@/services/workout";
 import { useModalStore } from "@/stores/useModalStore";
 import { useUserStore } from "@/stores/useUserStore";
 import { convertWater } from "@/utils/convertMeasure";
-import { convertTimestampVNtoTimestamp } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -84,16 +83,23 @@ export default function HomeScreen() {
     select: (res) => res.data,
   });
 
+  const { data: workoutDailyData, isLoading: loadingWorkoutDailyData } = useQuery({
+    queryKey: ["workoutDailyData"],
+    queryFn: () => workoutDaily({ date: selectedDate }),
+    staleTime: 1000 * 60 * 5,
+    select: (res) => res.data,
+  });
+
 
   const filteredActivityData = activityData?.filter((activity: any) => {
     if (selectedDate === 0) return true;
-    const selectedDateUTC = new Date(convertTimestampVNtoTimestamp(selectedDate * 1000));
-    const activityDateUTC = new Date(activity.startTime);
+    const VN_OFFSET = 7 * 60 * 60 * 1000;
+    const toVnDateKey = (ms: number) => new Date(ms + VN_OFFSET).toISOString().slice(0, 10);
 
-    const activityDateString = activityDateUTC.toDateString();
-    const selectedDateString = selectedDateUTC.toDateString();
+    const selectedKey = toVnDateKey(selectedDate * 1000);
+    const activityKey = toVnDateKey(new Date(activity.startTime).getTime());
 
-    return activityDateString === selectedDateString;
+    return activityKey === selectedKey;
   }) || [];
 
   const displayedActivityData = showAll ? filteredActivityData : filteredActivityData.slice(0, 3);
@@ -238,13 +244,15 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-1 gap-2.5">
-          <Card title={t("Mục tiêu tuần")} setting icon="ellipsis-vertical"
-            settingsOptions={[
-              { title: t("Đặt mục tiêu"), href: "/user/goal/edit" },
-            ]}
+          <Card title={t("Mục tiêu tuần")}  
+            
           >
-            {loadingWeeklyGoal ? <ActivityIndicator size="large" color="#000" /> : <>
-              <View className="flex flex-row items-start justify-between">
+            {loadingWeeklyGoal ? <>
+              <View className="h-[140px]">
+                <ActivityIndicator size="large" color="#000" />
+              </View>
+            </> : <>
+              <View className="flex flex-row items-start justify-between h-[140px]">
                 <View className="max-w-[50%] flex items-start justify-start gap-4">
                   <WeeklyGoalItem
                     icon="glass-water-droplet"
@@ -296,17 +304,17 @@ export default function HomeScreen() {
             <View className="flex flex-col gap-3">
               <ProgressItem
                 color="#00FF55"
-                index={0}
+                index={workoutDailyData?.workoutMinutes ?? 0}
                 unit={t("phút")}
                 icon="clock"
               />
               <ProgressItem
                 color="#00D4FF"
-                index={0}
+                index={workoutDailyData?.steps ?? 0}
                 unit={t("bước")}
                 icon="person-running"
               />
-              <ProgressItem color="#FFF200" index={0} unit="kcal" icon="bolt" />
+              <ProgressItem color="#FFF200" index={workoutDailyData?.calories ?? 0} unit="kcal" icon="bolt" />
             </View>
           </Card>
 

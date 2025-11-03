@@ -8,7 +8,7 @@ import {
     calculateTotalDistance,
     checkLocationPermission,
     distanceBetween,
-    formatDistance,
+    formatDistanceRT,
     formatSpeed,
     formatTime,
     requestActivityRecognitionPermission,
@@ -731,7 +731,7 @@ const Page = () => {
                     <View className='flex flex-row items-center justify-center gap-5'>
                         <View className='flex items-center justify-center bg-white rounded-md shadow-md p-2 w-[45%]'>
                             <Text className='text-lg text-black/60'>Khoảng cách</Text>
-                            <Text className='text-xl text-black font-bold'>{formatDistance(totalDistanceMeters)}</Text>
+                            <Text className='text-xl text-black font-bold'>{formatDistanceRT(totalDistanceMeters)}</Text>
                         </View>
                         <View className='flex items-center justify-center bg-white rounded-md shadow-md p-2 w-[45%]'>
                             <Text className='text-lg text-black/60'>Bước đi</Text>

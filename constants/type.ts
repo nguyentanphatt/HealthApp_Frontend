@@ -477,3 +477,12 @@ export interface WaterWeekly {
     totalMl: number
   }[]
 }
+
+export interface WorkoutDaily {
+  date: string;
+  dayOfWeek: string;
+  workoutMinutes: number;
+  steps: number;
+  calories: number;
+  water: number;
+}

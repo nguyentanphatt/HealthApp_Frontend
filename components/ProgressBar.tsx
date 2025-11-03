@@ -1,7 +1,7 @@
 import React from "react";
 import { View } from "react-native";
 
-const ProgressBar = ({ color }: { color: string }) => {
+const ProgressBar = ({ color, value }: { color: string, value: number }) => {
   return (
     <View className="relative w-56 h-7">
       <View
@@ -10,8 +10,8 @@ const ProgressBar = ({ color }: { color: string }) => {
       />
       <View
         className="size-7 rounded-full"
-        style={{ backgroundColor: color }}
-      />
+        style={{backgroundColor: color, width: `${value}%` }}
+      />  
     </View>
   );
 };
