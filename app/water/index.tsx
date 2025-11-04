@@ -335,6 +335,8 @@ const Page = () => {
             );
             return reminderDateStr === currentDateStr;
           });
+
+          console.log("filteredReminders", filteredReminders);
           return filteredReminders.length > 0 ? (
             <ReminderList data={filteredReminders} />
           ) : null;

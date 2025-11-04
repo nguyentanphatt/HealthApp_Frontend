@@ -41,6 +41,7 @@ const ReminderList = ({
       {displayedData.map((item, index) => (
         <TouchableOpacity
           key={index}
+          disabled={!item.enabled}
           onPress={() =>
             router.push(
               `/water/notification/edit?id=${item.id}&message=${item.message}&expiresIn=${item.expiresIn}` as Href

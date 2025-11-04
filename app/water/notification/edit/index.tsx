@@ -24,6 +24,11 @@ const Page = () => {
     message: string;
     expiresIn: string;
   }>();
+
+  console.log("id", id);
+  console.log("message", message);
+  console.log("expiresIn", expiresIn);
+  
   const { openModal } = useModalStore();
   const { t } = useTranslation();
   const router = useRouter();
@@ -36,9 +41,11 @@ const Page = () => {
       : Number(convertWater(initAmount, units.water).toFixed(2));
   const dateTimestamp = convertISOToTimestamp(expiresIn);
   const date = new Date(expiresIn);
-  const initHour = date.getUTCHours();
+  const initHour = (date.getUTCHours() + 7) % 24;
   const initMinute = date.getUTCMinutes();
-
+  console.log("initHour", initHour);
+  console.log("initMinute", initMinute);
+  
   const [selectedAmount, setSelectedAmount] = useState(initialValue);
   const [selectedHour, setSelectedHour] = useState(initHour);
   const [selectedMinute, setSelectedMinute] = useState(initMinute);
@@ -68,7 +75,7 @@ const Page = () => {
     id: string
   ) => {
     const newTime = new Date(expiresIn);
-    newTime.setUTCHours(hour + 1);
+    newTime.setUTCHours(hour - 7);
     newTime.setUTCMinutes(minute);
     newTime.setUTCSeconds(0);
     newTime.setUTCMilliseconds(0);

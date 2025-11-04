@@ -1,6 +1,6 @@
 import ActivityResult from '@/components/ActivityResult'
 import { deleteAllLocations, saveLocation, updateActivityData } from '@/services/activity'
-import { TrackedPoint, formatDistanceRT, formatTime } from '@/utils/activityHelper'
+import { formatDistanceRT, formatTime, TrackedPoint } from '@/utils/activityHelper'
 import { formatActivityDateTimeRange } from '@/utils/convertTime'
 import { FontAwesome6 } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -8,7 +8,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router/build/hooks'
 import React, { useEffect, useRef, useState } from 'react'
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
-import MapView, { Marker, Polygon, Polyline } from 'react-native-maps'
+import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps'
 
 type Data = {
   distance: number;
@@ -200,6 +200,7 @@ const Page = () => {
       <View className="bg-white rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4">
         <Text className="text-lg text-black/60">Bản đồ hoạt động</Text>
         <MapView
+          provider={PROVIDER_GOOGLE}
           ref={mapRef}
           style={{ width: '100%', height: 300 }}
           initialRegion={{

@@ -248,7 +248,7 @@ export default function HomeScreen() {
             
           >
             {loadingWeeklyGoal ? <>
-              <View className="h-[140px]">
+              <View className="h-[140px] flex items-center justify-center">
                 <ActivityIndicator size="large" color="#000" />
               </View>
             </> : <>
@@ -389,7 +389,7 @@ export default function HomeScreen() {
             ))}
 
             {filteredActivityData.length > 3 && (
-              <TouchableOpacity onPress={() => setShowAll(!showAll)} className="py-5 items-center">
+              <TouchableOpacity onPress={() => setShowAll(!showAll)} className="mb-6 items-center">
                 <Text className="text-lg text-center text-black/60 font-semibold">
                   {showAll ? t("Ẩn bớt") : t("Xem thêm")}
                 </Text>

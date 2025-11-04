@@ -22,7 +22,7 @@ import { Href, useRouter } from 'expo-router';
 import { Accelerometer } from 'expo-sensors';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, AppState, Text, TouchableOpacity, View } from 'react-native';
-import MapView, { Marker, Polygon, Polyline, Region } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE, Polygon, Polyline, Region } from "react-native-maps";
 
 const Page = () => {
     const router = useRouter();
@@ -759,7 +759,7 @@ const Page = () => {
             ) : (
                 <MapView
                     ref={mapRef}
-                    //provider={PROVIDER_GOOGLE}
+                    provider={PROVIDER_GOOGLE}
                     style={{ width: '100%', height: isStart ? '50%' : '60%', marginTop: isStart ? 20 : 50 }}
                     scrollEnabled={!isLocked}
                     zoomEnabled={!isLocked}
