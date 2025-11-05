@@ -1,4 +1,5 @@
 import { WaterWeekly } from '@/constants/type';
+import { useAppTheme } from '@/context/appThemeContext';
 import { FontAwesome6 } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,20 +8,22 @@ import { BarChart } from 'react-native-gifted-charts';
 
 const WaterWeeklyCard = ({ data }: { data: WaterWeekly }) => {
     const { t } = useTranslation();
+    const { theme } = useAppTheme();
     const [tooltip, setTooltip] = useState<{ x: number; y: number; item: WaterWeekly['dailyIntake'][number] } | null>(null);
 
     const maxWater = (() => {
-        const arr = (data.dailyIntake || []).map(d => d.totalMl);
+        const arr = (data?.dailyIntake || []).map(d => d?.totalMl ?? 0);
         return arr.length ? Math.max(1000, ...arr) : 1000;
     })();
 
-    const barData = data.dailyIntake.map(d => ({
-        value: d.totalMl,
-        label: d.dayOfWeek,
-        date: d.date,
-        ml: d.totalMl,
-        frontColor: d.totalMl > 0 ? '#60a5fa' : '#e5e7eb',
+    const barData = (data?.dailyIntake || []).map(d => ({
+        value: d?.totalMl ?? 0,
+        label: d?.dayOfWeek ?? "",
+        date: d?.date ?? "",
+        ml: d?.totalMl ?? 0,
+        frontColor: (d?.totalMl ?? 0) > 0 ? '#60a5fa' : '#e5e7eb',
     }));
+    
 
     useEffect(() => {
         if (!tooltip) return;
@@ -53,12 +56,14 @@ const WaterWeeklyCard = ({ data }: { data: WaterWeekly }) => {
         return `${ml}ml`;
     }
 
+    const hasAnyWater = (data?.totalWaterIntake ?? 0) > 0 || (data?.dailyIntake || []).some(d => (d?.totalMl ?? 0) > 0);
+
     return (
-        <View className="bg-white p-4 rounded-2xl shadow-md w-full">
-            {data.totalWaterIntake === 0 ? (
+        <View className=" p-4 rounded-2xl shadow-md w-full" style={{ backgroundColor: theme.colors.card }}>
+            {!hasAnyWater ? (
                 <View className='flex-1 gap-5'>
-                    <Text className="font-bold text-xl text-black">{t("Báo cáo nước uống")}</Text>
-                    <Text className='text-gray-500 text-sm text-center'>
+                    <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Báo cáo nước uống")}</Text>
+                    <Text className='text-sm text-center pb-2' style={{ color: theme.colors.textSecondary }}>
                         {t("Không có dữ liệu hãy thêm dữ liệu nước uống")}
                     </Text>
                 </View>
@@ -66,52 +71,58 @@ const WaterWeeklyCard = ({ data }: { data: WaterWeekly }) => {
                 <>
                     <View className="flex-row justify-between items-center mb-3">
                         <View>
-                            <Text className="font-bold text-xl text-black">{t("Báo cáo nước uống")}</Text>
+                            <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Báo cáo nước uống")}</Text>
                         </View>
                         <View className="items-end">
-                            <Text className="text-black font-semibold text-base">{formatWaterAmount(data.totalWaterIntake)}</Text>
-                            <Text className="text-gray-500 text-xs">{t("Tổng tuần")}</Text>
+                            <Text className="font-semibold text-base" style={{ color: theme.colors.textPrimary }}>{formatWaterAmount(data.totalWaterIntake)}</Text>
+                            <Text className="text-xs" style={{ color: theme.colors.textSecondary }}>{t("Tổng tuần")}</Text>
                         </View>
                     </View>
 
                     <View className="flex-col gap-2 mb-4">
-                        <View className="bg-blue-50 px-3 py-2 rounded-lg">
-                            <Text className="text-blue-700 font-semibold">{t("Mục tiêu hiện tại")}: {formatWaterAmount(data.currentGoal)}</Text>
+                        <View className="px-3 py-2 rounded-lg" style={{ backgroundColor: theme.colors.blueInfoCard }}>
+                            <Text className="text-blue-500 font-semibold">{t("Mục tiêu hiện tại")}: {formatWaterAmount(data.currentGoal)}</Text>
                         </View>
-                        <View className="bg-emerald-50 px-3 py-2 rounded-lg">
-                            <Text className="text-emerald-700 font-semibold">{t("Ngày có nước")}: {data.daysWithWater}/7 {t("ngày")}</Text>
+                        <View className="px-3 py-2 rounded-lg" style={{ backgroundColor: theme.colors.emeraldInfoCard }}>
+                            <Text className="text-emerald-500 font-semibold">{t("Ngày có nước")}: {data.daysWithWater}/7 {t("ngày")}</Text>
                         </View>
-                        <View className="bg-amber-50 px-3 py-2 rounded-lg">
-                            <Text className="text-amber-700 font-semibold">{t("Ngày không có nước")}: {data.daysWithoutWater}/7 {t("ngày")}</Text>
+                        <View className="px-3 py-2 rounded-lg" style={{ backgroundColor: theme.colors.amberInfoCard }}>
+                            <Text className="text-amber-500 font-semibold">{t("Ngày không có nước")}: {data.daysWithoutWater}/7 {t("ngày")}</Text>
                         </View>
                     </View>
 
                     <View className='flex-col gap-2 mb-4'>
-                        <Text className='font-semibold text-black'>{t("So với tuần trước")}</Text>
+                        <Text className='font-semibold' style={{ color: theme.colors.textPrimary }}>{t("So với tuần trước")}</Text>
                         <View className="flex-row justify-between">
                             {renderDelta(t("Lượng nước"), data.waterDifference.percentage)}
                             {renderDelta(t("Mục tiêu"), data.goalDifference.percentage)}
                         </View>
                     </View>
 
-                    <View className="bg-gray-50 rounded-xl p-3 mb-4">
-                        <Text className="font-semibold text-black mb-2">{t("Ngày uống nhiều nhất")}</Text>
-                        <View className="flex-row justify-between">
-                            <View className="flex-1 mr-2">
-                                <Text className="text-gray-500">{t("Ngày")}</Text>
-                                <Text className="text-black font-semibold">{data.highestDay.dayOfWeek}</Text>
-                                <Text className="text-gray-500 text-sm">{data.highestDay.date}</Text>
+                    <View className="rounded-xl p-3 mb-4" style={{ backgroundColor: theme.colors.secondaryCard }}>
+                        <Text className="font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>{t("Ngày uống nhiều nhất")}</Text>
+                        {data?.highestDay ? (
+                            <View className="flex-row justify-between">
+                                <View className="flex-1 mr-2">
+                                    <Text className="" style={{ color: theme.colors.textSecondary }}>{t("Ngày")}</Text>
+                                    <Text className="font-semibold" style={{ color: theme.colors.textPrimary }}>{data.highestDay.dayOfWeek}</Text>
+                                    <Text className="text-sm" style={{ color: theme.colors.textSecondary }}>{data.highestDay.date}</Text>
+                                </View>
+                                <View className="flex-1 ml-2">
+                                    <Text className="" style={{ color: theme.colors.textSecondary }}>{t("Lượng nước")}</Text>
+                                    <Text className="font-semibold" style={{ color: theme.colors.textPrimary }}>{formatWaterAmount(data.highestDay.totalMl)}</Text>
+                                </View>
                             </View>
-                            <View className="flex-1 ml-2">
-                                <Text className="text-gray-500">{t("Lượng nước")}</Text>
-                                <Text className="text-black font-semibold">{formatWaterAmount(data.highestDay.totalMl)}</Text>
+                        ) : (
+                            <View className="flex-row justify-between">
+                                <Text className="text-sm" style={{ color: theme.colors.textSecondary }}>{t("Chưa có ngày uống trong tuần này")}</Text>
                             </View>
-                        </View>
+                        )}
                     </View>
 
                     <View className="mb-6">
-                        <Text className="font-semibold text-black mb-2">{t("Lượng nước theo ngày")}</Text>
-                        <View className="relative items-center bg-gray-50 rounded-xl p-3">
+                        <Text className="font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>{t("Lượng nước theo ngày")}</Text>
+                        <View className="relative items-center rounded-xl p-3" style={{ backgroundColor: theme.colors.secondaryCard }}>
                             <BarChart
                                 data={barData}
                                 barWidth={24}
@@ -124,11 +135,17 @@ const WaterWeeklyCard = ({ data }: { data: WaterWeekly }) => {
                                 barBorderRadius={6}
                                 isAnimated
                                 renderTooltip={(item: any) => (
-                                    <View className="bg-white rounded-lg shadow-lg p-2 border border-gray-200">
-                                        <Text className="text-gray-700 text-xs">{item.label} • {item.date}</Text>
-                                        <Text className="text-black text-sm font-semibold">{formatWaterAmount(item.ml)}</Text>
+                                    <View className="rounded-lg shadow-lg p-2" style={{ backgroundColor: theme.colors.secondaryCard }}>
+                                        <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>{item.label} • {item.date}</Text>
+                                        <Text className="text-sm font-semibold" style={{ color: theme.colors.textPrimary }}>{formatWaterAmount(item.ml)}</Text>
                                     </View>
                                 )}
+                                xAxisLabelTextStyle={{
+                                    color: theme.colors.textSecondary,
+                                  }}
+                                  yAxisTextStyle={{
+                                    color: theme.colors.textSecondary,
+                                  }}
                             />
                         </View>
                     </View>

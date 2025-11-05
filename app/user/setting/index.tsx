@@ -1,3 +1,4 @@
+import { useAppTheme } from "@/context/appThemeContext";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { Href, useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -6,7 +7,9 @@ import { ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 
 const Page = () => {
   const router = useRouter();
-  const [isEnabled, setIsEnabled] = useState(false);
+  const { theme, toggle } = useAppTheme();
+  const isEnabled = theme.mode === "dark";
+  const [privacyEnabled, setPrivacyEnabled] = useState(false);
   const { t } = useTranslation();
   const overallData = [
     {
@@ -50,37 +53,38 @@ const Page = () => {
   ];
   return (
     <ScrollView
-      className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
+      className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular"
+      style={{ backgroundColor: theme.colors.background }}
       stickyHeaderIndices={[0]}
       contentContainerStyle={{ paddingBottom: 50 }}
       showsVerticalScrollIndicator={false}
     >
-      <View className="flex bg-[#f6f6f6] pt-16">
+      <View className="flex pt-16" style={{ backgroundColor: theme.colors.background }}>
         <View className="flex flex-row items-center justify-between">
           <TouchableOpacity
             onPress={() => router.push("/(tabs)/profile" as Href)}
           >
-            <FontAwesome6 name="chevron-left" size={24} color="black" />
+            <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">{t("Cài đặt")}</Text>
+          <Text className="text-2xl font-bold self-center" style={{ color: theme.colors.textPrimary }}>{t("Cài đặt")}</Text>
           <View style={{ width: 24 }} />
         </View>
       </View>
       <View className="flex gap-4 py-8">
-        <Text className="text-lg text-black/60">{t("Chung")}</Text>
-        <View className="flex w-full gap-4 bg-white rounded-md shadow-md p-4">
+        <Text className="text-lg" style={{ color: theme.colors.textSecondary }}>{t("Chung")}</Text>
+        <View className="flex w-full gap-4 rounded-md shadow-md p-4" style={{ backgroundColor: theme.colors.card }}>
           {overallData.map((item, idx) => (
             <View key={idx} className="flex gap-4">
               <TouchableOpacity
                 className="flex-row items-center justify-between h-[30px]"
-                onPress={() => router.push(item.href as Href)}
+                onPress={() => item.href && router.push(item.href as Href)}
               >
-                <Text className="text-xl">{item.settingName}</Text>
+                <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>{item.settingName}</Text>
                 {item.isSwitch && (
                   <Switch
                     value={isEnabled}
-                    onValueChange={setIsEnabled}
-                    trackColor={{ false: "#00000066", true: "#19B1FF" }}
+                    onValueChange={async () => { await toggle(); }}
+                    trackColor={{ false: "#00000066", true: theme.colors.tint }}
                     thumbColor={isEnabled ? "#fff" : "#f4f3f4"}
                     ios_backgroundColor="#3e3e3e"
                     className="scale-125"
@@ -88,31 +92,31 @@ const Page = () => {
                 )}
               </TouchableOpacity>
               {idx === overallData.length - 1 ? null : (
-                <View className="w-full h-0.5 bg-black/40" />
+                <View className="w-full h-0.5" style={{ backgroundColor: theme.colors.border }} />
               )}
             </View>
           ))}
         </View>
 
-        <Text className="text-lg text-black/60">{t("Riêng tư")}</Text>
-        <View className="flex w-full gap-4 bg-white rounded-md shadow-md p-4">
+        <Text className="text-lg" style={{ color: theme.colors.textSecondary }}>{t("Riêng tư")}</Text>
+        <View className="flex w-full gap-4 rounded-md shadow-md p-4" style={{ backgroundColor: theme.colors.card }}>
           {privateData.map((item, idx) => (
             <View key={idx} className="flex gap-4">
               <TouchableOpacity onPress={() => router.push(item.href as Href)} className="flex-row items-center justify-between h-[30px]">
-                <Text className="text-xl">{item.settingName}</Text>
+                <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>{item.settingName}</Text>
                 {item.isSwitch && (
                   <Switch
-                    value={isEnabled}
-                    onValueChange={setIsEnabled}
+                    value={privacyEnabled}
+                    onValueChange={setPrivacyEnabled}
                     trackColor={{ false: "#00000066", true: "#19B1FF" }}
-                    thumbColor={isEnabled ? "#fff" : "#f4f3f4"}
+                    thumbColor={privacyEnabled ? "#fff" : "#f4f3f4"}
                     ios_backgroundColor="#3e3e3e"
                     className="scale-125"
                   />
                 )}
               </TouchableOpacity>
               {idx === privateData.length - 1 ? null : (
-                <View className="w-full h-0.5 bg-black/40" />
+                <View className="w-full h-0.5" style={{ backgroundColor: theme.colors.border }} />
               )}
             </View>
           ))}

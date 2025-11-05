@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/context/appThemeContext';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -16,7 +17,7 @@ const ScheduleItem = ({
   percentage: number;
 }) => {
   const { t } = useTranslation();
-
+  const { theme } = useAppTheme();
   const formatData = useCallback((data: number) => {
     if (category === "calories") {
       return `${data} kcal`;
@@ -45,12 +46,12 @@ const ScheduleItem = ({
   
   return (
     <View className="flex gap-1">
-      <Text className="text-lg text-black">{title}</Text>
+      <Text className="text-lg" style={{ color: theme.colors.textPrimary }}>{title}</Text>
       <View className="flex-row items-center gap-1">
-        <Text className="text-2xl font-bold text-black">{formatData(current)}</Text>
+        <Text className="text-2xl font-bold" style={{ color: theme.colors.textPrimary }}>{formatData(current)}</Text>
         <Text className="font-bold" style={{ color: color }}>{text}</Text>
       </View>
-      <Text className="text-black/60">{t("so với tuần trước")} {formatData(old)}</Text>
+      <Text className="text-black/60" style={{ color: theme.colors.textSecondary }}>{t("so với tuần trước")} {formatData(old)}</Text>
     </View>
   );
 };

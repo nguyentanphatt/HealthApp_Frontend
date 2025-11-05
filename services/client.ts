@@ -1,9 +1,10 @@
 import { useAuthStore } from "@/stores/useAuthStore";
 import axios from "axios";
+import Constants from 'expo-constants';
 import { getNewToken } from "./user";
 
-const BASE_URL = "http://168.138.168.177:25565/";
-//const BASE_URL = "https://168.138.168.177:25566/";
+const BASE_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL;
+
 
 export const publicClient = axios.create({
   baseURL: BASE_URL,

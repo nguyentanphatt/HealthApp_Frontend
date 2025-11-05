@@ -1,5 +1,6 @@
 import StatisticWeeklyCard from "@/components/StatisticWeeklyCard";
 import { images } from "@/constants/image";
+import { useAppTheme } from "@/context/appThemeContext";
 import { foodWeekly, sleepWeekly, waterWeekly, weeklyReport, workoutWeekly } from "@/services/statistics";
 import { useUserStore } from "@/stores/useUserStore";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -16,6 +17,7 @@ const Profile = () => {
   dayjs.extend(isoWeek);
   const { t } = useTranslation();
   const user = useUserStore(state => state.user)
+  const { theme } = useAppTheme();
   const queryClient = useQueryClient();
   const { data: reportData, isLoading: isLoadingReportData } = useQuery({
     queryKey: ["reportData"],
@@ -51,23 +53,24 @@ const Profile = () => {
   
   return (
     <ScrollView
-      className="flex-1 gap-2.5 px-4 py-16 font-lato-regular bg-[#f6f6f6]"
+      className="flex-1 gap-2.5 px-4 py-16 font-lato-regular"
+      style={{ backgroundColor: theme.colors.background }}
       stickyHeaderIndices={[0]}
       contentContainerStyle={{ paddingBottom: 50 }}
       showsVerticalScrollIndicator={false}
     >
       <View className="flex flex-row items-center justify-between">
         <View className="size-[24px]" />
-        <Text className="text-3xl font-bold text-center py-5">
+        <Text className="text-3xl font-bold text-center py-5" style={{ color: theme.colors.textPrimary }}>
           {t("Thông tin của bạn")}
         </Text>
         <TouchableOpacity onPress={() => (router.push('/user/setting' as Href))} className="w-[30px]">
-          <FontAwesome6 name="ellipsis-vertical" size={24} color="black" />
+          <FontAwesome6 name="ellipsis-vertical" size={24} color={theme.colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
       <View className="flex gap-6">
-        <View className="w-[100px] h-[100px] bg-black/20 rounded-full self-center flex items-center justify-center overflow-hidden">
+        <View className="w-[100px] h-[100px] rounded-full self-center flex items-center justify-center overflow-hidden" style={{ backgroundColor: theme.colors.card }}>
           {user?.imageUrl ? (
             <Image
               source={{ uri: user.imageUrl }}
@@ -83,22 +86,22 @@ const Profile = () => {
           )}
         </View>
 
-        <View className="flex items-center justify-center w-full p-4 bg-white rounded-md shadow-md">
-          <Text className="text-xl">{user?.fullName}</Text>
+        <View className="flex items-center justify-center w-full p-4 rounded-md shadow-md" style={{ backgroundColor: theme.colors.card }}>
+          <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>{user?.fullName}</Text>
         </View>
 
         {isLoadingReportData ? (
           <View className="flex items-center justify-center w-full">
-            <Text>Loading...</Text>
+            <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>Loading...</Text>
           </View>
         ) : (
           <>
             <StatisticWeeklyCard data={reportData} />
 
             {improve ? (
-              <Text className="text-lg text-center">{t("Tuần vừa qua bạn đã cải thiện tốt hơn")}</Text>
+              <Text className="text-lg text-center" style={{ color: theme.colors.textPrimary }}>{t("Tuần vừa qua bạn đã cải thiện tốt hơn")}</Text>
             ) : (
-              <Text className="text-lg text-center">{t("Hãy cố gắng cải thiện hơn nữa")}</Text>
+              <Text className="text-lg text-center" style={{ color: theme.colors.textPrimary }}>{t("Hãy cố gắng cải thiện hơn nữa")}</Text>
             )}
           </>
         )}

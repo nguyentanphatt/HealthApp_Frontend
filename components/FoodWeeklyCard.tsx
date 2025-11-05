@@ -1,5 +1,6 @@
 
 import { FoodWeekly } from '@/constants/type';
+import { useAppTheme } from '@/context/appThemeContext';
 import { FontAwesome6 } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +9,7 @@ import { BarChart } from 'react-native-gifted-charts';
 
 const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
     const { t } = useTranslation();
+    const { theme } = useAppTheme();
     const [tooltip, setTooltip] = useState<{ x: number; y: number; item: any } | null>(null);
     const diff = data.caloriesDifference?.percentage ?? 0;
     const isIncrease = diff > 0;
@@ -19,6 +21,7 @@ const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
         frontColor: day.isBalanced ? "#22c55e" : "#d1d5db",
         onPress: (x: number, y: number) => setTooltip({ x, y, item: day }),
     }));
+    
 
     useEffect(() => {
         setTimeout(() => {
@@ -28,25 +31,25 @@ const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
 
     const renderNutrition = (label: string, value: number, color: string) => (
         <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-black text-base w-[60px]">{label}</Text>
+            <Text className="text-base w-[60px]" style={{ color: theme.colors.textPrimary }}>{label}</Text>
             <View className="flex-1 h-3 bg-gray-200 rounded-full mx-3">
                 <View
                     style={{ width: `${value}%`, backgroundColor: color }}
                     className="h-3 rounded-full"
                 />
             </View>
-            <Text className="text-black text-sm w-[30px] text-right">{value}%</Text>
+            <Text className="text-sm w-[30px] text-right" style={{ color: theme.colors.textPrimary }}>{value}%</Text>
         </View>
     );
 
     return (
-        <View className="bg-white p-4 rounded-2xl shadow-md w-full">
+        <View className="p-4 rounded-2xl shadow-md w-full" style={{ backgroundColor: theme.colors.card }}>
             {data.currentWeekCalories === 0 ? (
                 <View className='flex-1 gap-5'>
-                    <Text className="font-bold text-lg text-black">
+                    <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>
                         {t("Báo cáo dinh dưỡng")}
                     </Text>
-                    <Text className='text-gray-500 text-sm text-center'>
+                    <Text className='text-sm text-center pb-2' style={{ color: theme.colors.textSecondary }}>
                         {t("Không có dữ liệu hãy thêm dữ liệu thức ăn")}
                     </Text>
                 </View>
@@ -54,13 +57,13 @@ const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
                 <>
                     <View className="flex-row justify-between items-center mb-4">
                         <View>
-                            <Text className="font-bold text-xl text-black">
+                            <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>
                                 {t("Báo cáo dinh dưỡng")}
                             </Text>
                         </View>
 
                         {isEqual ? (
-                            <Text className="text-yellow-500 font-semibold text-lg">=</Text>
+                            <Text className="font-semibold text-lg" style={{ color: theme.colors.textPrimary }}>=</Text>
                         ) : (
                             <View className="flex-row items-center">
                                 <FontAwesome6
@@ -78,17 +81,17 @@ const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
                             </View>
                         )}
                     </View>
-                    <View className='flex-col items-center justify-between bg-gray-50 rounded-xl p-3'>
-                        <Text className='text-gray-500 text-sm'>
+                    <View className='flex-col items-center justify-between rounded-xl p-3' style={{ backgroundColor: theme.colors.secondaryCard }}>
+                        <Text className='text-sm' style={{ color: theme.colors.textSecondary }}>
                             {t("Tổng lượng calo")}
                         </Text>
-                        <Text className="text-black text-2xl font-bold">
+                        <Text className="text-2xl font-bold" style={{ color: theme.colors.textPrimary }}>
                             {data.currentWeekCalories} kcal
                         </Text>
                     </View>
                     <View className='pt-2'>
-                        <Text className="font-semibold text-black mb-2">{t("Thành phần dinh dưỡng theo ngày")}</Text>
-                        <View className="items-center mb-5 bg-gray-50 rounded-xl p-3">
+                        <Text className="font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>{t("Thành phần dinh dưỡng theo ngày")}</Text>
+                        <View className="items-center mb-5 rounded-xl p-3" style={{ backgroundColor: theme.colors.card }}>
                             <BarChart
                                 data={barData}
                                 barWidth={25}
@@ -99,23 +102,24 @@ const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
                                 noOfSections={3}
                                 barBorderRadius={6}
                                 isAnimated
+                                xAxisLabelTextStyle={{
+                                    color: theme.colors.textSecondary,
+                                  }}
+                                  yAxisTextStyle={{
+                                    color: theme.colors.textSecondary,
+                                  }}
                             />
 
                             {tooltip && (
                                 <View
-                                    className="absolute bg-white rounded-lg shadow-lg p-2 border border-gray-200"
-                                    style={{
-                                        left: tooltip.x + 20,
-                                        top: tooltip.y - 60,
-                                    }}
+                                    className="absolute rounded-lg shadow-lg p-2" style={{ backgroundColor: theme.colors.secondaryCard, left: tooltip.x + 20, top: tooltip.y - 60 }}
                                 >
-                                    <Text className="text-gray-700 text-xs">Protein: {tooltip.item.protein}</Text>
-                                    <Text className="text-gray-700 text-xs">Chất xơ: {tooltip.item.fiber}</Text>
-                                    <Text className="text-gray-700 text-xs">Chất béo: {tooltip.item.fat}</Text>
-                                    <Text className="text-gray-700 text-xs">Tinh bột: {tooltip.item.starch}</Text>
+                                    <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>Protein: {tooltip.item.protein}</Text>
+                                    <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>Chất xơ: {tooltip.item.fiber}</Text>
+                                    <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>Chất béo: {tooltip.item.fat}</Text>
+                                    <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>Tinh bột: {tooltip.item.starch}</Text>
                                     <Text
-                                        className={`text-xs font-semibold mt-1 ${tooltip.item.isBalanced ? "text-green-600" : "text-red-600"
-                                            }`}
+                                        className={`text-xs font-semibold mt-1`} style={{ color: tooltip.item.isBalanced ? theme.colors.tint : theme.colors.textSecondary }}
                                     >
                                         {tooltip.item.isBalanced ? "Cân bằng ✅" : "Chưa cân bằng ❌"}
                                     </Text>
@@ -124,7 +128,7 @@ const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
                         </View>
                     </View>
 
-                    <Text className="font-bold text-base mb-2 text-black">
+                    <Text className="font-bold text-base mb-2" style={{ color: theme.colors.textPrimary }}>
                         {t("Thành phần dinh dưỡng trung bình (%)")}
                     </Text>
                     {renderNutrition("Protein", data.averageNutrition.protein, "#60a5fa")}

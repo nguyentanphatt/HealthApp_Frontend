@@ -1,12 +1,18 @@
-import { SleepWeekly } from '@/constants/type'
-import React from 'react'
-import { useTranslation } from 'react-i18next'
-import { Text, View } from 'react-native'
-import { BarChart } from 'react-native-gifted-charts'
+import { SleepWeekly } from '@/constants/type';
+import { useAppTheme } from '@/context/appThemeContext';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Text, View } from 'react-native';
+import { BarChart } from 'react-native-gifted-charts';
 
 const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
     const { t } = useTranslation();
+    const { theme } = useAppTheme();
     const actual = propsData;
+
+    console.log("actual", actual);
+    
+
 
     const hoursArray = (actual.dailySleep || []).map(d => d.totalHours);
     const maxHours = hoursArray.length ? Math.max(8, ...hoursArray) : 8;
@@ -18,56 +24,51 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
         frontColor: d.date === actual.longestSleep?.date && d.totalHours > 0 ? '#60a5fa' : (d.totalHours > 0 ? '#93C5FD' : '#e5e7eb'),
     }));
 
-    
-
     return (
-        <View className="bg-white p-4 rounded-2xl shadow-md w-full">
-            {actual.totalSleepHours === 0 ? (
-                <View className='flex-1 gap-5'>
-                    <Text className="font-bold text-lg text-black">
-                        {t("Báo cáo giấc ngủ")}
-                    </Text>
-                    <Text className='text-gray-500 text-sm text-center'>
+        <View className=" p-4 rounded-2xl shadow-md w-full" style={{ backgroundColor: theme.colors.card }}>
+            <View className="flex-row justify-between items-center mb-3">
+                <View>
+                    <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Báo cáo giấc ngủ")}</Text>
+                </View>
+            </View>
+            {actual.totalSleepHours === 0 || hoursArray.every(hour => hour === 0) ? (
+                <View className='py-2'>
+                    <Text className='text-sm text-center' style={{ color: theme.colors.textSecondary }}>
                         {t("Không có dữ liệu hãy thêm dữ liệu giấc ngủ")}
                     </Text>
                 </View>
             ) : (
                 <>
-                    <View className="flex-row justify-between items-center mb-3">
-                        <View>
-                            <Text className="font-bold text-xl text-black">{t("Báo cáo giấc ngủ")}</Text>
-                        </View>
-                    </View>
 
                     <View className='flex-row justify-between gap-2'>
-                        <View className='min-w-[100px] flex-col items-center justify-between bg-pink-50 rounded-xl p-3'>
-                            <Text className='text-pink-500 text-sm'>
+                        <View className='min-w-[100px] flex-col items-center justify-between rounded-xl p-3' style={{ backgroundColor: theme.colors.redInfoCard }}>
+                            <Text className='text-sm text-red-400'>
                                 {t("Tổng giờ ngủ")}
                             </Text>
-                            <Text className="text-pink-600 text-xl font-bold">
+                            <Text className="text-xl font-bold text-red-500">
                                 {actual.totalSleepHours.toFixed(1)}h
                             </Text>
                         </View>
-                        <View className='min-w-[100px] flex-col items-center justify-between bg-blue-50 rounded-xl p-3'>
-                            <Text className='text-blue-500 text-sm'>
+                        <View className='min-w-[100px] flex-col items-center justify-between rounded-xl p-3' style={{ backgroundColor: theme.colors.blueInfoCard }}>
+                            <Text className='text-blue-400 text-sm'>
                                 {t("Giờ ngủ TB")}
                             </Text>
-                            <Text className="text-blue-600 text-xl font-bold">
+                            <Text className="text-blue-500 text-xl font-bold">
                                 {actual.averageBedtime}
                             </Text>
                         </View>
-                        <View className='min-w-[100px] flex-col items-center justify-between bg-emerald-50 rounded-xl p-3'>
-                            <Text className='text-emerald-500 text-sm'>
+                        <View className='min-w-[100px] flex-col items-center justify-between bg-emerald-50 rounded-xl p-3' style={{ backgroundColor: theme.colors.emeraldInfoCard }}>
+                            <Text className='text-emerald-400 text-sm'>
                                 {t("Giờ dậy TB")}
                             </Text>
-                            <Text className="text-emerald-600 text-xl font-bold">
+                            <Text className="text-emerald-500 text-xl font-bold">
                                 {actual.averageWakeTime}
                             </Text>
                         </View>
                     </View>
                     <View className="my-4">
-                        <Text className="font-semibold text-black mb-2">{t("Giấc ngủ theo ngày")}</Text>
-                        <View className="relative items-center mb-4 bg-gray-50 rounded-xl p-3">
+                        <Text className="font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>{t("Giấc ngủ theo ngày")}</Text>
+                        <View className="relative items-center mb-4 rounded-xl p-3" style={{ backgroundColor: theme.colors.secondaryCard }}>
                             <BarChart
                                 data={barData}
                                 barWidth={26}
@@ -80,22 +81,28 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
                                 barBorderRadius={6}
                                 isAnimated
                                 renderTooltip={(item: any) => (
-                                    <View className="bg-white rounded-lg shadow-lg p-2 border border-gray-200">
-                                        <Text className="text-gray-700 text-xs">{item.label} • {item.date}</Text>
-                                        <Text className="text-black text-sm font-semibold">{(item.hours ?? 0).toFixed(1)}h</Text>
+                                    <View className="rounded-lg shadow-lg p-2" style={{ backgroundColor: theme.colors.secondaryCard }}>
+                                        <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>{item.label} • {item.date}</Text>
+                                        <Text className="text-sm font-semibold" style={{ color: theme.colors.textPrimary }}>{(item.hours ?? 0).toFixed(1)}h</Text>
                                     </View>
                                 )}
+                                xAxisLabelTextStyle={{
+                                    color: theme.colors.textSecondary,
+                                }}
+                                yAxisTextStyle={{
+                                    color: theme.colors.textSecondary,
+                                }}
                             />
                         </View>
                     </View>
 
-                    <View className="bg-gray-50 flex gap-1 rounded-xl p-3">
-                        <Text className="text-gray-700 text-sm">{t("Giấc ngủ dài nhất")}</Text>
+                    <View className="flex gap-1 rounded-xl p-3" style={{ backgroundColor: theme.colors.secondaryCard }}>
+                        <Text className="text-sm" style={{ color: theme.colors.textSecondary }}>{t("Giấc ngủ dài nhất")}</Text>
                         <View className="flex-row justify-between mt-1">
-                            <Text className="text-black font-semibold text-xl">{actual.longestSleep?.date || '-'}</Text>
+                            <Text className="font-semibold text-xl" style={{ color: theme.colors.textPrimary }}>{actual.longestSleep?.date || '-'}</Text>
                             <Text className="text-blue-600 font-semibold text-xl">{(actual.longestSleep?.hours ?? 0).toFixed(1)}h</Text>
                         </View>
-                        <Text className="text-gray-500 text-sm mt-0.5">Từ {actual.longestSleep?.startTime || '--:--'} đến {actual.longestSleep?.endTime || '--:--'}</Text>
+                        <Text className="text-sm mt-0.5" style={{ color: theme.colors.textSecondary }}>Từ {actual.longestSleep?.startTime || '--:--'} đến {actual.longestSleep?.endTime || '--:--'}</Text>
                     </View>
                 </>
             )}

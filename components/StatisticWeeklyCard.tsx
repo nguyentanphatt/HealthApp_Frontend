@@ -1,4 +1,5 @@
 import { ReportData } from '@/constants/type'
+import { useAppTheme } from '@/context/appThemeContext'
 import { formatDateStatistics } from '@/utils/convertTime'
 import { FontAwesome6 } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -9,17 +10,18 @@ import { Text, TouchableOpacity, View } from 'react-native'
 import ScheduleItem from './ScheduleItem'
 
 const StatisticWeeklyCard = ({data}: {data: ReportData | undefined}) => {
+    const { theme } = useAppTheme();
     const { t } = useTranslation();
     const router = useRouter();
     AsyncStorage.setItem("statisticDate", formatDateStatistics(data?.currentWeek.weekStart || "", data?.currentWeek.weekEnd || ""));
     return (
-        <TouchableOpacity className="bg-white rounded-md shadow-md p-4 flex gap-3" onPress={() => router.push('/statistic' as Href)}>
+        <TouchableOpacity className="rounded-md shadow-md p-4 flex gap-3" style={{ backgroundColor: theme.colors.card }} onPress={() => router.push('/statistic' as Href)}>
             <View className="flex-row items-center justify-between">
                 <View>
-                    <Text className="font-bold text-xl">{t("Báo cáo hàng tuần")}</Text>
-                    <Text className="text-black/60">{formatDateStatistics(data?.currentWeek.weekStart || "", data?.currentWeek.weekEnd || "")}</Text>
+                    <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Báo cáo hàng tuần")}</Text>
+                    <Text className="text-black/60" style={{ color: theme.colors.textSecondary }}>{formatDateStatistics(data?.currentWeek.weekStart || "", data?.currentWeek.weekEnd || "")}</Text>
                 </View>
-                <FontAwesome6 name="chevron-right" size={24} color="black" />
+                <FontAwesome6 name="chevron-right" size={24} color={theme.colors.textPrimary} />
             </View>
 
             <View className="flex-row justify-between h-auto">
@@ -39,7 +41,7 @@ const StatisticWeeklyCard = ({data}: {data: ReportData | undefined}) => {
                         percentage={data?.difference.sleep.percentage || 0}
                     />
                 </View>
-                <View className="h-full w-1 bg-black/20" />
+                <View className="h-full w-1" style={{ backgroundColor: theme.colors.border }} />
                 <View className="flex gap-2.5 max-w-[40%]">
                     <ScheduleItem
                         title={t("Tổng số bước chân trung bình")}
