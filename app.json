@@ -73,7 +73,7 @@
       "eas": {
         "projectId": "467afe26-d461-44d7-b66b-0f24f461d0f7"
       },
-      "EXPO_PUBLIC_BACKEND_URL": "process.env.EXPO_PUBLIC_BACKEND_URL"
+      "EXPO_PUBLIC_BACKEND_URL": "http://168.138.168.177:25565/"
     }
   }
 }
