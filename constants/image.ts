@@ -8,6 +8,7 @@ import food from '@/assets/images/food.png';
 import food01 from '@/assets/images/food01.png';
 import noImg from '@/assets/images/no_img.png';
 import sleep from '@/assets/images/sleep.png';
+import waterDrop from '@/assets/images/waterDrop.png';
 
 import heart from '@/assets/images/heart.png';
 
@@ -26,5 +27,6 @@ export const images = {
   googleicon,
   food01,
   noImg,
-  heart
+  heart,
+  waterDrop
 };

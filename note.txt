@@ -1,8 +1,0 @@
-reset introduction
-<Button
-        title="Reset Introduction"
-        onPress={async () => {
-          await AsyncStorage.removeItem("hasSeenIntroduction");
-          alert("Introduction flag removed!");
-        }}
-      />

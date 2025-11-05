@@ -11,7 +11,7 @@ import { Text, View } from "react-native";
 
 const ReminderCard = ({ amount, time, id, enabled }: { amount: string; time: number; id: string; enabled: boolean }) => {
   const queryClient = useQueryClient();
-  const {units, displayWater} = useUnits()
+  const {displayWater} = useUnits()
   const { t } = useTranslation();
   const [isChecked, setIsChecked] = useState(false);
   const timestamp = convertISOToTimestamp(time.toString());
@@ -33,15 +33,15 @@ const ReminderCard = ({ amount, time, id, enabled }: { amount: string; time: num
         </View>
         <View className="flex flex-row items-center justify-between">
           <Text
-            className={`text-2xl font-bold ${isChecked ? "text-gray-400 line-through" : "text-black"
+            className={`text-2xl font-bold ${isChecked || enabled === false ? "text-gray-400 line-through" : "text-black"
               }`}
           >
             {displayWater(Number(amount)).formatted}
           </Text>
           <Checkbox
-            value={isChecked}
+            value={isChecked || enabled === false}
             onValueChange={handleCheckboxChange}
-            color={isChecked ? "#19B1FF" : undefined}
+            color={isChecked || enabled === false ? "#19B1FF" : undefined}
           />
         </View>
       </View>

@@ -22,7 +22,7 @@ const ProgressItem = ({
           <Text className="font-bold text-3xl text-black">{index}</Text> {unit}
         </Text>
       </View>
-      <ProgressBar color={color} />
+      <ProgressBar color={color} value={index} />
     </View>
   );
 };

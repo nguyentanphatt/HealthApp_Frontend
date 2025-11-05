@@ -19,7 +19,7 @@ type CircularTimePickerProps = {
 };
 
 export default function CircularTimePicker({
-  initialStartAngle = 0,
+  initialStartAngle = 300,
   initialEndAngle = 180,
   onChange,
   onStartChange,

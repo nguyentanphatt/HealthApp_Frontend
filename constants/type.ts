@@ -257,7 +257,8 @@ export interface CreateBlog {
   userId: string
   userName: string,
   category: string
-  likes: number
+  likes: number,
+  liked: boolean
 }
 
 export interface GetBlogsResponse {
@@ -274,17 +275,214 @@ export interface WeeklyGoal {
   weekStart: string,
   weekEnd: string,
   targets: {
-    water: number,
+    waterDaily: number,
     work: number,
     sleep: number,
     steps: number,
     calories: number
   },
   current: {
-    water: number,
+    waterDaily: number,
     work: number,
     sleep: number,
     steps: number,
     calories: number
   }
+}
+
+export interface VideoType {
+  videoId: string;
+  publishedAt: string;
+  channelId: string;
+  channelTitle: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+}
+
+export interface Activity {
+  sessionId: string;
+  startTime: number;
+  endTime: number;
+  distanceKm: number;
+  stepCount: number;
+  kcal: number;
+  avgSpeed: number;
+  activeTime: number;
+  userId: string;
+  type: string;
+  maxSpeed: number;
+  totalTime: number;
+  routeId: number;
+}
+
+export interface TrackedPoint {
+  latitude: number;
+  longitude: number;
+  time: number;
+}
+
+export interface WeeklyData {
+  weekStart: string;
+  weekEnd: string;
+  water: number;
+  sleep: number;
+  steps: number;
+  calories: number;
+}
+
+export interface ReportData {
+  currentWeek: WeeklyData;
+  previousWeek: WeeklyData;
+  difference: {
+    water: {
+      value: number;
+      percentage: number;
+    },
+    sleep: {
+      value: number;
+      percentage: number;
+    },
+    steps: {
+      value: number;
+      percentage: number;
+    },
+    calories: {
+      value: number;
+      percentage: number;
+    }
+  }
+}
+
+export interface FoodWeekly {
+  weekStart: string;
+  weekEnd: string;
+  currentWeekCalories: number;
+  previousWeekCalories: number;
+  caloriesDifference: {
+    value: number;
+    percentage: number;
+  };
+  averageNutrition: {
+    protein: number;
+    fiber: number;
+    fat: number;
+    starch: number;
+  };
+  balancedDays: [{
+    date: string;
+    dayOfWeek: string;
+    protein: number;
+    fiber: number;
+    fat: number;
+    starch: number;
+    isBalanced: boolean;
+  }];
+  balancedDaysCount: number;
+}
+
+export interface DailySleep {
+  date: string;
+  dayOfWeek: string;
+  totalHours: number;
+}
+
+export interface SleepWeekly {
+  weekStart: string;
+  weekEnd: string;
+  totalSleepHours: number;
+  averageBedtime: string;
+  averageWakeTime: string;
+  longestSleep: {
+    date: string;
+    hours: number;
+    startTime: string;
+    endTime: string;
+  };
+  dailySleep: DailySleep[];
+}
+
+export interface WorkoutWeekly {
+  weekStart: string,
+  weekEnd: string,
+  summary: {
+    totalSessions: number,
+    totalCalories: number,
+    totalTime: number,
+    totalDistance: number,
+    totalSteps: number
+  },
+  bestSession: {
+    duration: number,
+    calories: number,
+    distance: number,
+    avgSpeed: number
+  },
+  comparison: {
+    steps: { 
+      current: number, 
+      previous: number, 
+      difference: number, 
+      percentage: number 
+    },
+    distance: { 
+      current: number, 
+      previous: number, 
+      difference: number, 
+      percentage: number },
+    time: { 
+      current: number, 
+      previous: number, 
+      difference: number, 
+      percentage: number 
+    }
+  },
+  dailyCalories: { 
+    date: string, 
+    dayOfWeek: string, 
+    totalCalories: number 
+  }[],
+  dailySteps: { 
+    date: string, 
+    dayOfWeek: string, 
+    totalSteps: number 
+  }[]
+}
+
+export interface WaterWeekly {
+  weekStart: string,
+  weekEnd: string,
+  totalWaterIntake: number,
+  previousWeekWaterIntake: number,
+  waterDifference: {
+    value: number,
+    percentage: number
+  },
+  currentGoal: number,
+  previousGoal: number,
+  goalDifference: {
+    value: number,
+    percentage: number
+  },
+  highestDay:{
+    date: string,
+    dayOfWeek: string,
+    totalMl: number
+  },
+  daysWithWater: number,
+  daysWithoutWater: number,
+  dailyIntake: {
+    date: string,
+    dayOfWeek: string,
+    totalMl: number
+  }[]
+}
+
+export interface WorkoutDaily {
+  date: string;
+  dayOfWeek: string;
+  workoutMinutes: number;
+  steps: number;
+  calories: number;
+  water: number;
 }

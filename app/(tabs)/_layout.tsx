@@ -1,10 +1,12 @@
 import TabIcon from '@/components/TabIcon';
+import { useAppTheme } from '@/context/appThemeContext';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 export default function TabLayout() {
   const { t, i18n } = useTranslation();
+  const { theme } = useAppTheme();
   return (
     <Tabs
       key={i18n.language}
@@ -12,6 +14,8 @@ export default function TabLayout() {
         tabBarShowLabel: false,
         tabBarStyle: {
           height: 100,
+          backgroundColor: theme.colors.tabBarBackground,
+          borderTopColor: theme.colors.border,
         },
         tabBarItemStyle: {
           flexDirection: "column",
@@ -19,6 +23,8 @@ export default function TabLayout() {
           alignItems: "center",
           paddingVertical: 10,
         },
+        tabBarActiveTintColor: theme.colors.tint,
+        tabBarInactiveTintColor: theme.mode === 'dark' ? '#8a8a8a' : '#9b9b9b',
       }}
     >
       <Tabs.Screen

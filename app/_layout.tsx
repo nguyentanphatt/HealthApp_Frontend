@@ -1,5 +1,6 @@
 import AppRefreshWatcher from "@/components/AppRefreshWatcher";
 import GlobalModal from "@/components/GlobalModal";
+import { ThemeProvider, useAppTheme } from "@/context/appThemeContext";
 import { UnitProvider } from "@/context/unitContext";
 import { useNotifications } from "@/hooks/useNotification";
 import { registerForPushNotificationsAsync } from "@/utils/notificationsHelper";
@@ -12,17 +13,17 @@ import { useEffect } from "react";
 import Toast from "react-native-toast-message";
 import "../global.css";
 import "../plugins/i18n";
-import "../utils/activityNotification"; // Import to register background task
 
-SplashScreen.preventAutoHideAsync(); // ✅ keep splash until we say so
+SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function InnerRoot() {
   useNotifications();
   const [loaded] = Font.useFonts({
     "Lato-Regular": require("../assets/fonts/Lato-Regular.ttf"),
     "Lato-Bold": require("../assets/fonts/Lato-Bold.ttf"),
   });
   const queryClient = new QueryClient();
+  const { theme } = useAppTheme();
 
   useEffect(() => {
     (async () => {
@@ -31,29 +32,37 @@ export default function RootLayout() {
     })();
   }, []);
 
-  if (!loaded) return null; // Splash stays while loading fonts
+  if (!loaded) return null;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <UnitProvider>
-        <AppRefreshWatcher />
-        <GlobalModal />
-        <StatusBar hidden />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: "#f6f6f6" },
-          }}
-        >
-          <Stack.Screen name="introduction" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="auth/signin" />
-          <Stack.Screen name="water/index" />
-          <Stack.Screen name="water/edit/index" />
-          <Stack.Screen name="food/index" />
-        </Stack>
-        <Toast swipeable visibilityTime={3000} topOffset={50} />
-      </UnitProvider>
-    </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <UnitProvider>
+          <AppRefreshWatcher />
+          <GlobalModal />
+          <StatusBar style={theme.mode === "dark" ? "light" : "dark"} />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: theme.colors.background },
+            }}
+          >
+            <Stack.Screen name="introduction" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="auth/signin" />
+            <Stack.Screen name="water/index" />
+            <Stack.Screen name="water/edit/index" />
+            <Stack.Screen name="food/index" />
+          </Stack>
+          <Toast swipeable visibilityTime={3000} topOffset={50} />
+        </UnitProvider>
+      </QueryClientProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <InnerRoot />
+    </ThemeProvider>
   );
 }

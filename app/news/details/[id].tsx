@@ -1,13 +1,13 @@
 import ActionModal from '@/components/modal/ActionModal';
 import { images } from '@/constants/image';
-import { deleteBlog, getBlogById } from '@/services/blog';
+import { deleteBlog, getBlogById, likeBlog } from '@/services/blog';
 import { useModalStore } from '@/stores/useModalStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { Href, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -25,6 +25,12 @@ const NewsDetails = () => {
     queryFn: () => getBlogById(id as string),
     select: (res) => res.blogs,
   });
+
+  useEffect(() => {
+    if (blog && blog[0]) {
+      setIsLiked(blog[0].liked);
+    }
+  }, [blog]);
 
   const deleteBlogMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -44,6 +50,69 @@ const NewsDetails = () => {
     },
     onError: (err) => {
       console.log("Error deleting blog:", err);
+    },
+  });
+
+  const likeBlogMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return likeBlog(id);
+    },
+    onMutate: async (blogId: number) => {
+      await queryClient.cancelQueries({ predicate: (q: any) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId" || q.queryKey[0] === "blog") });
+
+      const previousBlogs = queryClient.getQueriesData({ predicate: (q: any) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId" || q.queryKey[0] === "blog") });
+
+      queryClient.setQueriesData(
+        { predicate: (q: any) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId" || q.queryKey[0] === "blog") },
+        (old: any) => {
+          if (!old) return old;
+          
+          if (old.blogs && Array.isArray(old.blogs)) {
+            const updatedBlogs = old.blogs.map((blog: any) => {
+              if (blog.id === blogId) {
+                return {
+                  ...blog,
+                  liked: !blog.liked,
+                  likes: blog.liked ? blog.likes - 1 : blog.likes + 1
+                };
+              }
+              return blog;
+            });
+
+            return {
+              ...old,
+              blogs: updatedBlogs
+            };
+          }
+          
+          if (old.id === blogId) {
+            return {
+              ...old,
+              liked: !old.liked,
+              likes: old.liked ? old.likes - 1 : old.likes + 1
+            };
+          }
+          
+          return old;
+        }
+      );
+      setIsLiked(prev => !prev);
+
+      return { previousBlogs };
+    },
+    onError: (err, blogId, context) => {
+      if (context?.previousBlogs) {
+        context.previousBlogs.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      
+      setIsLiked(prev => !prev);
+      
+      console.log("Error liking blog:", err);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ predicate: (q: any) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId" || q.queryKey[0] === "blog") });
     },
   });
 
@@ -101,12 +170,11 @@ const NewsDetails = () => {
         <FontAwesome6 name="share" size={24} color="white" />
       </TouchableOpacity>
       <TouchableOpacity
-        onPress={() => setIsLiked(!isLiked)}
+        onPress={() => likeBlogMutation.mutate(blog[0]?.id)}
         className='absolute bottom-8 right-4 w-[60px] h-[60px] flex items-center justify-center bg-red-400 rounded-full'>
-        {isLiked === false ? <FontAwesome6 name="heart" size={24} color="white" /> : (
+        {!isLiked ? <FontAwesome6 name="heart" size={24} color="white" /> : (
           <View className='flex items-center justify-center'>
             <Image source={images.heart} className='w-[25px] h-[22px]' width={24} height={24} />
-            <Text className='text-white'>{blog[0]?.likes}</Text>
           </View>
         )}
       </TouchableOpacity>

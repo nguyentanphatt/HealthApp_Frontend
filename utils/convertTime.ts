@@ -114,6 +114,27 @@ export const formatDateTimeRange = (startTime: number | null, endTime: string | 
 };
 
 //format activity date and time range
+export const formatTimeRange = (startTime: number | null, endTime: string | number) => {
+    const startDate = new Date(startTime || 0);
+    const endDate = new Date(endTime);
+
+    const startTimeStr = startDate.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    const endTimeStr = endDate.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    return `${startTimeStr} - ${endTimeStr}`;
+
+};
+
+//format activity date and time range
 export const formatActivityDateTimeRange = (startTime: number | null, endTime: number | string | null) => {
     const startDate = startTime ? new Date(startTime) : new Date();
     let endTimeValue = endTime;
@@ -148,3 +169,19 @@ export const formatActivityDateTimeRange = (startTime: number | null, endTime: n
 
     return `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
 };
+
+//format date to dd - dd tháng mm or dd/mm - dd/mm
+export const formatDateStatistics = (start: string, end: string) => {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  
+  if (startDate.getMonth() === endDate.getMonth()) {
+    return `${startDate.getDate()} - ${endDate.getDate()} tháng ${startDate.getMonth() + 1}`;
+  } else {
+    const startMonth = (startDate.getMonth() + 1).toString().padStart(2, '0');
+    const endMonth = (endDate.getMonth() + 1).toString().padStart(2, '0');
+    const startDay = startDate.getDate().toString().padStart(2, '0');
+    const endDay = endDate.getDate().toString().padStart(2, '0');
+    return `${startDay}/${startMonth} - ${endDay}/${endMonth}`;
+  }
+}

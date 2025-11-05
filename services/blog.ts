@@ -108,3 +108,12 @@ export const updateBlog = async (id: string, title:string, image:string, content
         throw error;
     }
 }
+
+export const likeBlog = async (id: number): Promise<{success: boolean, liked: boolean, likesCount: number}> => {
+    try {
+        const response = await privateClient.post(`/api/blog/${id}/like`)
+        return response.data
+    } catch (error) {
+        throw error
+    }
+}
