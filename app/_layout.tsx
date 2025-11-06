@@ -53,7 +53,7 @@ function InnerRoot() {
             <Stack.Screen name="water/edit/index" />
             <Stack.Screen name="food/index" />
           </Stack>
-          <Toast swipeable visibilityTime={3000} topOffset={50} />
+          <Toast swipeable visibilityTime={3000} topOffset={50} autoHide={true} />
         </UnitProvider>
       </QueryClientProvider>
   );

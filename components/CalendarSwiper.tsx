@@ -1,19 +1,12 @@
 import { useAppTheme } from "@/context/appThemeContext";
 import i18n from "@/plugins/i18n";
 import { convertDayToVN } from "@/utils/convertTime";
+import { FontAwesome6 } from "@expo/vector-icons";
 import dayjs from "dayjs";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  FlatList,
-  LayoutChangeEvent,
-  ListRenderItem,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { LayoutChangeEvent, Modal, PanResponder, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+// @ts-ignore: the project uses this component in other screens
+import DateTimePicker from "react-native-ui-datepicker";
 
 type DayItem = {
   day: string;
@@ -23,7 +16,6 @@ type DayItem = {
 
 const ITEM_WIDTH = 60;
 const ITEM_MARGIN = 6;
-const ITEM_TOTAL = ITEM_WIDTH + ITEM_MARGIN * 2;
 
 export default function CalendarSwiper({
   onDateChange,
@@ -38,24 +30,38 @@ export default function CalendarSwiper({
     selectedDate ?? dayjs().format("YYYY-MM-DD")
   );
   const [containerWidth, setContainerWidth] = useState<number>(0);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerDate, setPickerDate] = useState<Date>(new Date());
 
-  const listRef = useRef<FlatList<DayItem> | null>(null);
-  const earliestDate = useRef(dayjs());
-  const initialScrollDone = useRef(false);
+  const TODAY_STR = dayjs().format("YYYY-MM-DD");
+
+  // Anchor end date for the 5-day window (4 past + endDate)
+  const [endDate, setEndDate] = useState<dayjs.Dayjs>(() => {
+    const initial = dayjs(localSelected);
+    return initial.isAfter(dayjs()) ? dayjs() : initial;
+  });
 
   useEffect(() => {
-    const today = dayjs();
-    const start = today.subtract(90, "day");
-    const initialDays = generateDays(start, 91);
-    setDays(initialDays);
-    earliestDate.current = start;
-  }, []);
+    const start = endDate.subtract(4, "day");
+    const generated = generateDays(start, 5);
+    setDays(generated);
+  }, [endDate]);
 
   useEffect(() => {
     if (selectedDate) {
       setLocalSelected(selectedDate);
+      const picked = dayjs(selectedDate);
+      const today = dayjs();
+      const clamped = picked.isAfter(today) ? today : picked;
+      // current window bounds
+      const windowEnd = endDate;
+      const windowStart = endDate.subtract(4, "day");
+      const isOutside = clamped.isBefore(windowStart, "day") || clamped.isAfter(windowEnd, "day");
+      if (isOutside) {
+        setEndDate(clamped);
+      }
     }
-  }, [selectedDate, days, containerWidth]);
+  }, [selectedDate]);
 
   const generateDays = (start: dayjs.Dayjs, count: number): DayItem[] => {
     return Array.from({ length: count }).map((_, i) => {
@@ -68,59 +74,40 @@ export default function CalendarSwiper({
     });
   };
 
-  const prependDays = useCallback(() => {
-    const newStart = earliestDate.current.subtract(90, "day");
-    const newDays = generateDays(newStart, 90);
-
-    setDays((prev) => [...newDays, ...prev]);
-    earliestDate.current = newStart;
-
-    requestAnimationFrame(() => {
-      listRef.current?.scrollToOffset({
-        offset: ITEM_TOTAL * newDays.length,
-        animated: false,
-      });
-    });
-  }, []);
-
-  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetX = e.nativeEvent.contentOffset.x;
-    if (offsetX < 100) {
-      prependDays();
-    }
-  };
-
   const handleSelectDate = (date: string) => {
     setLocalSelected(date);
     onDateChange?.(date, new Date(date).getTime());
   };
 
-  useEffect(() => {
-    if (days.length > 0 && containerWidth > 0 && !initialScrollDone.current) {
-      const lastIndex = days.length - 1;
-      const offset = Math.max(0, (lastIndex + 1) * ITEM_TOTAL - containerWidth);
-      requestAnimationFrame(() => {
-        listRef.current?.scrollToOffset({ offset, animated: false });
-        initialScrollDone.current = true;
-      });
-    }
-  }, [days, containerWidth]);
+  const applyPickedDate = (date?: Date) => {
+    if (!date) return;
+    const picked = dayjs(date);
+    const end = picked.isAfter(dayjs()) ? dayjs() : picked;
+    const selectedStr = end.format("YYYY-MM-DD");
+    setLocalSelected(selectedStr);
+    setEndDate(end);
+    onDateChange?.(selectedStr, end.valueOf());
+  };
 
   const onContainerLayout = (e: LayoutChangeEvent) => {
     setContainerWidth(e.nativeEvent.layout.width);
   };
 
-  const renderItem: ListRenderItem<DayItem> = ({ item }) => {
+  const renderItem = (item: DayItem) => {
     const isSelected = item.fullDate === localSelected;
+    const isFuture = dayjs(item.fullDate).isAfter(dayjs(), "day");
     return (
       <TouchableOpacity
-        onPress={() => handleSelectDate(item.fullDate)}
+        key={item.fullDate}
+        onPress={() => !isFuture && handleSelectDate(item.fullDate)}
         style={[
           styles.item,
           { width: ITEM_WIDTH, marginHorizontal: ITEM_MARGIN },
           isSelected ? { backgroundColor: theme.colors.tint } : { backgroundColor: theme.colors.card },
+          isFuture ? { opacity: 0.4 } : null,
         ]}
         activeOpacity={0.7}
+        disabled={isFuture}
       >
         <Text
           style={[
@@ -146,6 +133,26 @@ export default function CalendarSwiper({
     );
   };
 
+  // Swipe: both directions go back one week (no jump to current)
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 15 && Math.abs(g.dy) < 10,
+      onPanResponderRelease: (_, g) => {
+        if (g.dx > 40) {
+          // swipe right → go to previous 5-day window
+          setEndDate((prev) => prev.subtract(5, "day"));
+        } else if (g.dx < -40) {
+          // swipe left → go forward 5 days, but not beyond today
+          setEndDate((prev) => {
+            const candidate = prev.add(5, "day");
+            const today = dayjs();
+            return candidate.isAfter(today) ? today : candidate;
+          });
+        }
+      },
+    })
+  ).current;
+
   return (
     <View
       onLayout={onContainerLayout}
@@ -155,31 +162,57 @@ export default function CalendarSwiper({
         elevation: 5
       }}
     >
-      <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 8 }}>
-        {i18n?.language && i18n.language.startsWith("en")
-          ? dayjs(localSelected).format("MMMM, YYYY")
-          : "Tháng " + dayjs(localSelected).format("M YYYY")}
-      </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <Text style={{ fontSize: 16, fontWeight: "700" }}>
+          {i18n?.language && i18n.language.startsWith("en")
+            ? dayjs(localSelected).format("MMMM, YYYY")
+            : "Tháng " + dayjs(localSelected).format("M YYYY")}
+        </Text>
+        <TouchableOpacity onPress={() => { setPickerDate(dayjs(localSelected).toDate()); setPickerOpen(true); }}>
+          <FontAwesome6 name="calendar-days" size={20} color={theme.colors.textPrimary} />
+        </TouchableOpacity>
+      </View>
 
-      <FlatList
-        ref={listRef}
-        horizontal
-        data={days}
-        keyExtractor={(item) => item.fullDate}
-        renderItem={renderItem}
-        showsHorizontalScrollIndicator={false}
-        getItemLayout={(_, index) => ({
-          length: ITEM_TOTAL,
-          offset: ITEM_TOTAL * index,
-          index,
-        })}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        extraData={localSelected}
-        contentContainerStyle={{ paddingRight: ITEM_MARGIN }}
-        pointerEvents="auto"
-        removeClippedSubviews={false}
-      />
+      <View {...panResponder.panHandlers} style={{ alignItems: "center" }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+          {days.map(renderItem)}
+        </View>
+      </View>
+
+      <Modal visible={pickerOpen} transparent animationType="fade" onRequestClose={() => setPickerOpen(false)}>
+        <View style={{ flex: 1, backgroundColor: "#0008", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <View style={{ width: "100%", borderRadius: 12, padding: 12, backgroundColor: theme.colors.card }}>
+            <DateTimePicker
+              mode="single"
+              date={pickerDate}
+              onChange={(params: any) => setPickerDate(params?.date ?? new Date())}
+              locale={i18n.language}
+              maxDate={new Date()}
+              styles={{
+                day_cell: { borderRadius: 20, width: 40, height: 40 },
+                today: { borderColor: theme.colors.tint, borderWidth: 1 },
+                selected: { backgroundColor: theme.colors.tint, borderRadius: 5 },
+                selected_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" },
+                disabled: { opacity: 0.4 },
+                disabled_label: { color: theme.colors.textSecondary },
+                button_next_image: { tintColor: '#000' },
+                button_prev_image: { tintColor: '#000' },
+              }}
+            />
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 12, marginTop: 12 }}>
+              <TouchableOpacity onPress={() => setPickerOpen(false)} style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
+                <Text style={{ color: theme.colors.textSecondary }}>{i18n.t?.("Huỷ") ?? "Huỷ"}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => { const chosen = pickerDate ?? new Date(); setPickerOpen(false); applyPickedDate(chosen); }}
+                style={{ paddingHorizontal: 12, paddingVertical: 8 }}
+              >
+                <Text style={{ color: theme.colors.tint, fontWeight: "700" }}>{i18n.t?.("Chọn") ?? "Chọn"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

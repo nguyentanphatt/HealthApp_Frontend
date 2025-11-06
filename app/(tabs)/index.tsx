@@ -94,8 +94,8 @@ export default function HomeScreen() {
   });
 
   const { data: workoutDailyData } = useQuery({
-    queryKey: ["workoutDailyData"],
-    queryFn: () => workoutDaily({ date: selectedDate }),
+    queryKey: ["workoutDailyData", selectedDate],
+    queryFn: () => workoutDaily({ date: selectedDate ? selectedDate * 1000 : undefined }),
     staleTime: 1000 * 60 * 5,
     select: (res) => res.data,
   });
@@ -234,6 +234,11 @@ export default function HomeScreen() {
     },
   });
 
+  console.log(selectedDate);
+  console.log("daily", workoutDailyData);
+  
+  
+
   return (
     <View className="flex-1 font-lato-regular">
       <View className="pt-16 px-4" style={{ backgroundColor: theme.colors.background }}>
@@ -313,7 +318,7 @@ export default function HomeScreen() {
             <View className="flex flex-col gap-3">
               <ProgressItem
                 color="#00FF55"
-                index={workoutDailyData?.workoutMinutes ?? 0}
+                index={Number(workoutDailyData?.workoutMinutes.toFixed(0) ?? 0)}
                 unit={t("phút")}
                 icon="clock"
               />

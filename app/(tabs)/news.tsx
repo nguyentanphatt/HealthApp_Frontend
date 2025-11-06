@@ -203,30 +203,8 @@ const News = () => {
 
 
   return (
-    <View className="flex-1 relative">
-      <ScrollView
-        className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular" style={{ backgroundColor: theme.colors.background }}
-        stickyHeaderIndices={[0]}
-        contentContainerStyle={{ paddingBottom: 50 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#19B1FF"
-            colors={["#19B1FF"]}
-          />
-        }
-        onScroll={({ nativeEvent }) => {
-          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
-          if (isCloseToBottom) {
-            loadMore();
-          }
-        }}
-        scrollEventThrottle={400}
-      >
-        <View className="flex pt-16" style={{ backgroundColor: theme.colors.background }}>
+    <View className="flex-1 pt-12 relative" style={{ backgroundColor: theme.colors.background }}>
+      <View className="flex px-4" style={{ backgroundColor: theme.colors.background }}>
           <View className='flex flex-row items-center justify-between'>
             {type === "user" ? (
               <TouchableOpacity onPress={() => router.push(`/(tabs)/news` as Href)} className='size-14 rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.secondaryCard }}>
@@ -256,7 +234,26 @@ const News = () => {
             />
           </View>
         </View>
-
+      <ScrollView
+        className="flex-1 gap-2.5 font-lato-regular" style={{ backgroundColor: theme.colors.background }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#19B1FF"
+            colors={["#19B1FF"]}
+          />
+        }
+        onScroll={({ nativeEvent }) => {
+          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+          if (isCloseToBottom) {
+            loadMore();
+          }
+        }}
+        scrollEventThrottle={400}
+      >
         {allBlogs.length === 0 && (
           <View className="py-4 items-center">
             <Text className="text-cyan-blue">{t("Không có bài viết")}</Text>
@@ -264,7 +261,7 @@ const News = () => {
         )}
 
         {allBlogs.map((item, idx) => (
-          <TouchableOpacity className=' py-2.5' key={idx} onPress={() => router.push(`/news/details/${item.id}` as Href)}>
+          <TouchableOpacity className='px-4 py-2.5' key={idx} onPress={() => router.push(`/news/details/${item.id}` as Href)}>
             <View className='relative rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4' style={{ backgroundColor: theme.colors.card }}>
               <Image
                 source={item.image ? { uri: item.image } : images.noImg}

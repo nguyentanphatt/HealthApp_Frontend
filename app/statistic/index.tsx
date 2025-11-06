@@ -24,7 +24,7 @@ const Statistic = () => {
     const weekEnd = weekStart.add(7, 'day');
     const currentWeekStart = dayjs().startOf('isoWeek');
     const isAtCurrentWeek = weekStart.isSame(currentWeekStart, 'day');
-    const displayRange = `${weekStart.format('DD/MM')} - ${weekEnd.format('DD/MM')} Năm ${weekEnd.format('YYYY')}`;    
+    const displayRange = `${weekStart.format('DD/MM')} - ${weekEnd.format('DD/MM')} Năm ${weekEnd.format('YYYY')}`;
     const { data: foodWeeklyData, isLoading: isLoadingFoodWeeklyData } = useQuery({
         queryKey: ["foodWeeklyData", weekStart.valueOf()],
         queryFn: () => foodWeekly({ date: weekStart.valueOf() }),
@@ -91,32 +91,18 @@ const Statistic = () => {
             });
         }
     }, [weekStart, queryClient, isAtCurrentWeek]);
-
-    if (isLoadingFoodWeeklyData || isLoadingSleepWeeklyData || isLoadingWorkoutWeeklyData || isLoadingWaterWeeklyData || !foodWeeklyData || !sleepWeeklyData || !workoutWeeklyData || !waterWeeklyData) {
-        return (
-            <View className='flex-1 items-center justify-center'>
-                <ActivityIndicator size="large" color="#1D9BF0" />
-            </View>
-        )
-    }
     return (
-        <ScrollView
-            className="flex-1 gap-2.5 font-lato-regular"
-            style={{ backgroundColor: theme.colors.background }}
-            stickyHeaderIndices={[0]}
-            contentContainerStyle={{ paddingBottom: 50 }}
-            showsVerticalScrollIndicator={false}
-        >
-            <View className='flex-col items-center gap-5 py-10' style={{ backgroundColor: theme.colors.background }}>
+        <View className='flex-1 pt-12' style={{ backgroundColor: theme.colors.background }}>
+            <View className='flex-col items-center gap-5 py-5' style={{ backgroundColor: theme.colors.background }}>
                 <View className='flex flex-row items-center justify-between w-full'>
                     <TouchableOpacity onPress={() => router.push(`/(tabs)/profile` as Href)} className='size-14 rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.background }}>
                         <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
                     </TouchableOpacity>
                     <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{t("Báo cáo chi tiết")}</Text>
-                    <View className='size-14 rounded-full' style={{ backgroundColor: theme.colors.card }} />
+                    <View className='size-14 rounded-full' style={{ backgroundColor: theme.mode === "dark" ? theme.colors.card : theme.colors.background }} />
                 </View>
                 <View className='rounded-md p-4 w-full flex-row items-center justify-between' style={{ backgroundColor: theme.colors.card }}>
-                        <TouchableOpacity onPress={() => setWeekAnchorMs(weekStart.subtract(7, 'day').valueOf())} className='px-3 py-2 rounded-md' style={{ backgroundColor: theme.colors.secondaryCard }}>
+                    <TouchableOpacity onPress={() => setWeekAnchorMs(weekStart.subtract(7, 'day').valueOf())} className='px-3 py-2 rounded-md' style={{ backgroundColor: theme.colors.secondaryCard }}>
                         <Text className='' style={{ color: theme.colors.textPrimary }}>{t("Trước")}</Text>
                     </TouchableOpacity>
                     <Text className='font-semibold text-xl' style={{ color: theme.colors.textPrimary }}>{displayRange}</Text>
@@ -133,16 +119,48 @@ const Statistic = () => {
                     )}
                 </View>
             </View>
+            <ScrollView
+                className="flex-1 gap-2.5 font-lato-regular"
+                style={{ backgroundColor: theme.colors.background }}
+                showsVerticalScrollIndicator={false}
+            >
+                <View className='flex gap-5 px-4 pb-12'>
+                    {isLoadingFoodWeeklyData || !foodWeeklyData ? (
+                        <LoadingBlock label={t("Đang tải dữ liệu dinh dưỡng") as string} />
+                    ) : (
+                        <FoodWeeklyCard data={foodWeeklyData} />
+                    )}
 
+                    {isLoadingSleepWeeklyData || !sleepWeeklyData ? (
+                        <LoadingBlock label={t("Đang tải dữ liệu giấc ngủ") as string} />
+                    ) : (
+                        <SleepWeeklyCard data={sleepWeeklyData} />
+                    )}
 
-            <View className='flex gap-5 px-4'>
-                <FoodWeeklyCard data={foodWeeklyData} />
-                <SleepWeeklyCard data={sleepWeeklyData} />
-                <WorkoutWeeklyCard data={workoutWeeklyData} />
-                <WaterWeeklyCard data={waterWeeklyData} />
-            </View>
-        </ScrollView>
+                    {isLoadingWorkoutWeeklyData || !workoutWeeklyData ? (
+                        <LoadingBlock label={t("Đang tải dữ liệu vận động") as string} />
+                    ) : (
+                        <WorkoutWeeklyCard data={workoutWeeklyData} />
+                    )}
+
+                    {isLoadingWaterWeeklyData || !waterWeeklyData ? (
+                        <LoadingBlock label={t("Đang tải dữ liệu nước uống") as string} />
+                    ) : (
+                        <WaterWeeklyCard data={waterWeeklyData} />
+                    )}
+                </View>
+            </ScrollView>
+        </View>
     )
 }
 
 export default Statistic
+
+function LoadingBlock({ label }: { label: string }) {
+    return (
+        <View className='rounded-md p-6 items-center justify-center' style={{ backgroundColor: '#00000010' }}>
+            <ActivityIndicator size="small" color="#1D9BF0" />
+            <Text className='mt-2'>{label}</Text>
+        </View>
+    );
+}

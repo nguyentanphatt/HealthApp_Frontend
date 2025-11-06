@@ -10,10 +10,6 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
     const { theme } = useAppTheme();
     const actual = propsData;
 
-    console.log("actual", actual);
-    
-
-
     const hoursArray = (actual.dailySleep || []).map(d => d.totalHours);
     const maxHours = hoursArray.length ? Math.max(8, ...hoursArray) : 8;
     const barData = actual.dailySleep.map((d) => ({

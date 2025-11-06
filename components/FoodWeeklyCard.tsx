@@ -49,7 +49,7 @@ const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
                     <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>
                         {t("Báo cáo dinh dưỡng")}
                     </Text>
-                    <Text className='text-sm text-center pb-2' style={{ color: theme.colors.textSecondary }}>
+                    <Text className='text-sm text-center' style={{ color: theme.colors.textSecondary }}>
                         {t("Không có dữ liệu hãy thêm dữ liệu thức ăn")}
                     </Text>
                 </View>

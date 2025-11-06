@@ -3,17 +3,23 @@ import { useAppTheme } from '@/context/appThemeContext';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const { t, i18n } = useTranslation();
   const { theme } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const TAB_BAR_BASE_HEIGHT = 64; // visual height excluding safe area
+  const tabBarHeight = TAB_BAR_BASE_HEIGHT + insets.bottom;
   return (
     <Tabs
       key={i18n.language}
       screenOptions={{
         tabBarShowLabel: false,
         tabBarStyle: {
-          height: 100,
+          height: tabBarHeight,
+          paddingBottom: insets.bottom,
+          paddingTop: 10,
           backgroundColor: theme.colors.tabBarBackground,
           borderTopColor: theme.colors.border,
         },
