@@ -1,3 +1,4 @@
+import { useAppTheme } from "@/context/appThemeContext";
 import { useUnits } from "@/context/unitContext";
 import i18n from "@/plugins/i18n";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -15,6 +16,7 @@ const Page = () => {
   const router = useRouter();
   const { units, setUnit, isLoaded } = useUnits();
   const { t } = useTranslation();
+  const {theme} = useAppTheme();
   const options: Option[] = [
     { label: t("Tiếng Việt"), value: "vi" },
     { label: t("Tiếng Anh"), value: "en" },
@@ -22,7 +24,6 @@ const Page = () => {
 
   useEffect(() => {
     if (isLoaded) {
-      // Update i18n language when units are loaded
       i18n.changeLanguage(units.language);
     }
   }, [units.language, isLoaded]);
@@ -34,22 +35,23 @@ const Page = () => {
 
   return (
     <ScrollView
-      className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
+      className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular"
+      style={{ backgroundColor: theme.colors.background }}
       stickyHeaderIndices={[0]}
       contentContainerStyle={{ paddingBottom: 50 }}
       showsVerticalScrollIndicator={false}
     >
-      <View className="flex bg-[#f6f6f6] pt-16">
+      <View className="flex pt-16" style={{ backgroundColor: theme.colors.background }}>
         <View className="flex flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()}>
-            <FontAwesome6 name="chevron-left" size={24} color="black" />
+            <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
           <Text className="text-2xl font-bold  self-center">{t("Ngôn ngữ")}</Text>
           <View style={{ width: 24 }} />
         </View>
       </View>
       <View className="flex gap-4 py-8">
-        <View className="flex w-full gap-4 bg-white rounded-md shadow-md p-4">
+        <View className="flex w-full gap-4 rounded-md shadow-md p-4" style={{ backgroundColor: theme.colors.secondaryCard }}>
           {options.map((item, idx) => (
             <TouchableOpacity
               key={item.value}
@@ -57,16 +59,16 @@ const Page = () => {
               className="flex gap-4"
             >
               <View className="flex-row items-center justify-between">
-                <Text className="text-xl text-black">{item.label}</Text>
-                <View className="size-[20px] rounded-full border-2 border-black flex items-center justify-center">
+                <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>{item.label}</Text>
+                <View className="size-[20px] rounded-full border-2 flex items-center justify-center" style={{ borderColor: theme.mode === "dark" ? theme.colors.border : "#00000020" }}>
                   {units.language === item.value && (
-                    <View className="size-[10px] rounded-full bg-black" />
+                    <View className="size-[10px] rounded-full" style={{ backgroundColor: theme.mode === "dark" ? theme.colors.textPrimary : "#19B1FF" }} />
                   )}
                 </View>
               </View>
 
               {idx === options.length - 1 ? null : (
-                <View className="w-full h-0.5 bg-black/40" />
+                <View className="w-full h-0.5" style={{ backgroundColor: theme.colors.border }} />
               )}
             </TouchableOpacity>
           ))}

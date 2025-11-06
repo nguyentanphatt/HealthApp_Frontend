@@ -1,3 +1,4 @@
+import { useAppTheme } from "@/context/appThemeContext";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Easing } from "react-native";
 import Svg, { ClipPath, Defs, G, Path } from "react-native-svg";
@@ -11,9 +12,9 @@ const WaterVector: React.FC<WaterVectorProps> = ({
   progress = 0, 
   animated = true 
 }) => {
+  const { theme } = useAppTheme();
   const waveAnimation = useRef(new Animated.Value(0)).current;
   const [waveOffset, setWaveOffset] = useState(0);
-  // Animated water level and amplitude for subtle splash when progress changes
   const levelAnim = useRef(new Animated.Value(progress)).current;
   const [level, setLevel] = useState(progress);
   const amplitudeAnim = useRef(new Animated.Value(1)).current;
@@ -46,7 +47,6 @@ const WaterVector: React.FC<WaterVectorProps> = ({
     };
   }, [animated]);
 
-  // Animate level and add a small amplitude bump whenever progress changes
   useEffect(() => {
     const levelListener = levelAnim.addListener(({ value }) => setLevel(value));
     Animated.timing(levelAnim, {
@@ -56,7 +56,6 @@ const WaterVector: React.FC<WaterVectorProps> = ({
       useNativeDriver: false,
     }).start();
 
-    // brief splash: increase amplitude then settle
     const ampListener = amplitudeAnim.addListener(({ value }) => setAmplitude(value));
     Animated.sequence([
       Animated.timing(amplitudeAnim, {
@@ -87,11 +86,10 @@ const WaterVector: React.FC<WaterVectorProps> = ({
     let path = `M 0 ${waterLevel}`;
     
     for (let x = 0; x <= 68; x += 0.8) {
-      const dropPosition = x / 68; // 0 to 1
+      const dropPosition = x / 68;
       const dropWidth = Math.sin(dropPosition * Math.PI);
       const waveHeight = baseWaveHeight * waveIntensity * dropWidth;
       
-      //wave 1
       const wave1 = Math.sin((x * frequency) + (waveOffset * Math.PI * 2) + (phaseOffset * Math.PI)) * waveHeight;
       const wave2 = Math.sin((x * frequency * 1.5) + (waveOffset * Math.PI * 3) + (phaseOffset * Math.PI * 0.7)) * waveHeight * 0.3;
       
@@ -146,7 +144,7 @@ const WaterVector: React.FC<WaterVectorProps> = ({
         </G>
       )}
 
-      <Path d={`${OUTLINE_PATH}${INNER_PATH}`} fill="black" stroke="black" strokeWidth="0.05" />
+      <Path d={`${OUTLINE_PATH}${INNER_PATH}`} fill={theme.colors.textPrimary} stroke={theme.colors.textPrimary} strokeWidth="0.05" />
     </Svg>
   );
 };

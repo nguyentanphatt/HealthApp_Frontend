@@ -1,16 +1,16 @@
 import QuestionFlow from '@/components/QuestionFlow';
 import WorkoutVideo from '@/components/WorkoutVideo';
 import { workQuestions } from '@/constants/data';
+import { useAppTheme } from '@/context/appThemeContext';
 import { workoutSurvey } from '@/services/workout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from 'react-native';
 
 const Work = () => {
-  const router = useRouter();
+  const { theme } = useAppTheme();
   const [showQuestions, setShowQuestions] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [initializing, setInitializing] = useState(true);
@@ -67,8 +67,8 @@ const Work = () => {
 
   if (initializing) {
     return (
-      <View className='flex-1 items-center justify-center bg-white'>
-        <ActivityIndicator size="large" color="#19B1FF" />
+      <View className='flex-1 items-center justify-center' style={{ backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.textPrimary} />
       </View>
     );
   }
@@ -79,12 +79,12 @@ const Work = () => {
         <QuestionFlow onComplete={handleQuestionComplete} />
         {analyzing && (
           <View className="absolute inset-0 bg-black/50 justify-center items-center z-50">
-            <View className="bg-white rounded-lg p-6 flex items-center justify-center w-[90%] h-[300px]">
-              <ActivityIndicator size="large" color="#19B1FF" />
-              <Text className="text-2xl font-bold mt-4 text-center">
+            <View className="rounded-lg p-6 flex items-center justify-center w-[90%] h-[300px]" style={{ backgroundColor: theme.colors.card }}>
+              <ActivityIndicator size="large" color={theme.colors.textPrimary} />
+              <Text className="text-2xl font-bold mt-4 text-center" style={{ color: theme.colors.textPrimary }}>
                 {t("AI đang phân tích...")}
               </Text>
-              <Text className="text-lg text-gray-600 mt-2 text-center">
+              <Text className="text-lg text-gray-600 mt-2 text-center" style={{ color: theme.colors.textSecondary }}>
                 {t("Vui lòng chờ trong giây lát")}
               </Text>
             </View>
@@ -95,13 +95,13 @@ const Work = () => {
   }
 
   return (
-    <View className='flex-1 bg-white'>
+    <View className='flex-1' style={{ backgroundColor: theme.colors.background }}>
       {finished ? <WorkoutVideo /> :
         <View className='flex-1 justify-center items-center px-6'>
-          <Text className='text-3xl font-bold text-center mb-4 text-gray-800'>
+          <Text className='text-3xl font-bold text-center mb-4' style={{ color: theme.colors.textPrimary }}>
             {t("Khảo sát tập luyện")}
           </Text>
-          <Text className='text-lg text-center text-gray-600 mb-8'>
+          <Text className='text-lg text-center py-4' style={{ color: theme.colors.textSecondary }}>
             {t("Hãy trả lời một vài câu hỏi để chúng tôi có thể tạo kế hoạch tập luyện phù hợp nhất với bạn")}
           </Text>
           <TouchableOpacity

@@ -1,3 +1,4 @@
+import { useAppTheme } from "@/context/appThemeContext";
 import i18n from "@/plugins/i18n";
 import { convertDayToVN } from "@/utils/convertTime";
 import dayjs from "dayjs";
@@ -31,6 +32,7 @@ export default function CalendarSwiper({
   onDateChange?: (date: string, timestamp: number) => void;
   selectedDate?: string;
 }) {
+  const { theme } = useAppTheme();
   const [days, setDays] = useState<DayItem[]>([]);
   const [localSelected, setLocalSelected] = useState<string>(
     selectedDate ?? dayjs().format("YYYY-MM-DD")
@@ -41,7 +43,6 @@ export default function CalendarSwiper({
   const earliestDate = useRef(dayjs());
   const initialScrollDone = useRef(false);
 
-  // init days 90 ngày
   useEffect(() => {
     const today = dayjs();
     const start = today.subtract(90, "day");
@@ -92,29 +93,6 @@ export default function CalendarSwiper({
   const handleSelectDate = (date: string) => {
     setLocalSelected(date);
     onDateChange?.(date, new Date(date).getTime());
-    // Do not auto-align on user selection
-  };
-
-  const scrollToIndexAligned = (fullDate: string, animated: boolean) => {
-    const idx = days.findIndex((d) => d.fullDate === fullDate);
-    if (idx === -1 || !listRef.current) return;
-
-    if (!containerWidth || containerWidth <= 0) {
-      try {
-        listRef.current.scrollToIndex({
-          index: idx,
-          animated,
-          viewPosition: 1,
-        });
-      } catch (e) {
-        listRef.current.scrollToOffset({ offset: ITEM_TOTAL * idx, animated });
-      }
-      return;
-    }
-
-    const offset = Math.max(0, (idx + 1) * ITEM_TOTAL - containerWidth);
-
-    listRef.current.scrollToOffset({ offset, animated });
   };
 
   useEffect(() => {
@@ -140,14 +118,16 @@ export default function CalendarSwiper({
         style={[
           styles.item,
           { width: ITEM_WIDTH, marginHorizontal: ITEM_MARGIN },
-          isSelected ? styles.itemSelected : styles.itemUnselected,
+          isSelected ? { backgroundColor: theme.colors.tint } : { backgroundColor: theme.colors.card },
         ]}
         activeOpacity={0.7}
       >
         <Text
           style={[
             styles.dayText,
-            isSelected ? styles.textWhite : styles.textBlack,
+            isSelected
+              ? { color: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" }
+              : { color: theme.colors.textSecondary },
           ]}
         >
           {item.day}
@@ -155,7 +135,9 @@ export default function CalendarSwiper({
         <Text
           style={[
             styles.dateText,
-            isSelected ? styles.textWhite : styles.textBlack,
+            isSelected
+              ? { color: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" }
+              : { color: theme.colors.textSecondary },
           ]}
         >
           {item.date}
@@ -165,9 +147,9 @@ export default function CalendarSwiper({
   };
 
   return (
-    <View 
-      onLayout={onContainerLayout} 
-      style={{ 
+    <View
+      onLayout={onContainerLayout}
+      style={{
         paddingVertical: 12,
         zIndex: 20,
         elevation: 5
@@ -195,7 +177,6 @@ export default function CalendarSwiper({
         scrollEventThrottle={16}
         extraData={localSelected}
         contentContainerStyle={{ paddingRight: ITEM_MARGIN }}
-        // Đảm bảo touch events không bị chặn
         pointerEvents="auto"
         removeClippedSubviews={false}
       />

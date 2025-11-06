@@ -1,4 +1,5 @@
 import { VideoType } from '@/constants/type';
+import { useAppTheme } from '@/context/appThemeContext';
 import { getWorkoutVideo, resetWorkoutVideo } from '@/services/workout';
 import { FontAwesome6 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,9 +17,9 @@ const WorkoutVideo = () => {
   const [videos, setVideos] = useState<VideoType[]>([]);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const router = useRouter();
 
-  // ✅ Fetch video theo page
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["videos", page],
     queryFn: () => getWorkoutVideo({ page, limit: LIMIT }),
@@ -49,16 +50,16 @@ const WorkoutVideo = () => {
   }
 
   return (
-    <View className='flex-1 bg-white pt-12 px-4'>
+    <View className='flex-1 px-4 pt-12' style={{ backgroundColor: theme.colors.background }}>
       <View className="flex flex-row items-center justify-between">
         <TouchableOpacity onPress={() => (router.push('/(tabs)' as Href))} className="w-[30px]">
-          <FontAwesome6 name="chevron-left" size={24} color="black" />
+          <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
         </TouchableOpacity>
-        <Text className="text-2xl font-bold text-center py-5">
+        <Text className="text-2xl font-bold text-center py-5" style={{ color: theme.colors.textPrimary }}>
           {t("Đề xuất luyện tập")}
         </Text>
         <TouchableOpacity onPress={() => setOpenMenu(!openMenu)} className="w-[30px]">
-          <FontAwesome6 name="ellipsis-vertical" size={24} color="black" />
+          <FontAwesome6 name="ellipsis-vertical" size={24} color={theme.colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -70,8 +71,8 @@ const WorkoutVideo = () => {
             onPress={() => setOpenMenu(false)}
           />
           <View
-            className="absolute top-16 right-6 bg-white rounded-md shadow-xl z-50 w-40 p-4"
-            style={{ elevation: 5 }}
+            className="absolute top-16 right-6 rounded-md shadow-xl z-50 w-40 p-4"
+            style={{ backgroundColor: theme.colors.secondaryCard, elevation: 5 }}
           >
             <TouchableOpacity
               onPress={async () => {
@@ -82,7 +83,7 @@ const WorkoutVideo = () => {
               }}
               className="py-2"
             >
-              <Text className='text-lg text-black'>Đặt lại mục tiêu</Text>
+              <Text className='text-lg' style={{ color: theme.colors.textPrimary }}>Đặt lại mục tiêu</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -96,12 +97,12 @@ const WorkoutVideo = () => {
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         renderItem={({ item }: { item: VideoType }) => (
-          <View className='w-[48%] rounded-lg bg-gray-50 p-3'>
+          <View className='w-[48%] rounded-lg' style={{ backgroundColor: theme.colors.card }}>
             <TouchableOpacity onPress={() => router.push(`/work/details/${item.videoId}` as Href)}>
               <Image source={{ uri: item.thumbnail }} className='w-full h-[100px] rounded-md' />
               <View className='mt-2'>
-                <Text numberOfLines={2} className='text-base font-semibold'>{item.title}</Text>
-                <Text className='text-sm text-gray-600 mt-1'>by {item.channelTitle}</Text>
+                <Text numberOfLines={2} className='text-base font-semibold' style={{ color: theme.colors.textPrimary }}>{item.title}</Text>
+                <Text className='text-sm mt-1' style={{ color: theme.colors.textSecondary }}>by {item.channelTitle}</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -110,13 +111,13 @@ const WorkoutVideo = () => {
           isFetchingMore ? (
             <View className='py-4 items-center'>
               <ActivityIndicator size="small" color="#19B1FF" />
-              <Text className='mt-2 text-gray-600'>Đang tải thêm...</Text>
+              <Text className='mt-2' style={{ color: theme.colors.textSecondary }}>Đang tải thêm...</Text>
             </View>
           ) : null
         }
         ListEmptyComponent={() => (
           <View className='flex-1 items-center justify-center mt-10'>
-            <Text>Không có video phù hợp</Text>
+            <Text style={{ color: theme.colors.textSecondary }}>Không có video phù hợp</Text>
           </View>
         )}
         contentContainerStyle={{ paddingBottom: 24 }}
