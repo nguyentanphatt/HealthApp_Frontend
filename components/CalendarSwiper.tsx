@@ -5,7 +5,6 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import React, { useEffect, useRef, useState } from "react";
 import { LayoutChangeEvent, Modal, PanResponder, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-// @ts-ignore: the project uses this component in other screens
 import DateTimePicker from "react-native-ui-datepicker";
 
 type DayItem = {
@@ -35,7 +34,6 @@ export default function CalendarSwiper({
 
   const TODAY_STR = dayjs().format("YYYY-MM-DD");
 
-  // Anchor end date for the 5-day window (4 past + endDate)
   const [endDate, setEndDate] = useState<dayjs.Dayjs>(() => {
     const initial = dayjs(localSelected);
     return initial.isAfter(dayjs()) ? dayjs() : initial;
@@ -53,7 +51,6 @@ export default function CalendarSwiper({
       const picked = dayjs(selectedDate);
       const today = dayjs();
       const clamped = picked.isAfter(today) ? today : picked;
-      // current window bounds
       const windowEnd = endDate;
       const windowStart = endDate.subtract(4, "day");
       const isOutside = clamped.isBefore(windowStart, "day") || clamped.isAfter(windowEnd, "day");
@@ -133,16 +130,13 @@ export default function CalendarSwiper({
     );
   };
 
-  // Swipe: both directions go back one week (no jump to current)
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 15 && Math.abs(g.dy) < 10,
       onPanResponderRelease: (_, g) => {
         if (g.dx > 40) {
-          // swipe right → go to previous 5-day window
           setEndDate((prev) => prev.subtract(5, "day"));
         } else if (g.dx < -40) {
-          // swipe left → go forward 5 days, but not beyond today
           setEndDate((prev) => {
             const candidate = prev.add(5, "day");
             const today = dayjs();
@@ -163,7 +157,7 @@ export default function CalendarSwiper({
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <Text style={{ fontSize: 16, fontWeight: "700" }}>
+        <Text style={{ fontSize: 16, fontWeight: "700", color: theme.colors.textPrimary }}>
           {i18n?.language && i18n.language.startsWith("en")
             ? dayjs(localSelected).format("MMMM, YYYY")
             : "Tháng " + dayjs(localSelected).format("M YYYY")}
@@ -195,8 +189,20 @@ export default function CalendarSwiper({
                 selected_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" },
                 disabled: { opacity: 0.4 },
                 disabled_label: { color: theme.colors.textSecondary },
-                button_next_image: { tintColor: '#000' },
-                button_prev_image: { tintColor: '#000' },
+                button_next_image: { tintColor: theme.mode === "dark" ? "#fff" : "#000" },
+                button_prev_image: { tintColor: theme.mode === "dark" ? "#fff" : "#000" },
+                month_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                year_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                year: { borderWidth: 0 },
+                year_selector_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                header: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                month: { borderWidth: 0 },
+                month_selector_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                day_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                today_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                selected_month: { borderWidth: 1, borderColor: theme.colors.tint },
+                selected_year: { borderWidth: 1, borderColor: theme.colors.tint },
+                weekday_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
               }}
             />
             <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 12, marginTop: 12 }}>

@@ -73,7 +73,7 @@ export default function HomeScreen() {
     select: (res) => res.data
   });
 
-  const weekStart = selectedDate !== 0 
+  const weekStart = selectedDate !== 0
     ? dayjs.unix(selectedDate).startOf('isoWeek')
     : dayjs().startOf('isoWeek');
   const weekKey = weekStart.valueOf();
@@ -93,7 +93,7 @@ export default function HomeScreen() {
     select: (res) => res.data,
   });
 
-  const { data: workoutDailyData } = useQuery({
+  const { data: workoutDailyData, isLoading: loadingWorkoutDailyData } = useQuery({
     queryKey: ["workoutDailyData", selectedDate],
     queryFn: () => workoutDaily({ date: selectedDate ? selectedDate * 1000 : undefined }),
     staleTime: 1000 * 60 * 5,
@@ -234,11 +234,6 @@ export default function HomeScreen() {
     },
   });
 
-  console.log(selectedDate);
-  console.log("daily", workoutDailyData);
-  
-  
-
   return (
     <View className="flex-1 font-lato-regular">
       <View className="pt-16 px-4" style={{ backgroundColor: theme.colors.background }}>
@@ -259,7 +254,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-1 gap-2.5 px-4" style={{ backgroundColor: theme.colors.background }}>
-          <Card title={t("Mục tiêu tuần")}  
+          <Card title={t("Mục tiêu tuần")}
           >
             {loadingWeeklyGoal ? <>
               <View className="h-[140px] flex items-center justify-center">
@@ -315,21 +310,27 @@ export default function HomeScreen() {
           </Card>
 
           <Card title={t("Hoạt động hôm nay")}>
-            <View className="flex flex-col gap-3">
-              <ProgressItem
-                color="#00FF55"
-                index={Number(workoutDailyData?.workoutMinutes.toFixed(0) ?? 0)}
-                unit={t("phút")}
-                icon="clock"
-              />
-              <ProgressItem
-                color="#00D4FF"
-                index={workoutDailyData?.steps ?? 0}
-                unit={t("bước")}
-                icon="person-running"
-              />
-              <ProgressItem color="#FFF200" index={workoutDailyData?.calories ?? 0} unit="kcal" icon="bolt" />
-            </View>
+            {loadingWorkoutDailyData ?
+              <View className="h-[140px] flex items-center justify-center">
+                <ActivityIndicator size="large" color={theme.colors.textPrimary} />
+              </View> : <>
+                <View className="flex flex-col gap-3">
+                  <ProgressItem
+                    color="#00FF55"
+                    index={Number(workoutDailyData?.workoutMinutes.toFixed(0) ?? 0)}
+                    unit={t("phút")}
+                    icon="clock"
+                  />
+                  <ProgressItem
+                    color="#00D4FF"
+                    index={workoutDailyData?.steps ?? 0}
+                    unit={t("bước")}
+                    icon="person-running"
+                  />
+                  <ProgressItem color="#FFF200" index={workoutDailyData?.calories ?? 0} unit="kcal" icon="bolt" />
+                </View>
+              </>
+            }
           </Card>
 
           {sessionId && (

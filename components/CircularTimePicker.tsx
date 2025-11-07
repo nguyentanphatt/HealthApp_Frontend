@@ -1,3 +1,4 @@
+import { useAppTheme } from "@/context/appThemeContext";
 import React, { useEffect, useState } from "react";
 import { GestureResponderEvent, PanResponder, PanResponderGestureState, Text, View } from "react-native";
 import Svg, { Circle, G, Path, Text as SvgText } from "react-native-svg";
@@ -25,6 +26,7 @@ export default function CircularTimePicker({
   onStartChange,
   onEndChange,
 }: CircularTimePickerProps) {
+  const { theme } = useAppTheme();
   const [startAngle, setStartAngle] = useState(initialStartAngle);
   const [endAngle, setEndAngle] = useState(initialEndAngle); 
   const [activeHandle, setActiveHandle] = useState<"start" | "end" | null>(null);
@@ -40,7 +42,6 @@ export default function CircularTimePicker({
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: (evt) => {
-      // Chỉ bắt đầu khi touch gần các handle
       const { locationX, locationY } = evt.nativeEvent;
       const centerX = RADIUS + STROKE_WIDTH;
       const centerY = RADIUS + STROKE_WIDTH;
@@ -80,13 +81,10 @@ export default function CircularTimePicker({
       const dx = locationX - centerX;
       const dy = locationY - centerY;
       
-      // Tính góc từ tọa độ touch
       let newAngle = (Math.atan2(dy, dx) * 180) / Math.PI;
       
-      // Bù trừ để khớp với polarToCartesian và rotation -90
       newAngle = newAngle + 90;
       
-      // Chuyển từ -180..180 sang 0..360
       if (newAngle < 0) newAngle += 360;
       if (newAngle >= 360) newAngle -= 360;
       
@@ -98,7 +96,6 @@ export default function CircularTimePicker({
     },
     onPanResponderRelease: () => {
       setActiveHandle(null);
-      // Emit only when user stops dragging
       onStartChange?.(startAngle, startTime);
       onEndChange?.(endAngle, endTime);
       onChange?.({ startAngle, endAngle, startTime, endTime });
@@ -114,12 +111,10 @@ export default function CircularTimePicker({
   const startTime = getTimeFromAngle(startAngle);
   const endTime = getTimeFromAngle(endAngle);
 
-  // Emit initial values so parent gets defaults without interaction
   useEffect(() => {
     onStartChange?.(startAngle, startTime);
     onEndChange?.(endAngle, endTime);
     onChange?.({ startAngle, endAngle, startTime, endTime });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -135,22 +130,20 @@ export default function CircularTimePicker({
       <Svg
         width={(RADIUS + STROKE_WIDTH) * 2}
         height={(RADIUS + STROKE_WIDTH) * 2}
-        fill={"#f6f6f6"}
+        fill={theme.colors.card}
       >
         <G
           rotation=""
           originX={RADIUS + STROKE_WIDTH}
           originY={RADIUS + STROKE_WIDTH}
         >
-          {/* Vòng ban đêm */}
           <Circle
             cx={RADIUS + STROKE_WIDTH}
             cy={RADIUS + STROKE_WIDTH}
             r={RADIUS}
-            stroke="#00000066"
+            stroke={theme.colors.border}
             strokeWidth={STROKE_WIDTH}
           />
-          {/* Vòng ban ngày - follow theo góc từ start đến end */}
           <Path
             d={describeArc(
               RADIUS + STROKE_WIDTH,
@@ -164,7 +157,6 @@ export default function CircularTimePicker({
             fill="none"
           />
 
-          {/* Handle bắt đầu với icon 🌙 */}
           <Circle
             cx={
               polarToCartesian(
@@ -212,7 +204,6 @@ export default function CircularTimePicker({
             🌙
           </SvgText>
 
-          {/* Handle kết thúc với icon ☀️ */}
           <Circle
             cx={
               polarToCartesian(
@@ -260,7 +251,6 @@ export default function CircularTimePicker({
           </SvgText>
         </G>
 
-        {/* Các text 0, 6, 12, 18 - bên trong vòng tròn */}
         <G>
           {[
             { angle: 0, text: "0" },
@@ -280,7 +270,7 @@ export default function CircularTimePicker({
                 x={pos.x}
                 y={pos.y}
                 fontSize="16"
-                fill="black"
+                fill={theme.colors.textPrimary}
                 textAnchor="middle"
                 alignmentBaseline="middle"
               >
@@ -294,13 +284,13 @@ export default function CircularTimePicker({
       <View style={{ position: "absolute", alignItems: "center" }}>
         <View className="flex-row items-center gap-5">
           <Text className="text-xl">🌙</Text>
-          <Text className="text-black text-3xl font-bold font-lato-regular w-[80px]">
+          <Text className="text-3xl font-bold font-lato-regular w-[80px]" style={{ color: theme.colors.textPrimary }}>
             {startTime}
           </Text>
         </View>
         <View className="flex-row items-center gap-5">
           <Text className="text-xl">☀️</Text>
-          <Text className="text-black text-3xl font-bold font-lato-regular w-[80px]">
+          <Text className="text-3xl font-bold font-lato-regular w-[80px]" style={{ color: theme.colors.textPrimary }}>
             {endTime}
           </Text>
         </View>
@@ -309,7 +299,6 @@ export default function CircularTimePicker({
   );
 }
 
-// Hàm vẽ cung tròn
 function polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
   const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
 
@@ -323,7 +312,6 @@ function describeArc(x: number, y: number, radius: number, startAngle: number, e
   const start = polarToCartesian(x, y, radius, startAngle);
   const end = polarToCartesian(x, y, radius, endAngle);
 
-  // Tính delta angle, xử lý trường hợp qua midnight
   let delta = endAngle - startAngle;
   if (delta < 0) delta += 360;
   

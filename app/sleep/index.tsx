@@ -1,5 +1,6 @@
 import CalendarSwiper from "@/components/CalendarSwiper";
 import CircularTimePicker from "@/components/CircularTimePicker";
+import { useAppTheme } from "@/context/appThemeContext";
 import { CreateSleepRecord, getSleepStatus, UpdateSleepRecord } from "@/services/sleep";
 import { formatTimeForDisplay, utcTimeToVnTime, vnDateAndTimeToUtcTimestamp, vnTimeToUtcTimestamp } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -15,6 +16,7 @@ import Toast from "react-native-toast-message";
 const Page = () => {
   const router = useRouter();
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const params = useLocalSearchParams();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState(
@@ -43,7 +45,7 @@ const Page = () => {
     select: (res) => res.data,
   });
 
-  const [selectedMood, setSelectedMood] = useState<string | null>(sleepStatus?.history[0]?.qualityScore || null);
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
 
   useEffect(() => {
     const currentTimestamp = selectedDate || Math.floor(Date.now() / 1000);
@@ -126,7 +128,6 @@ const Page = () => {
     },
   ];
 
-  // Thức=2, ngủ=0, ngáy/ho=1
   const data = [
     { value: 2, label: "11:00" },
     { value: 0, label: "0:00" },
@@ -146,6 +147,22 @@ const Page = () => {
     { label: t("Không tốt"), emoji: "☹️", color: "#E74C3C", value: 40 },
     { label: t("Tệ"), emoji: "😡", color: "#C0392B", value: 20 },
   ];
+
+  useEffect(() => {
+    if (sleepStatus?.history?.[0]?.qualityScore) {
+      const qualityScore = sleepStatus.history[0].qualityScore;
+      const matchingMood = moods.find(m => 
+        m.label === qualityScore || 
+        qualityScore.includes(m.label) ||
+        m.label.includes(qualityScore)
+      );
+      if (matchingMood) {
+        setSelectedMood(matchingMood.label);
+      }
+    } else {
+      setSelectedMood(null);
+    }
+  }, [sleepStatus?.history?.[0]?.qualityScore, moods]);
 
   const handleSetSleepTime = async (startTime: string, endTime: string, isAllWeek: boolean) => {
     const startTimeHour = Number(startTime.split(":")[0]);
@@ -215,17 +232,18 @@ const Page = () => {
 
   return (
     <ScrollView
-      className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
+      className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular"
+      style={{ backgroundColor: theme.colors.background }}
       stickyHeaderIndices={[0]}
       contentContainerStyle={{ paddingBottom: 50 }}
       showsVerticalScrollIndicator={false}
     >
-      <View className="flex bg-[#f6f6f6] pt-16">
+      <View className="flex pt-16">
         <View className="flex flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.push("/(tabs)")}>
-            <FontAwesome6 name="chevron-left" size={24} color="black" />
+            <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">{t("Giấc ngủ")}</Text>
+          <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{t("Giấc ngủ")}</Text>
           <View style={{ width: 24 }} />
         </View>
         <CalendarSwiper
@@ -249,7 +267,7 @@ const Page = () => {
             }}
           />
           <View className="flex-row items-center gap-10">
-            <Text className="text-xl">{t("Thiết lập cho cả tuần")}</Text>
+            <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>{t("Thiết lập cho cả tuần")}</Text>
             <Switch
               value={isEnabled}
               onValueChange={setIsEnabled}
@@ -265,7 +283,7 @@ const Page = () => {
               onPress={() => handleSetSleepTime(startTime, endTime, isEnabled)}
               className="self-center flex-row items-center justify-center w-[50%] bg-cyan-blue py-3 rounded-md shadow-md"
             >
-              <Text className="text-xl text-white font-bold ">{t("Đặt giờ ngủ")}</Text>
+              <Text className="text-xl font-bold " style={{ color: theme.colors.textPrimary }}>{t("Đặt giờ ngủ")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -274,15 +292,15 @@ const Page = () => {
       {/* Khi đã có dữ liệu giấc ngủ */}
       {hasSleepData && (
         <View className="flex gap-5">
-          <View className="bg-white rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4">
-            <Text className="font-bold text-xl">{t("Thời gian ngủ")}</Text>
+          <View className="rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4" style={{ backgroundColor: theme.colors.card }}>
+            <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Thời gian ngủ")}</Text>
             <View className="flex-row items-center justify-center gap-5 mt-3">
-              <FontAwesome6 name="bed" size={24} color="black" />
-              <Text className="text-2xl text-center font-bold">
+              <FontAwesome6 name="bed" size={24} color={theme.colors.textPrimary} />
+              <Text className="text-2xl text-center font-bold" style={{ color: theme.colors.textPrimary }}>
                 {sleepStatus?.history[0].duration} {t("giờ")}
               </Text>
             </View>
-            <Text className="text-lg text-black/60 text-center">
+            <Text className="text-lg text-center" style={{ color: theme.colors.textSecondary }}>
               {t("Từ")} {(() => {
                 const startTime = utcTimeToVnTime(new Date(sleepStatus?.history[0].startAt).getTime());
                 const endTime = utcTimeToVnTime(new Date(sleepStatus?.history[0].endedAt).getTime());
@@ -291,10 +309,10 @@ const Page = () => {
             </Text>
           </View>
 
-          <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4 mt-4">
+          <View className="flex gap-2.5 p-4 rounded-md shadow-md mb-4 mt-4" style={{ backgroundColor: theme.colors.card }}>
             <View>
-              <Text className="font-bold text-xl">{t("Ngủ đầy đặn")}</Text>
-              <Text className="text-black/60">{t("Hãy giữ phong độ nào !")}</Text>
+              <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Ngủ đầy đặn")}</Text>
+              <Text className="" style={{ color: theme.colors.textSecondary }}>{t("Hãy giữ phong độ nào !")}</Text>
             </View>
             <ScrollView
               horizontal
@@ -307,31 +325,31 @@ const Page = () => {
                 frontColor="#00BFFF"
                 noOfSections={4}
                 yAxisLabelTexts={["0", "5", "10", "15"]}
-                xAxisLabelTextStyle={{ color: "black" }}
-                yAxisTextStyle={{ color: "black" }}
+                xAxisLabelTextStyle={{ color: theme.colors.textPrimary }}
+                yAxisTextStyle={{ color: theme.colors.textPrimary }}
               />
             </ScrollView>
 
             <View className="flex-row items-center justify-center gap-5 mt-2.5">
               <View className="flex-row items-center gap-2">
                 <View className="size-4 rounded-full bg-[#3634A3]" />
-                <Text className="text-lg">{t("Ngủ")}</Text>
+                <Text className="text-lg" style={{ color: theme.colors.textPrimary }}>{t("Ngủ")}</Text>
               </View>
               <View className="flex-row items-center gap-2">
                 <View className="size-4 rounded-full bg-[#5EC8FE]" />
-                <Text className="text-lg">{t("Ngáy/Ho")}</Text>
+                <Text className="text-lg" style={{ color: theme.colors.textPrimary }}>{t("Ngáy/Ho")}</Text>
               </View>
               <View className="flex-row items-center gap-2">
                 <View className="size-4 rounded-full bg-[#003FDD]" />
-                <Text className="text-lg">{t("Thức")}</Text>
+                <Text className="text-lg" style={{ color: theme.colors.textPrimary }}>{t("Thức")}</Text>
               </View>
             </View>
           </View>
 
-          <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md">
+          <View className="flex gap-2.5 p-4 rounded-md shadow-md" style={{ backgroundColor: theme.colors.card }}>
             <View>
-              <Text className="font-bold text-xl">{t("Tiến trình ngủ")}</Text>
-              <Text className="text-black/60">{t("Ngày hôm qua bạn ngủ như thế nào !")}</Text>
+              <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Tiến trình ngủ")}</Text>
+              <Text className="" style={{ color: theme.colors.textSecondary }}>{t("Ngày hôm qua bạn ngủ như thế nào !")}</Text>
             </View>
             <ScrollView
               horizontal
@@ -344,22 +362,24 @@ const Page = () => {
                 height={200}
                 spacing={60}
                 initialSpacing={20}
-                color="black"
+                color={theme.colors.textPrimary}
                 thickness={2}
                 maxValue={3}
                 noOfSections={2}
                 yAxisLabelTexts={['Ngủ', 'Ngáy/Ho', 'Thức']}
                 yAxisLabelWidth={50}
-                yAxisTextStyle={{ color: 'black' }}
-                yAxisColor="gray"
-                xAxisColor="gray"
+                yAxisTextStyle={{ color: theme.colors.textPrimary }}
+                yAxisColor={theme.colors.border}
+                xAxisColor={theme.colors.border}
+                xAxisLabelTextStyle={{ color: theme.colors.textPrimary }}
+                dataPointsColor={theme.colors.textPrimary}
               />
             </ScrollView>
 
 
           </View>
-          <View className="flex bg-white p-4 rounded-md shadow-md my-4">
-            <Text className="font-bold text-xl">{t("Bạn đánh giá như thế nào !")}</Text>
+          <View className="flex p-4 rounded-md shadow-md my-4" style={{ backgroundColor: theme.colors.card }}>
+            <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Bạn đánh giá như thế nào !")}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -378,15 +398,20 @@ const Page = () => {
                      onPress={() => (setSelectedMood(mood.label), handleUpdateMood(sleepStatus?.history[0].recordId, mood.value.toString()))}
                     className="flex items-center gap-1"
                   >
-                    <View className={`w-[70px] h-[70px] flex items-center justify-center transition-all duration-300 ${selectedMood === null ? "opacity-100" : selectedMood === mood.label ? "opacity-100" : "opacity-50"}`}>
+                    <View 
+                      className={`w-[70px] h-[70px] flex items-center justify-center ${selectedMood === null ? "opacity-100" : selectedMood === mood.label ? "opacity-100" : "opacity-50"}`}
+                      style={{ opacity: selectedMood === null ? 1 : selectedMood === mood.label ? 1 : 0.5 }}
+                    >
                       <Text
-                        className={`transition-all duration-300 ${ isSelected ? "text-[50px]" : "text-[30px]"}`}
+                        className={isSelected ? "text-[50px]" : "text-[30px]"}
+                        style={{ fontSize: isSelected ? 50 : 30 }}
                       >
                         {mood.emoji}
                       </Text>
                     </View>
                     <Text
-                      className={`text-lg ${isSelected ? "text-cyan-blue font-bold" : "text-black"}`}
+                      className={`text-lg ${isSelected ? "text-cyan-blue font-bold" : "text-primary"}`}
+                      style={{ color: isSelected ? theme.colors.tint : theme.colors.textPrimary }}
                     >
                       {mood.label}
                     </Text>
