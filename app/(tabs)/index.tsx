@@ -311,10 +311,10 @@ export default function HomeScreen() {
 
           <Card title={t("Hoạt động hôm nay")}>
             {loadingWorkoutDailyData ?
-              <View className="h-[140px] flex items-center justify-center">
+              <View className="h-[110px] flex items-center justify-center">
                 <ActivityIndicator size="large" color={theme.colors.textPrimary} />
               </View> : <>
-                <View className="flex flex-col gap-3">
+                <View className="flex flex-col gap-3 h-[110px]">
                   <ProgressItem
                     color="#00FF55"
                     index={Number(workoutDailyData?.workoutMinutes.toFixed(0) ?? 0)}

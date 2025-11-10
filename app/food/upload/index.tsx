@@ -1,17 +1,18 @@
+import { useAppTheme } from "@/context/appThemeContext";
 import { submitFoodRecord } from "@/services/food";
 import { useModalStore } from "@/stores/useModalStore";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
+import { Href, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import Toast from "react-native-toast-message";
 const Page = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const { openModal } = useModalStore();
   const [selectedTag, setSelectedTag] = useState("");
   const [images, setImages] = useState<string[]>([]);
@@ -52,28 +53,16 @@ const Page = () => {
           console.log(`Upload ảnh ${i + 1} thành công:`, res);
           if (res.success) {
             if (res.name === "Invalid") {
-              Toast.show({
-                type: "error",
-                text1: `Ảnh ${i + 1} sai`,
-                text2: t("Vui lòng chọn ảnh về bữa ăn"),
-              });
+              console.log("Ảnh ${i + 1} sai");
             } else {
-              Toast.show({
-                type: "success",
-                text1: `Ảnh ${i + 1} thành công`,
-              });
+              console.log("Ảnh ${i + 1} thành công");
             }
-            // Invalidate all food queries (any date key) so screens refetch
             queryClient.invalidateQueries({ queryKey: ["foodStatus"], exact: false });
             queryClient.invalidateQueries({ queryKey: ["foodWeekly"], exact: false });
           }
         } catch (err) {
           console.log(`Upload ảnh ${i + 1} thất bại:`, err);
-          Toast.show({
-            type: "error",
-            text1: `Ảnh ${i + 1} lỗi`,
-            text2: t("Không thể upload ảnh này"),
-          });
+          console.log("Ảnh ${i + 1} lỗi");
         }
 
         if (i < uris.length - 1) {
@@ -90,23 +79,21 @@ const Page = () => {
   return (
     <View className="flex-1 relative">
       <ScrollView
-        className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
+        className="flex-1 gap-2.5 pb-10 font-lato-regular pt-12" style={{ backgroundColor: theme.colors.background }}
         stickyHeaderIndices={[0]}
         contentContainerStyle={{ paddingBottom: 50 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex bg-[#f6f6f6] pt-10">
-          <View className="flex flex-row items-center justify-between">
-            <TouchableOpacity onPress={() => router.back()}>
-              <FontAwesome6 name="chevron-left" size={24} color="black" />
-            </TouchableOpacity>
-            <Text className="text-2xl font-bold self-center">{t("Hình ảnh")}</Text>
-            <View style={{ width: 24 }} />
-          </View>
+        <View className='flex flex-row items-center justify-between w-full'>
+          <TouchableOpacity onPress={() => router.push("/food" as Href)} className='size-14 rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.background }}>
+            <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
+          </TouchableOpacity>
+          <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{t("Hình ảnh")}</Text>
+          <View className='size-14 rounded-full' style={{ backgroundColor: theme.mode === "dark" ? theme.colors.background : theme.colors.background }} />
         </View>
-        <View className="flex gap-5">
+        <View className="flex gap-5 px-4">
           <View>
-            <Text className="font-bold text-xl pt-5 pb-2">{t("Loại bữa ăn")}</Text>
+            <Text className="font-bold text-xl pt-5 pb-2" style={{ color: theme.colors.textPrimary }}>{t("Loại bữa ăn")}</Text>
             <View className="flex-row gap-3">
               <FlatList
                 data={options}
@@ -118,12 +105,27 @@ const Page = () => {
                   const isSelectedTag = selectedTag === item;
                   return (
                     <TouchableOpacity
+                      activeOpacity={1}
                       onPress={() => setSelectedTag(item)}
-                      className={`px-4 py-2 rounded-full ${isSelectedTag ? "bg-cyan-blue" : "bg-white"}`}
-                      style={{ marginRight: 0 }}
+                      className="px-4 py-2 rounded-full"
+                      style={{
+                        backgroundColor: isSelectedTag
+                          ? "#19B1FF"
+                          : theme.mode === "dark"
+                            ? theme.colors.card
+                            : "white",
+                        marginRight: 0,
+                      }}
                     >
                       <Text
-                        className={`text-lg ${isSelectedTag ? "text-white" : "text-black"}`}
+                        className="text-lg"
+                        style={{
+                          color: isSelectedTag
+                            ? "#fff"
+                            : theme.mode === "dark"
+                              ? theme.colors.textPrimary
+                              : "black",
+                        }}
                       >
                         {t(item)}
                       </Text>
@@ -133,31 +135,31 @@ const Page = () => {
               />
             </View>
           </View>
-          <View className="w-full h-64 bg-white rounded-md shadow-md flex items-center justify-center border-dashed border-2 border-black/20">
+          <View className="w-full h-64 rounded-md shadow-md flex items-center justify-center border-dashed border-2 border-black/20" style={{ backgroundColor: theme.colors.card }}>
             <View className="size-20 flex items-center justify-center bg-cyan-blue/20 rounded-full">
-              <FontAwesome6 name="image" color="black" size={24} />
+              <FontAwesome6 name="image" color={theme.colors.textPrimary} size={24} />
             </View>
-            <Text className="text-xl text-center">{t("Chọn ảnh")}</Text>
+            <Text className="text-xl text-center" style={{ color: theme.colors.textPrimary }}>{t("Chọn ảnh")}</Text>
           </View>
 
           <View className="flex flex-row items-center justify-center gap-5">
             <TouchableOpacity
               onPress={pickImage}
-              className="self-center flex-row items-center justify-center gap-5 w-[40%] bg-white py-3 rounded-md shadow-md"
+              className="self-center flex-row items-center justify-center gap-5 w-[40%] py-3 rounded-md shadow-md" style={{ backgroundColor: theme.colors.card }}
             >
               <FontAwesome6 name="upload" color="#19B1FF" size={20} />
-              <Text className="text-xl text-black ">{t("Thư viện")}</Text>
+              <Text className="text-xl " style={{ color: theme.colors.textPrimary }}>{t("Thư viện")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={takePhoto}
-              className="self-center flex-row items-center justify-center gap-5 w-[40%] bg-white py-3 rounded-md shadow-md"
+              className="self-center flex-row items-center justify-center gap-5 w-[40%] py-3 rounded-md shadow-md" style={{ backgroundColor: theme.colors.card }}
             >
               <FontAwesome6 name="camera" color="#19B1FF" size={20} />
-              <Text className="text-xl text-black ">{t("Chụp ảnh")}</Text>
+              <Text className="text-xl " style={{ color: theme.colors.textPrimary }}>{t("Chụp ảnh")}</Text>
             </TouchableOpacity>
           </View>
           <View className="py-2">
-            {images.length > 0 && <Text>{t("Ảnh đã chọn")} ({images.length})</Text>}
+            {images.length > 0 && <Text style={{ color: theme.colors.textPrimary }}>{t("Ảnh đã chọn")} ({images.length})</Text>}
             <View className="flex-row items-center gap-4 py-2">
               {images.map((uri, idx) => (
                 <View key={idx} className="w-32 h-32 rounded-md relative">
@@ -185,14 +187,14 @@ const Page = () => {
         </View>
       </ScrollView>
       {images.length > 0 && (
-        <View className="absolute bottom-10 left-0 right-0 p-4 bg-[#f6f6f6]">
+        <View className="absolute bottom-10 left-0 right-0 p-4" style={{ backgroundColor: theme.colors.background }}>
           <TouchableOpacity
             onPress={() => {
               sendToBackend(images, selectedTag);
             }}
             className="self-center flex-row items-center justify-center w-[45%] bg-cyan-blue py-3 rounded-md shadow-md"
           >
-            <Text className="text-xl text-white font-bold ">{t("Tải ảnh lên")}</Text>
+            <Text className="text-xl font-bold " style={{ color: theme.colors.textPrimary }}>{t("Tải ảnh lên")}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -200,12 +202,12 @@ const Page = () => {
 
       {isUploading && (
         <View className="absolute inset-0 bg-black/50 justify-center items-center z-50">
-          <View className="bg-white rounded-lg p-6 flex items-center justify-center w-[90%] h-[300px]">
+          <View className="rounded-lg p-6 flex items-center justify-center w-[90%] h-[300px]" style={{ backgroundColor: theme.colors.card }}>
             <ActivityIndicator size="large" color="#19B1FF" />
-            <Text className="text-2xl font-bold mt-4 text-center">
+            <Text className="text-2xl font-bold mt-4 text-center" style={{ color: theme.colors.textPrimary }}>
               {t("AI đang phân tích...")}
             </Text>
-            <Text className="text-lg text-gray-600 mt-2 text-center">
+            <Text className="text-lg mt-2 text-center" style={{ color: theme.colors.textPrimary }}>
               {t("Vui lòng chờ trong giây lát")}
             </Text>
           </View>

@@ -231,14 +231,8 @@ const Page = () => {
   
 
   return (
-    <ScrollView
-      className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular"
-      style={{ backgroundColor: theme.colors.background }}
-      stickyHeaderIndices={[0]}
-      contentContainerStyle={{ paddingBottom: 50 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <View className="flex pt-16">
+    <View className="flex-1 pt-12" style={{ backgroundColor: theme.colors.background }}>
+      <View className="flex px-4 py-5">
         <View className="flex flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.push("/(tabs)")}>
             <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
@@ -257,6 +251,12 @@ const Page = () => {
           }}
         />
       </View>
+    <ScrollView
+      className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular"
+      style={{ backgroundColor: theme.colors.background }}
+      contentContainerStyle={{ paddingBottom: 50 }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Khi chưa có dữ liệu giấc ngủ */}
       {!hasSleepData && (
         <View className="pt-20 flex gap-5">
@@ -424,6 +424,7 @@ const Page = () => {
         </View>
       )}
     </ScrollView>
+    </View>
   );
 };
 

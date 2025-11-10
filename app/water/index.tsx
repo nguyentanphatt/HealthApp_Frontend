@@ -5,6 +5,7 @@ import WaterVector from "@/components/vector/WaterVector";
 import WaterHistory from "@/components/WaterHistory";
 import Weather from "@/components/Weather";
 import { WaterStatus, WeatherResponse } from "@/constants/type";
+import { useAppTheme } from "@/context/appThemeContext";
 import { useUnits } from "@/hooks/useUnits";
 import {
   getIp,
@@ -37,6 +38,7 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 const Page = () => {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const router = useRouter();
   const params = useLocalSearchParams();
   const { openModal } = useModalStore();
@@ -204,7 +206,7 @@ const Page = () => {
 
   if (isInitialLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: theme.colors.background }}>
         <ActivityIndicator size="large" color="#000" />
       </View>
     );
@@ -227,18 +229,13 @@ const Page = () => {
     displayWater(val).value.toString()
   );
   return (
-    <ScrollView
-      className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
-      stickyHeaderIndices={[0]}
-      contentContainerStyle={{ paddingBottom: 50 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <View className="flex bg-[#f6f6f6] pt-16">
+    <View className="flex-1 pt-12" style={{ backgroundColor: theme.colors.background }}>
+      <View className="flex px-4 py-5" style={{ backgroundColor: theme.colors.background }}>
         <View className="flex flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.push("/(tabs)")}>
-            <FontAwesome6 name="chevron-left" size={24} color="black" />
+            <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">{t("Nước")}</Text>
+          <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{t("Nước")}</Text>
           <View style={{ width: 24 }} />
         </View>
         <CalendarSwiper
@@ -252,138 +249,145 @@ const Page = () => {
           }}
         />
       </View>
-      <View className="flex-row">
-        <View className="relative flex-1 items-center justify-center bg-white rounded-md shadow-md mr-1">
-          <WaterVector
-            progress={
-              waterStatus
-                ? (waterStatus.currentIntake / waterStatus.dailyGoal) * 100
-                : 0
-            }
-            animated={true}
-          />
-          <Text className="absolute top-2 right-2 text-black text-lg">
-            - {displayWater(waterStatus?.dailyGoal ?? 0).formatted}
-          </Text>
-        </View>
-        <View className="flex-1 justify-between ml-1">
-          <TouchableOpacity
-            onPress={() =>
-              router.push(
-                `/water/goal?amount=${waterStatus?.dailyGoal}&time=${waterStatus?.date}` as Href
-              )
-            }
-          >
+      <ScrollView
+        className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular" style={{ backgroundColor: theme.colors.background }}
+        contentContainerStyle={{ paddingBottom: 50 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="flex-row">
+          <View className="relative flex-1 items-center justify-center rounded-md shadow-md mr-1" style={{ backgroundColor: theme.colors.card }}>
+            <WaterVector
+              progress={
+                waterStatus
+                  ? (waterStatus.currentIntake / waterStatus.dailyGoal) * 100
+                  : 0
+              }
+              animated={true}
+            />
+            <Text className="absolute top-2 right-2 text-lg" style={{ color: theme.colors.textPrimary }}>
+              - {displayWater(waterStatus?.dailyGoal ?? 0).formatted}
+            </Text>
+          </View>
+          <View className="flex-1 justify-between ml-1">
+            <TouchableOpacity
+              onPress={() =>
+                router.push(
+                  `/water/goal?amount=${waterStatus?.dailyGoal}&time=${waterStatus?.date}` as Href
+                )
+              }
+            >
+              <InfoCard
+                title={t("Mục tiêu")}
+                content={
+                  displayWater(waterStatus?.dailyGoal ?? 0).formatted ||
+                  displayWater(2000).formatted
+                }
+              />
+            </TouchableOpacity>
             <InfoCard
-              title={t("Mục tiêu")}
+              title={t("Tiến độ")}
               content={
-                displayWater(waterStatus?.dailyGoal ?? 0).formatted ||
+                displayWater(waterStatus?.currentIntake || 0).formatted ||
+                displayWater(0).formatted
+              }
+              subcontent={
+                ` / ${displayWater(waterStatus?.dailyGoal || 0).formatted}` ||
                 displayWater(2000).formatted
               }
             />
-          </TouchableOpacity>
-          <InfoCard
-            title={t("Tiến độ")}
-            content={
-              displayWater(waterStatus?.currentIntake || 0).formatted ||
-              displayWater(0).formatted
-            }
-            subcontent={
-              ` / ${displayWater(waterStatus?.dailyGoal || 0).formatted}` ||
-              displayWater(2000).formatted
-            }
-          />
-          <TouchableOpacity
-            onPress={() => router.push("/water/notification" as Href)}
-            className="flex flex-row items-center justify-center gap-2.5 bg-white p-2 rounded-md shadow-md h-[70px]"
-          >
-            <FontAwesome6 name="calendar" size={24} color="black" />
-            <Text className="text-xl">{t("Nhắc nhở tôi")}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      <View className="flex items-center justify-center py-4">
-        {(() => {
-          const isToday = selectedDate === 0 || dayjs.unix(selectedDate).isSame(dayjs(), 'day');
-          return (
             <TouchableOpacity
-              disabled={!isToday}
-              accessibilityState={{ disabled: !isToday }}
-              className={`self-center flex-row items-center justify-center w-[70%] py-3 rounded-full ${isToday ? 'bg-cyan-blue' : 'bg-gray-300'}`}
-              onPress={isToday ? () => openModal("waterwheel", {
-                title: `${t("Lượng nước uống")} (${units.water})`,
-                items: items,
-                initialValue: initialValue,
-                currentDate: currentDate,
-                handleConfirm: handleConfirm,
-              }) : undefined}
+              onPress={() => router.push("/water/notification" as Href)}
+              className="flex flex-row items-center justify-center gap-2.5 p-2 rounded-md shadow-md h-[70px]" style={{ backgroundColor: theme.colors.card }}
             >
-              <Text className="text-xl text-white">{t("Thêm")}</Text>
+              <FontAwesome6 name="calendar" size={24} color={theme.colors.textPrimary} />
+              <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>{t("Nhắc nhở tôi")}</Text>
             </TouchableOpacity>
-          )
-        })()}
-      </View>
-
-      {waterReminderData &&
-        (() => {
-          const currentDate = selectedDate || Math.floor(Date.now() / 1000);
-          const currentDateStr = dayjs.unix(currentDate).format("YYYY-MM-DD");
-
-          const filteredReminders = waterReminderData.filter((reminder) => {
-            const reminderDateStr = dayjs(reminder.expiresIn).format(
-              "YYYY-MM-DD"
-            );
-            return reminderDateStr === currentDateStr;
-          });
-
-          console.log("filteredReminders", filteredReminders);
-          return filteredReminders.length > 0 ? (
-            <ReminderList data={filteredReminders} />
-          ) : null;
-        })()}
-      {percent >= 25 && (
-        <Text className="text-lg text-center text-black/60 py-2">
-          {t("Bạn đã hoàn thành")} {percent.toFixed(0)}% {t("mục tiêu đề ra")}
-        </Text>
-      )}
-      {filtered && filtered.length > 0 && (
-        <Text className="font-bold text-lg text-black/60 pb-2">
-          {t("Lịch sử hôm nay")}
-        </Text>
-      )}
-      <WaterHistory filtered={filtered ?? []} />
-
-      <View className="flex gap-2.5 bg-white p-4 rounded-md shadow-md mb-4 mt-4">
-        <View>
-          <Text className="font-bold text-xl">{t("Tiến trình của bạn")}</Text>
-          <Text className="text-black/60">{t("Hãy giữ phong độ nào !")}</Text>
+          </View>
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 8 }}
-        >
-          <BarChart
-            data={data}
-            barWidth={24}
-            frontColor="#00BFFF"
-            noOfSections={3}
-            yAxisLabelTexts={yAxisLabelTexts}
-            maxValue={displayWater(2000).value}
-            xAxisLabelTextStyle={{ color: "black" }}
-            yAxisTextStyle={{ color: "black" }}
-          />
-        </ScrollView>
-      </View>
+        <View className="flex items-center justify-center py-4">
+          {(() => {
+            const isToday = selectedDate === 0 || dayjs.unix(selectedDate).isSame(dayjs(), 'day');
+            return (
+              <TouchableOpacity
+                disabled={!isToday}
+                accessibilityState={{ disabled: !isToday }}
+                className={`self-center flex-row items-center justify-center w-[70%] py-3 rounded-full ${isToday ? 'bg-cyan-blue' : 'bg-gray-300'}`}
+                onPress={isToday ? () => openModal("waterwheel", {
+                  title: `${t("Lượng nước uống")} (${units.water})`,
+                  items: items,
+                  initialValue: initialValue,
+                  currentDate: currentDate,
+                  handleConfirm: handleConfirm,
+                }) : undefined}
+              >
+                <Text className="text-xl text-white">{t("Thêm")}</Text>
+              </TouchableOpacity>
+            )
+          })()}
+        </View>
 
-      <Weather
-        handleUpdateGoal={() =>
-          handleUpdateGoal(weatherReport?.recommended ?? 0, Date.now().toString())
-        }
-        weatherReport={weatherReport as WeatherResponse}
-        waterStatus={waterStatus as WaterStatus}
-      />
-    </ScrollView>
+        {waterReminderData &&
+          (() => {
+            const currentDate = selectedDate || Math.floor(Date.now() / 1000);
+            const currentDateStr = dayjs.unix(currentDate).format("YYYY-MM-DD");
+
+            const filteredReminders = waterReminderData.filter((reminder) => {
+              const reminderDateStr = dayjs(reminder.expiresIn).format(
+                "YYYY-MM-DD"
+              );
+              return reminderDateStr === currentDateStr;
+            });
+
+            return filteredReminders.length > 0 ? (
+              <ReminderList data={filteredReminders} />
+            ) : null;
+          })()}
+        {percent >= 25 && (
+          <Text className="text-lg text-center py-2" style={{ color: theme.colors.textSecondary }}>
+            {t("Bạn đã hoàn thành")} {percent.toFixed(0)}% {t("mục tiêu đề ra")}
+          </Text>
+        )}
+        {filtered && filtered.length > 0 && (
+          <Text className="font-bold text-lg pb-2" style={{ color: theme.colors.textSecondary }}>
+            {t("Lịch sử hôm nay")}
+          </Text>
+        )}
+        <WaterHistory filtered={filtered ?? []} />
+
+        <View className="flex gap-2.5 p-4 rounded-md shadow-md mb-4 mt-4" style={{ backgroundColor: theme.colors.card }}>
+          <View>
+            <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Tiến trình của bạn")}</Text>
+            <Text className="" style={{ color: theme.colors.textSecondary }}>{t("Hãy giữ phong độ nào !")}</Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 8 }}
+          >
+            <BarChart
+              data={data}
+              barWidth={24}
+              frontColor="#00BFFF"
+              noOfSections={3}
+              yAxisLabelTexts={yAxisLabelTexts}
+              maxValue={displayWater(2000).value}
+              xAxisLabelTextStyle={{ color: theme.colors.textPrimary }}
+              yAxisTextStyle={{ color: theme.colors.textPrimary }}
+              xAxisColor={theme.colors.border}
+              yAxisColor={theme.colors.border}
+            />
+          </ScrollView>
+        </View>
+
+        <Weather
+          handleUpdateGoal={() =>
+            handleUpdateGoal(weatherReport?.recommended ?? 0, Date.now().toString())
+          }
+          weatherReport={weatherReport as WeatherResponse}
+          waterStatus={waterStatus as WaterStatus}
+        />
+      </ScrollView>
+    </View>
   );
 };
 

@@ -4,7 +4,7 @@ import { convertDayToVN } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import React, { useEffect, useRef, useState } from "react";
-import { LayoutChangeEvent, Modal, PanResponder, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { LayoutChangeEvent, Modal, PanResponder, Text, TouchableOpacity, View } from "react-native";
 import DateTimePicker from "react-native-ui-datepicker";
 
 type DayItem = {
@@ -97,18 +97,18 @@ export default function CalendarSwiper({
       <TouchableOpacity
         key={item.fullDate}
         onPress={() => !isFuture && handleSelectDate(item.fullDate)}
+        className="h-16 rounded-lg items-center justify-center"
         style={[
-          styles.item,
           { width: ITEM_WIDTH, marginHorizontal: ITEM_MARGIN },
-          isSelected ? { backgroundColor: theme.colors.tint } : { backgroundColor: theme.colors.card },
+          isSelected ? { backgroundColor: "#19B1FF" } : { backgroundColor: theme.colors.card },
           isFuture ? { opacity: 0.4 } : null,
         ]}
-        activeOpacity={0.7}
+        activeOpacity={1}
         disabled={isFuture}
       >
         <Text
+          className="text-sm font-bold"
           style={[
-            styles.dayText,
             isSelected
               ? { color: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" }
               : { color: theme.colors.textSecondary },
@@ -117,8 +117,8 @@ export default function CalendarSwiper({
           {item.day}
         </Text>
         <Text
+          className="text-sm"
           style={[
-            styles.dateText,
             isSelected
               ? { color: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" }
               : { color: theme.colors.textSecondary },
@@ -222,31 +222,3 @@ export default function CalendarSwiper({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  item: {
-    height: 64,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  itemSelected: {
-    backgroundColor: "#00BFFF",
-  },
-  itemUnselected: {
-    backgroundColor: "#E6E6E6",
-  },
-  dayText: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  dateText: {
-    fontSize: 14,
-  },
-  textWhite: {
-    color: "#fff",
-  },
-  textBlack: {
-    color: "#000",
-  },
-});
