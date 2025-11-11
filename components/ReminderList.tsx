@@ -1,4 +1,5 @@
 import { WaterReminder } from "@/constants/type";
+import { useAppTheme } from "@/context/appThemeContext";
 import { convertISOToTimestamp } from "@/utils/convertTime";
 import { scheduleReminders } from "@/utils/notificationsHelper";
 import { Href, useRouter } from "expo-router";
@@ -12,6 +13,7 @@ const ReminderList = ({
 }: {
   data: WaterReminder[];
 }) => {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const [showAll, setShowAll] = useState(false);
   const displayedData = showAll ? data : data.slice(0, 3);
@@ -55,7 +57,7 @@ const ReminderList = ({
 
       {data.length > 3 && (
         <TouchableOpacity onPress={() => setShowAll(!showAll)} className="py-5">
-          <Text className="text-lg text-center text-black/60 font-semibold">
+          <Text className="text-lg text-center text-black/60 font-semibold" style={{ color: theme.colors.textSecondary }}>
             {showAll ? t("Ẩn bớt") : t("Xem thêm")}
           </Text>
         </TouchableOpacity>

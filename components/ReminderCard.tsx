@@ -1,4 +1,5 @@
 // ReminderCard.tsx
+import { useAppTheme } from "@/context/appThemeContext";
 import { useUnits } from "@/hooks/useUnits";
 import { updateWaterReminder } from "@/services/water";
 import { convertISOToTimestamp } from "@/utils/convertTime";
@@ -10,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
 const ReminderCard = ({ amount, time, id, enabled }: { amount: string; time: number; id: string; enabled: boolean }) => {
+  const { theme } = useAppTheme();
   const queryClient = useQueryClient();
   const {displayWater} = useUnits()
   const { t } = useTranslation();
@@ -26,15 +28,16 @@ const ReminderCard = ({ amount, time, id, enabled }: { amount: string; time: num
   };
   return (
     <View className="relative">
-      <View className="flex gap-1 p-4 rounded-md bg-white shadow-md">
+      <View className="flex gap-1 p-4 rounded-md shadow-md" style={{ backgroundColor: theme.colors.card }}>
         <View className="flex flex-row items-center justify-between">
-          <Text className="text-xl">{t("Nhắc nhở")}</Text>
-          <Text className="text-xl">{hour} : {minute}</Text>
+          <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>{t("Nhắc nhở")}</Text>
+          <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>{hour} : {minute}</Text>
         </View>
         <View className="flex flex-row items-center justify-between">
           <Text
             className={`text-2xl font-bold ${isChecked || enabled === false ? "text-gray-400 line-through" : "text-black"
               }`}
+            style={{ color: theme.colors.textPrimary }}
           >
             {displayWater(Number(amount)).formatted}
           </Text>
@@ -47,9 +50,9 @@ const ReminderCard = ({ amount, time, id, enabled }: { amount: string; time: num
       </View>
 
       {enabled === false && (
-        <View className="absolute flex items-center justify-center inset-0 bg-white/60 rounded-md">
+        <View className="absolute flex items-center justify-center inset-0 rounded-md" style={{ backgroundColor: theme.mode === "dark" ? "bg-white/50" : "bg-white/60" }}>
           <View className="bg-cyan-blue/60 rounded-full flex items-center justify-center size-10">
-            <FontAwesome6 name="check" size={24} color="white" />
+            <FontAwesome6 name="check" size={24} color={theme.colors.textPrimary} />
           </View>
         </View>
       )}

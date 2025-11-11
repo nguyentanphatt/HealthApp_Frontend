@@ -14,7 +14,6 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import Toast from "react-native-toast-message";
 
 const Page = () => {
   const { theme } = useAppTheme();
@@ -60,10 +59,7 @@ const Page = () => {
       );
       if (response.success) {
         queryClient.invalidateQueries({ queryKey: ["waterReminder"] });
-        Toast.show({
-          type: "success",
-          text1: "Thêm nhắc nhở thành công",
-        });
+        console.log("response", response);
         router.push("/water");
       }
     } catch (error) {

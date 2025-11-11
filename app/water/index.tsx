@@ -207,7 +207,7 @@ const Page = () => {
   if (isInitialLoading) {
     return (
       <View className="flex-1 items-center justify-center" style={{ backgroundColor: theme.colors.background }}>
-        <ActivityIndicator size="large" color="#000" />
+        <ActivityIndicator size="large" color={theme.colors.textPrimary} />
       </View>
     );
   }
