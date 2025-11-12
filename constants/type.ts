@@ -235,6 +235,7 @@ export interface UserSetting {
   water: string,
   temp: string,
   language: string
+  theme: string
 }
 
 export interface UserProfile {

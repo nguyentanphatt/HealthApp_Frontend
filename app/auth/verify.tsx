@@ -1,5 +1,6 @@
 import { images } from "@/constants/image";
 import { useAppTheme } from "@/context/appThemeContext";
+import { useUnits } from "@/context/unitContext";
 import i18n from "@/plugins/i18n";
 import { sendOtp, verifyOtp } from "@/services/user";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -12,7 +13,8 @@ import { Image, Text, TouchableOpacity, View } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
 const Verify = () => {
   const router = useRouter()
-  const { theme } = useAppTheme();
+  const { theme, loadFromAPI: loadThemeFromAPI } = useAppTheme();
+  const { loadFromAPI: loadUnitsFromAPI } = useUnits();
   const [email, setEmail] = useState("");
   const [type, setType] = useState("");
   const [otp, setOtp] = useState("");
@@ -69,6 +71,7 @@ const Verify = () => {
      const response = await verifyOtp(email, otp);
      if(response.success){
       setTokens(response.data.accessToken, response.data.refreshToken)
+      
       if(type === 'signup'){
         console.log("Đăng ký thành công");
         router.push("/(tabs)");
@@ -94,10 +97,10 @@ const Verify = () => {
   }
 
   return (
-    <View className="font-lato-regular flex-1 items-center py-10 h-full" style={{ backgroundColor: theme.colors.background }}>
+    <View className="font-lato-regular flex-1 items-center py-10 h-full">
       <View className="py-20">
-        <Text className="text-2xl font-bold text-center" style={{ color: theme.colors.textPrimary }}>{t("Xác thực OTP")}</Text>
-        <Text className="text-center" style={{ color: theme.colors.textSecondary }}>
+        <Text className="text-2xl font-bold text-center">{t("Xác thực OTP")}</Text>
+        <Text className="text-center text-black/50 mt-2">
           {t("Chúng tôi đã gửi OTP qua mail của bạn")}
         </Text>
       </View>
@@ -109,7 +112,7 @@ const Verify = () => {
         source={images.star}
         className="-z-10 absolute top-[20%] -left-[15%] w-[100px] h-[100px]"
       />
-      <View className="flex-1 items-center w-full gap-[5%] z-10 px-5" style={{ backgroundColor: theme.mode === "dark" ? theme.colors.card : "white/40 backdrop-blur-md" }}>
+      <View className="flex-1 items-center w-full gap-[5%] z-10 bg-white/40 backdrop-blur-md px-5">
         <View className="w-full flex items-center pt-10">
           <OtpInput
             numberOfDigits={6}
@@ -117,26 +120,23 @@ const Verify = () => {
             onTextChange={(text) => setOtp(text)}
             textInputProps={{
               keyboardType: "numeric",
-              style: {
-                color: theme.colors.textPrimary,
-              },
             }}
             theme={{
               containerStyle: {
                 width: "90%",
               },
               pinCodeContainerStyle: {
-                backgroundColor: theme.mode === "dark" ? theme.colors.card : "white",
+                backgroundColor: "white",
                 borderRadius: 4,
-                borderColor: theme.colors.border,
+                borderColor: "#E5E7EB",
               },
               pinCodeTextStyle: {
-                color: theme.colors.textPrimary,
+                color: "black",
                 fontSize: 20,
               },
             }}
           />
-          <Text className="self-end mt-2 px-5" style={{ color: theme.colors.textSecondary }}>{formatTime(timeLeft)}</Text>
+          <Text className="self-end mt-2 px-5">{formatTime(timeLeft)}</Text>
         </View>
         <TouchableOpacity onPress={resend}>
           <Text className="text-cyan-blue text-center" >

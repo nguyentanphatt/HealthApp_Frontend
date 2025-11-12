@@ -35,7 +35,7 @@ dayjs.extend(isoWeek);
 export default function HomeScreen() {
   const setUser = useUserStore(state => state.setUser)
   const { units } = useUnits()
-  const { setUnit } = useUnitsContext()
+  const { setUnit, loadFromAPI: loadUnitsFromAPI } = useUnitsContext()
   const { openModal } = useModalStore();
   const { closeModal } = useModalStore();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -44,8 +44,10 @@ export default function HomeScreen() {
   const [sessionId, setSessionId] = useState("");
   const queryClient = useQueryClient();
   const { t } = useTranslation();
-  const { theme } = useAppTheme();
+  const { theme, loadFromAPI: loadThemeFromAPI } = useAppTheme();
   const [showAll, setShowAll] = useState(false);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+  const hasLoadedSettings = useRef(false);
 
   useEffect(() => {
     const loadTempLanguage = async () => {
@@ -61,6 +63,28 @@ export default function HomeScreen() {
     };
     loadTempLanguage();
   }, [setUnit]);
+
+  useEffect(() => {
+    // Only load settings once when component mounts
+    if (hasLoadedSettings.current) return;
+    
+    const loadSettings = async () => {
+      try {
+        hasLoadedSettings.current = true;
+        setLoadingSettings(true);
+        await Promise.all([
+          loadUnitsFromAPI(),
+          loadThemeFromAPI()
+        ]);
+      } catch (error) {
+        console.error('Error loading settings from API:', error);
+      } finally {
+        setLoadingSettings(false);
+      }
+    };
+    loadSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     data: activityData,
@@ -233,6 +257,14 @@ export default function HomeScreen() {
       },
     },
   });
+
+  if (loadingSettings) {
+    return (
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.textPrimary} />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 font-lato-regular">

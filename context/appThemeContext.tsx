@@ -1,6 +1,8 @@
+import { getUserSetting, updateUserSetting } from "@/services/user";
+import { useAuthStore } from "@/stores/useAuthStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSegments } from "expo-router";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-
 type ThemeMode = "light" | "dark";
 
 type ThemePalette = {
@@ -32,6 +34,7 @@ type ThemeContextValue = {
   theme: AppTheme;
   setMode: (mode: ThemeMode) => Promise<void>;
   toggle: () => Promise<void>;
+  loadFromAPI: () => Promise<void>;
 };
 
 const STORAGE_KEY = "app.theme.mode";
@@ -82,9 +85,32 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
+        // Only try to load from API if user is authenticated
+        const accessToken = useAuthStore.getState().accessToken;
+        if (accessToken) {
+          try {
+            const userSettings = await getUserSetting();
+            if (userSettings?.theme && (userSettings.theme === "light" || userSettings.theme === "dark")) {
+              setModeState(userSettings.theme as ThemeMode);
+              // Save to AsyncStorage for offline support
+              await AsyncStorage.setItem(STORAGE_KEY, userSettings.theme);
+              return;
+            }
+          } catch (error) {
+            // If API fails, fallback to AsyncStorage
+            console.error('Error loading theme from API:', error);
+          }
+        }
+        // Fallback to AsyncStorage if not authenticated or API fails
         const saved = await AsyncStorage.getItem(STORAGE_KEY);
         if (saved === "light" || saved === "dark") setModeState(saved);
-      } catch {}
+      } catch (error) {
+        // Final fallback to AsyncStorage
+        try {
+          const saved = await AsyncStorage.getItem(STORAGE_KEY);
+          if (saved === "light" || saved === "dark") setModeState(saved);
+        } catch {}
+      }
     })();
   }, []);
 
@@ -92,6 +118,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setModeState(next);
     try {
       await AsyncStorage.setItem(STORAGE_KEY, next);
+      await updateUserSetting({ theme: next });
     } catch {}
   }, []);
 
@@ -100,12 +127,29 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     await setMode(next);
   }, [mode, setMode]);
 
+  const loadFromAPI = useCallback(async () => {
+    try {
+      const accessToken = useAuthStore.getState().accessToken;
+      if (!accessToken) {
+        console.warn('Cannot load theme from API: No access token');
+        return;
+      }
+      const userSettings = await getUserSetting();
+      if (userSettings?.theme && (userSettings.theme === "light" || userSettings.theme === "dark")) {
+        setModeState(userSettings.theme as ThemeMode);
+        await AsyncStorage.setItem(STORAGE_KEY, userSettings.theme);
+      }
+    } catch (error) {
+      console.error('Error loading theme from API:', error);
+    }
+  }, []);
+
   const theme: AppTheme = useMemo(
     () => ({ mode, colors: mode === "light" ? lightPalette : darkPalette }),
     [mode]
   );
 
-  const value: ThemeContextValue = useMemo(() => ({ theme, setMode, toggle }), [theme, setMode, toggle]);
+  const value: ThemeContextValue = useMemo(() => ({ theme, setMode, toggle, loadFromAPI }), [theme, setMode, toggle, loadFromAPI]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
@@ -113,7 +157,26 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useAppTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error("useAppTheme must be used within ThemeProvider");
-  return ctx;
+  
+  // Force light mode for auth pages
+  const segments = useSegments();
+  const segmentString = segments.join("/");
+  const isAuthPage = segmentString.includes("introduction") || 
+                     segmentString.includes("auth") ||
+                     segmentString.startsWith("auth/");
+  
+  const theme: AppTheme = useMemo(() => {
+    const effectiveMode = isAuthPage ? "light" : ctx.theme.mode;
+    return {
+      mode: effectiveMode,
+      colors: effectiveMode === "light" ? lightPalette : darkPalette,
+    };
+  }, [isAuthPage, ctx.theme.mode]);
+  
+  return {
+    ...ctx,
+    theme,
+  };
 }
 
 export type { AppTheme, ThemeMode, ThemePalette };

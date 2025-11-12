@@ -1,6 +1,7 @@
 import { useModalStore } from '@/stores/useModalStore';
 import React from 'react';
 import ActionModal from './modal/ActionModal';
+import ConfirmModal from './modal/ConfirmModal';
 import DeleteModal from './modal/DeleteModal';
 import ImagePreviewModal from './modal/ImageViewModal';
 import TimeWheelModal from './modal/TimePickerModal';
@@ -29,6 +30,10 @@ const GlobalModal = () => {
         }
         case "delete": {
             return <DeleteModal  {...modalProps} closeModal={closeModal} />
+        }
+
+        case "confirm": {
+            return <ConfirmModal  {...modalProps} closeModal={closeModal} />
         }
 
         default: {

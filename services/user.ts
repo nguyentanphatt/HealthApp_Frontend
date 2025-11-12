@@ -1,4 +1,4 @@
-import { NewTokens, OtpData, UserProfile, WeeklyGoal } from "@/constants/type";
+import { NewTokens, OtpData, UserProfile, UserSetting, WeeklyGoal } from "@/constants/type";
 import { privateClient, publicClient } from "./client";
 
 export const signup = async (email: string, password: string):Promise<{success:boolean,message:string, userId:string}> => {
@@ -130,9 +130,19 @@ export const updateUserSetting = async (option?: {
   water?: string;
   temp?: string;
   lang?: string;
+  theme?: string;
 }) => {
   try {
     const response = await privateClient.put("/api/user/settings", option || {});
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getUserSetting = async ():Promise<UserSetting> => {
+  try {
+    const response = await privateClient.get("/api/user/settings");
     return response.data
   } catch (error) {
     throw error
@@ -174,6 +184,30 @@ export const getWeeklyGoal = async (option?:{date?:string}):Promise<{success:boo
       params: {
         date: option?.date,
       },
+    });
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const verifyResetPassword = async (email: string, otp: string):Promise<{success:boolean,message:string}> => {
+  try {
+    const response = await publicClient.post("/api/auth/verify-reset-otp", {
+      email,
+      otp,
+    });
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const resetPassword = async (email: string, newPassword: string):Promise<{success:boolean,message:string}> => {
+  try {
+    const response = await publicClient.post("/api/auth/reset-password", {
+      email,
+      newPassword,
     });
     return response.data
   } catch (error) {
