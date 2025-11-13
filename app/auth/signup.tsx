@@ -2,6 +2,7 @@ import InputWithIcon from "@/components/InputWithIcon";
 import { images } from "@/constants/image";
 import i18n from "@/plugins/i18n";
 import { sendOtp, signup } from "@/services/user";
+import { useToastStore } from "@/stores/useToast";
 import { validateConfirmPassword, validateEmail, validatePassword } from "@/utils/validate";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, useRouter } from "expo-router";
@@ -11,6 +12,7 @@ import { Image, Text, TouchableOpacity, View } from "react-native";
 
 const Signup = () => {
   const router = useRouter()
+  const { addToast } = useToastStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -43,6 +45,10 @@ const Signup = () => {
     ) {
       return;
     }
+    if(email === "" || password === "" || confirmPassword === "") {
+      addToast(t("Vui lòng điền đầy đủ thông tin"), "error");
+      return;
+    }
     const response = await signup(email, password);
     if(response.success){
       await AsyncStorage.multiSet([
@@ -54,17 +60,10 @@ const Signup = () => {
     }
     else {
       console.log("error");
-      
+      addToast(response.message, "error");
     }
   };
-  const googleSignin = () => {
-    //Signin with google
-    //Return data to storage in database
-  };
 
-  const localData = () => {
-    //Setup an AsyncStorage to store data
-  };
 
   return (
     <View className="font-lato-regular flex-1 items-center py-10 h-full">

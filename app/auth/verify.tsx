@@ -4,6 +4,7 @@ import { useUnits } from "@/context/unitContext";
 import i18n from "@/plugins/i18n";
 import { sendOtp, verifyOtp } from "@/services/user";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useToastStore } from "@/stores/useToast";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
@@ -21,6 +22,7 @@ const Verify = () => {
   const [timeLeft, setTimeLeft] = useState(5 * 60);
   const setTokens = useAuthStore(state => state.setTokens)
   const { t } = useTranslation(); 
+  const { addToast } = useToastStore();
   useEffect(() => {
     const loadLanguage = async () => {
       try {
@@ -83,14 +85,14 @@ const Verify = () => {
      } 
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
-      console.log(err.response?.data.message);
+      addToast(err.response?.data.message || t("Lỗi khi xác thực OTP"), "error");
     }
   }
 
   const resend = async () => {
     try {
       await sendOtp(email)
-      console.log("Đã gửi lại mã OTP");
+      addToast(t("Đã gửi lại mã OTP"), "success");
     } catch (error) {
       throw error
     }

@@ -5,7 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Href, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
+import { Linking, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 
 const Page = () => {
   const router = useRouter();
@@ -41,6 +41,7 @@ const Page = () => {
       id: 2,
       settingName: t("Quyền"),
       isSwitch: false,
+      href: '/user/setting/policy'
     },
     {
       id: 3,
@@ -54,14 +55,9 @@ const Page = () => {
       isSwitch: false,
       href: '/user/setting/delete'
     },
-    {
-      id: 5,
-      settingName: t("Xóa dữ liệu cá nhân"),
-      isSwitch: false,
-    },
   ];
 
-  const handlePress = (id: number, href?: string) => {
+  const handlePress = async (id: number, href?: string) => {
     if (id === 4) {
       openModal("confirm", {
         title: t("đăng xuất"),
@@ -71,6 +67,17 @@ const Page = () => {
           router.push("/auth/signin" as Href);
         },
       });
+    }
+    else if (id === 1) {
+      let url = 'https://www.freeprivacypolicy.com/live/0110d8b7-8fa1-4c5d-a461-3080383b11d8'
+      const supported = await Linking.canOpenURL(url);
+
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        console.log("Không thể mở đường dẫn: ", url);
+
+      }
     } else {
       router.push(href as Href);
     }

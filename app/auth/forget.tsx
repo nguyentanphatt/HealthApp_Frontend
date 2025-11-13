@@ -1,10 +1,11 @@
 import InputWithIcon from "@/components/InputWithIcon";
 import { images } from "@/constants/image";
 import i18n from "@/plugins/i18n";
-import { resetPassword, sendOtp, signup, verifyResetPassword } from "@/services/user";
+import { resetPassword, sendOtp, verifyResetPassword } from "@/services/user";
+import { useToastStore } from "@/stores/useToast";
 import { validateConfirmPassword, validateEmail, validatePassword } from "@/utils/validate";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -16,12 +17,14 @@ const Signup = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [otp, setOtp] = useState("");
     const [isOtpFocused, setIsOtpFocused] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(0);
     const [errorMessage, setErrorMessage] = useState({
         email: "",
         password: "",
         confirmPassword: ""
     });
     const { t } = useTranslation();
+    const { addToast } = useToastStore();
 
     useEffect(() => {
         const loadLanguage = async () => {
@@ -37,37 +40,31 @@ const Signup = () => {
         loadLanguage();
     }, []);
 
-    const handleSignup = async () => {
-        if (
-            errorMessage.email ||
-            errorMessage.password ||
-            errorMessage.confirmPassword
-        ) {
-            return;
-        }
-        const response = await signup(email, password);
-        if (response.success) {
-            await AsyncStorage.multiSet([
-                ["email", email],
-                ["type", "signup"]
-            ]);
-            await sendOtp(email)
-            router.push('/auth/verify')
-        }
-        else {
-            console.log("error");
+    useEffect(() => {
+        if (timeLeft <= 0) return;
 
-        }
+        const interval = setInterval(() => {
+            setTimeLeft((prev) => prev - 1);
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [timeLeft]);
+
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s < 10 ? "0" : ""}${s}`;
     };
 
     const handleSendOtp = async () => {
         const response = await sendOtp(email);
         if (response.success) {
             console.log("OTP sent successfully");
-            
+            addToast(t("Đã gửi mã OTP"), "success");
+            setTimeLeft(5 * 60); // 5 minutes countdown
         }
         else {
-            console.log("error");
+            addToast(response.message, "error");
         }
     };
 
@@ -79,11 +76,11 @@ const Signup = () => {
                 router.push('/auth/signin')
             }
             else {
-                console.log("error");
+                addToast(resetResponse.message, "error");
             }
         }
         else {
-            console.log("error");
+            addToast(response.message, "error");
         }
     };
 
@@ -98,7 +95,7 @@ const Signup = () => {
                 source={images.star}
                 className="-z-10 absolute top-[20%] -left-[15%] w-[100px] h-[100px]"
             />
-            <View className="flex-1 items-center justify-center w-full gap-[6%] z-10 bg-white/40 backdrop-blur-md px-5">
+            <View className=" items-center justify-center w-full gap-[6%] z-10 bg-white/40 backdrop-blur-md px-5">
                 <InputWithIcon
                     icon="envelope"
                     placeholder="Email"
@@ -127,10 +124,14 @@ const Signup = () => {
                         />
                     </View>
                     <TouchableOpacity
-                        className="flex items-center justify-center py-4 w-[50px] bg-cyan-blue rounded-md"
+                        className="flex items-center justify-center py-4 px-3 bg-cyan-blue rounded-md"
                         onPress={() => handleSendOtp()}
+                        disabled={timeLeft > 0}
+                        style={{ opacity: timeLeft > 0 ? 0.6 : 1, minWidth: 60 }}
                     >
-                        <Text className="text-white">{t("Gửi")}</Text>
+                        <Text className="text-white text-xs font-medium">
+                            {timeLeft > 0 ? formatTime(timeLeft) : t("Gửi")}
+                        </Text>
                     </TouchableOpacity>
                 </View>
 
@@ -170,6 +171,14 @@ const Signup = () => {
                 >
                     <Text className="text-white">{t("Đặt lại")}</Text>
                 </TouchableOpacity>
+            </View>
+            <View className="flex items-center gap-2">
+                <Text className="text-black/50">
+                    {t("Đã có tài khoản? ")}{" "}
+                    <Link href={"/auth/signin"} className="text-cyan-blue">
+                        {t("Đăng nhập")}
+                    </Link>
+                </Text>
             </View>
         </View>
     );

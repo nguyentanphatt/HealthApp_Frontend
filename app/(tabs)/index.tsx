@@ -83,7 +83,6 @@ export default function HomeScreen() {
       }
     };
     loadSettings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const {
@@ -366,9 +365,9 @@ export default function HomeScreen() {
           </Card>
 
           {sessionId && (
-            <TouchableOpacity onPress={() => router.push('/activity' as Href)} className="flex p-4 items-center justify-between bg-white shadow-md rounded-md">
-              <Text className="text-xl text-black/60">{t("Bạn đang có buổi tập tạm dừng")}</Text>
-              <Text className="text-2xl font-bold">{t("Tiếp tục tập")}</Text>
+            <TouchableOpacity onPress={() => router.push('/activity' as Href)} className="flex p-4 items-center justify-between shadow-md rounded-md" style={{ backgroundColor: theme.colors.card }}>
+              <Text className="text-xl" style={{ color: theme.colors.textSecondary }}>{t("Bạn đang có buổi tập tạm dừng")}</Text>
+              <Text className="text-2xl font-bold" style={{ color: theme.colors.textPrimary }}>{t("Tiếp tục tập")}</Text>
             </TouchableOpacity>
           )}
 

@@ -9,7 +9,7 @@ const WaterWheelModal = ({ title, items, initialValue, currentDate, handleConfir
     () => items.map((it: any) => ({ label: it.label, value: it.amount })),
     [items]
   );
-  // Do not auto-scroll to initial value; start at top with the first item centered
+
   const [selectedIndex, setSelectedIndex] = useState(0);
   const listRef = useRef<FlatList<{ label: string; value: number }>>(null);
 

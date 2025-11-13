@@ -2,6 +2,8 @@ import InputWithIcon from "@/components/InputWithIcon";
 import { images } from "@/constants/image";
 import i18n from "@/plugins/i18n";
 import { signin } from "@/services/user";
+import { useToastStore } from "@/stores/useToast";
+import { validateEmail } from "@/utils/validate";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
@@ -12,9 +14,15 @@ import { Image, Text, TouchableOpacity, View } from "react-native";
 
 const Signin = () => {
   const router = useRouter();
+  const { addToast } = useToastStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { t } = useTranslation();
+  const [errorMessage, setErrorMessage] = useState({
+    email: "",
+    password: "",
+  });
+  const [apiError, setApiError] = useState("");
 
   useEffect(() => {
     const loadLanguage = async () => {
@@ -46,8 +54,9 @@ const Signin = () => {
 
     onError: (error) => {
       const err = error as AxiosError<{ message: string }>;
-      const msg = err.response?.data?.message || "Đăng nhập thất bại!";
-      console.log("err", err);
+      const msg = err.response?.data?.message || t("Đăng nhập thất bại!");
+      addToast(msg, "error");
+      console.log("err", msg);
     },
   })
 
@@ -78,6 +87,11 @@ const Signin = () => {
           placeholder={t("Email")}
           value={email}
           onChangeText={setEmail}
+          onBlur={() => {
+            const emailError = validateEmail(email);
+            setErrorMessage((prev) => ({ ...prev, email: t(emailError) }));
+          }}
+          error={errorMessage.email}
         />
 
         <View className="w-full">
@@ -89,14 +103,17 @@ const Signin = () => {
             onChangeText={setPassword}
           />
           <TouchableOpacity onPress={() => router.push("/auth/forget" as Href)}>
-            <Text className="text-sm text-black/50 self-end pt-2">
+            <Text className="text-sm text-black/50 self-end pt-4">
               {t("Quên mật khẩu ?")}
             </Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity
           className="flex items-center justify-center py-4 w-full bg-cyan-blue rounded-full"
-          onPress={() => signinMutation.mutate({ email, password })}
+          onPress={() => {
+            setApiError("");
+            signinMutation.mutate({ email, password });
+          }}
         >
           <Text className="text-white">{t("Đăng nhập")}</Text>
         </TouchableOpacity>
