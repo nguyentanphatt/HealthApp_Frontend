@@ -2,8 +2,8 @@ import { workQuestions } from '@/constants/data';
 import { useAppTheme } from '@/context/appThemeContext';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Animated, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 interface QuestionFlowProps {
   onComplete: (answers: number[]) => void;
@@ -14,18 +14,9 @@ const QuestionFlow = ({ onComplete }: QuestionFlowProps) => {
   const { theme } = useAppTheme();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
-  const [slideAnim] = useState(new Animated.Value(0));
 
   const currentQuestion = workQuestions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === workQuestions.length - 1;
-
-  useEffect(() => {
-    Animated.timing(slideAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  }, [currentQuestionIndex]);
 
   const handleSelectAnswer = (answerId: number) => {
     const newAnswers = [...selectedAnswers];
@@ -34,13 +25,7 @@ const QuestionFlow = ({ onComplete }: QuestionFlowProps) => {
   };
 
   const nextQuestion = () => {
-    Animated.timing(slideAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      setCurrentQuestionIndex(prev => prev + 1);
-    });
+    setCurrentQuestionIndex(prev => prev + 1);
   };
 
   const handleComplete = () => {
@@ -53,26 +38,8 @@ const QuestionFlow = ({ onComplete }: QuestionFlowProps) => {
 
   const prevQuestion = () => {
     if (currentQuestionIndex > 0) {
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start(() => {
-        setCurrentQuestionIndex(prev => prev - 1);
-      });
+      setCurrentQuestionIndex(prev => prev - 1);
     }
-  };
-
-  const slideStyle = {
-    transform: [
-      {
-        translateX: slideAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [300, 0],
-        }),
-      },
-    ],
-    opacity: slideAnim,
   };
 
   return (
@@ -97,58 +64,55 @@ const QuestionFlow = ({ onComplete }: QuestionFlowProps) => {
         </View>
         <View className="w-full bg-gray-100 rounded-full h-2">
           <View
-            className="bg-cyan-blue h-2 rounded-full transition-all duration-300"
+            className="bg-cyan-blue h-2 rounded-full"
             style={{ width: `${((currentQuestionIndex + 1) / workQuestions.length) * 100}%` }}
           />
         </View>
       </View>
 
-      <Animated.View style={[slideStyle, { flex: 1 }]}>
-        <View className="justify-center items-center px-6">
-          <Text className="text-2xl font-bold text-center mb-8" style={{ color: theme.colors.textPrimary }}>
-            {currentQuestion.question}
-          </Text>
+      <View className="flex-1 justify-center items-center px-6">
+        <Text className="text-2xl font-bold text-center mb-8" style={{ color: theme.colors.textPrimary }}>
+          {currentQuestion.question}
+        </Text>
 
-          <View className="w-full gap-4">
-            {currentQuestion.answers.map((answer) => {
-              const isSelected = selectedAnswers[currentQuestionIndex] === answer.id;
+        <View className="w-full gap-4">
+          {currentQuestion.answers.map((answer) => {
+            const isSelected = selectedAnswers[currentQuestionIndex] === answer.id;
 
-              return (
-                <TouchableOpacity
-                  key={answer.id}
-                  className="w-full border-2 rounded-full p-4"
+            return (
+              <TouchableOpacity
+                key={answer.id}
+                className="w-full border-2 rounded-full p-4"
+                activeOpacity={1}
+                style={{
+                  backgroundColor: isSelected
+                    ? "#19B1FF"
+                    : theme.mode === "dark"
+                      ? theme.colors.card
+                      : "#f3f4f6",
+                  borderColor: isSelected
+                    ? "#19B1FF"
+                    : theme.mode === "dark"
+                      ? theme.colors.border
+                      : "#d1d5db",
+                }}
+                onPress={() => handleSelectAnswer(answer.id)}
+              >
+                <Text
+                  className="text-lg text-center"
                   style={{
-                    backgroundColor: isSelected
-                      ? "#19B1FF"
-                      : theme.mode === "dark"
-                        ? theme.colors.card
-                        : "#f3f4f6",
-                    borderColor: isSelected
-                      ? "#19B1FF"
-                      : theme.mode === "dark"
-                        ? theme.colors.border
-                        : "#d1d5db",
+                    color: isSelected
+                      ? (theme.mode === "dark" ? theme.colors.textPrimary : "#000")
+                      : "#000"
                   }}
-                  onPress={() => handleSelectAnswer(answer.id)}
                 >
-                  <Text
-                    className="text-lg text-center"
-                    style={{
-                      color: isSelected
-                        ? "#fff"
-                        : theme.mode === "dark"
-                          ? theme.colors.textPrimary
-                          : theme.colors.textSecondary,
-                    }}
-                  >
-                    {answer.answer}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+                  {answer.answer}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
-      </Animated.View>
+      </View>
 
       <View className="flex-row justify-between items-center p-6">
         <TouchableOpacity

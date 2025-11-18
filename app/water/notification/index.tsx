@@ -95,7 +95,7 @@ const Page = () => {
           initialHour={selectedHour}
           initialMinute={selectedMinute}
           onChange={(hour, minute) => {
-            setSelectedHour(hour-1);
+            setSelectedHour(hour);
             setSelectedMinute(minute);
           }}
         />
