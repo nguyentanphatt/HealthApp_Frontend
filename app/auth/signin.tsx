@@ -1,12 +1,11 @@
 import InputWithIcon from "@/components/InputWithIcon";
 import { images } from "@/constants/image";
 import i18n from "@/plugins/i18n";
-import { googleSigninAPI, signin } from "@/services/user";
+import { signin } from "@/services/user";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useToastStore } from "@/stores/useToast";
 import { validateEmail } from "@/utils/validate";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from "@react-native-google-signin/google-signin";
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { Href, Link, useRouter } from "expo-router";
@@ -62,15 +61,15 @@ const Signin = () => {
       console.log("err", msg);
     },
   })
-  
-  useEffect(() => {
+  //Comment this when testing on local expo go
+  /* useEffect(() => {
     GoogleSignin.configure({
       webClientId: "424764431800-foqjtm63t5bm82qtcsmr1g3r596rmkjc.apps.googleusercontent.com",
     });
-  },[])
+  },[]) */
 
   const googleSignin = async () => {
-    try {
+    /* try {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
       if (isSuccessResponse(response)) {
@@ -105,8 +104,9 @@ const Signin = () => {
       } else {
         addToast(t("Đã xảy ra lỗi"), "error");
       }
-    }
+    } */
   };
+  //
 
 
   return (

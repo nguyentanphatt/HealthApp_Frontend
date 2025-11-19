@@ -2,7 +2,7 @@ import ActivityResult from '@/components/ActivityResult';
 import { darkMapStyle, lightMapStyle } from '@/constants/mapStyle';
 import { useAppTheme } from '@/context/appThemeContext';
 import { getActivityById, getAllLocations } from '@/services/activity';
-import { formatDistance, formatTime } from '@/utils/activityHelper';
+import { decimalToHHMMSS, formatDistance } from '@/utils/activityHelper';
 import { formatDateTimeRange } from '@/utils/convertTime';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -23,8 +23,6 @@ const Page = () => {
                 const validId = Array.isArray(id) ? id[0] : id;
                 const response = await getActivityById(validId);
                 const location = await getAllLocations(validId);
-                console.log("response", response);
-                console.log("location", location);
                 setData(response.data);
                 setLocations(location.data);
                 
@@ -80,7 +78,7 @@ const Page = () => {
             <ActivityResult
               icon="clock"
               title="Tổng thời gian"
-              result={formatTime((data?.totalTime ? data.totalTime * 60 : 0))}
+              result={ decimalToHHMMSS(data?.totalTime ?? 0)}
             />
             <ActivityResult
               icon="person-walking"
@@ -90,24 +88,24 @@ const Page = () => {
             <ActivityResult
               icon="gauge"
               title="Vận tốc trung bình"
-              result={`${data?.avgSpeed ?? 0} km/h`}
+              result={`${Number(data?.avgSpeed).toFixed(1) ?? 0} km/h`}
             />
           </View>
           <View className='w-[45%] flex gap-3'>
             <ActivityResult
               icon="bolt"
               title="Thời gian hoạt động"
-              result={formatTime(data?.activeTime ? data.activeTime * 60 : 0)}
+              result={decimalToHHMMSS(data?.activeTime ?? 0)}
             />
             <ActivityResult
               icon="fire"
               title="Lượng calo"
-              result={`${(data?.caloriesBurned ?? 0).toFixed(1)} kcal`}
+              result={`${Number(data?.kcal).toFixed(1) ?? 0} kcal`}
             />
             <ActivityResult
               icon="gauge-high"
               title="Vận tốc tối đa"
-              result={`${data?.maxSpeed ?? 0} km/h`}
+              result={`${Number(data?.maxSpeed).toFixed(1) ?? 0} km/h`}
             />
           </View>
         </View>

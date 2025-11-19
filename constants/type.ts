@@ -304,8 +304,8 @@ export interface VideoType {
 
 export interface Activity {
   sessionId: string;
-  startTime: number;
-  endTime: number;
+  startTime: string | number;
+  endTime: string | number;
   distanceKm: number;
   stepCount: number;
   kcal: number;

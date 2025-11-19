@@ -95,6 +95,7 @@ const Page = () => {
                 totalTime: activityData.elapsed / 1000,
                 activeTime: activityData.activeTime / 1000,
               });
+
             } catch (error) {
               throw error;
             }

@@ -28,12 +28,25 @@ export const formatTime = (milliseconds: number) => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
+export const decimalToHHMMSS = (decimal: number): string => {
+    const minutes = Math.floor(decimal);
+    const seconds = Math.round((decimal - minutes) * 100);
+  
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+  
+    const hh = hours.toString().padStart(2, "0");
+    const mm = remainingMinutes.toString().padStart(2, "0");
+    const ss = seconds.toString().padStart(2, "0");
+  
+    return `${hh}:${mm}:${ss}`;
+  }
+
 export const formatSpeed = (speedMs: number) => {
     const speedKmh = (speedMs * 3.6).toFixed(1);
     return `${speedKmh} km/h`;
 };
 
-// Format distance
 export const formatDistance = (distanceMeters: number): string => {
     const meters = distanceMeters * 1000;
     if (meters >= 1000) {
@@ -90,9 +103,11 @@ export const saveActivityDataToStorage = async (data: {
     caloriesBurned: number;
     currentMV: number;
     startTime: number | null;
+    endTime?: number | null;
     elapsed: number;
     activeTime: number;
 }) => {
+    const endTimestamp = data.endTime ?? Date.now();
     
     await AsyncStorage.multiSet([
         ["distance", data.distance.toString()],
@@ -104,9 +119,9 @@ export const saveActivityDataToStorage = async (data: {
         ["maxSpeed", (data.maxSpeed * 3.6).toFixed(1)],
         ["currentMV", data.currentMV.toString()],
         ["startTime", data.startTime?.toString() ?? ""],
+        ["endTime", endTimestamp.toString()],
         ["elapsed", (data.elapsed / 60).toFixed(1)],
         ["activeTime", (data.activeTime / 60).toFixed(1)],
-        ["endTime", Date.now().toString()],
         ["Date", new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })],
     ]);
 

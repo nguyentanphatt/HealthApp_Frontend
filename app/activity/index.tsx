@@ -460,7 +460,6 @@ const Page = () => {
     };
 
     const stopTracking = async () => {
-        AsyncStorage.removeItem('activity_session_id');
         let finalCalories = 0;
         if (mvCountRef.current > 0) {
             const avgMV = mvSumRef.current / mvCountRef.current;
@@ -472,6 +471,8 @@ const Page = () => {
             }
         }
 
+        const endTime = Date.now();
+
         saveActivityDataToStorage({
             distance: totalDistanceMeters,
             stepCount,
@@ -482,6 +483,7 @@ const Page = () => {
             caloriesBurned: finalCalories,
             currentMV,
             startTime: startTimeRef.current,
+            endTime,
             elapsed,
             activeTime
         });
@@ -646,7 +648,7 @@ const Page = () => {
                 activeTime: currentActiveTime
             };
 
-            console.log('Activity snapshot', snapshot);
+            //console.log('Activity snapshot', snapshot);
 
             try {
                 isSyncingRef.current = true;
@@ -673,7 +675,7 @@ const Page = () => {
                         totalTimeNum,
                         activeTimeNum,
                     );
-                    console.log("data created");
+                    console.log("data created", res.data);
 
                     const createdId = (res as any)?.sessionId ?? (res as any)?.data?.sessionId ?? null;
                     if (createdId != null) {
@@ -694,8 +696,6 @@ const Page = () => {
                         totalTime: totalTimeNum,
                         activeTime: activeTimeNum,
                     });
-
-                    console.log("data updated in db", response);
 
                     const unsynced = positionsRef.current
                         .filter(p => p.time > lastSyncedLocationTimeRef.current)
@@ -785,16 +785,6 @@ const Page = () => {
                     {polygonCoords && <Polygon coordinates={polygonCoords} fillColor="rgba(0,122,255,0.2)" strokeColor="rgba(0,122,255,0.5)" />}
                     {current && <Marker coordinate={current} title="Bạn đang ở đây" />}
                 </MapView>
-            )}
-
-            {isStart && (
-                <View className='absolute bottom-[30%] right-4'>
-                    <TouchableOpacity
-                        onPress={() => setShowPolygon((s) => !s)}
-                        className="px-4 py-3 rounded-lg" style={{ backgroundColor: theme.colors.card }}>
-                        <Text style={{ color: theme.colors.textPrimary }}>{showPolygon ? "Đường đi: bật" : "Đường đi: tắt"}</Text>
-                    </TouchableOpacity>
-                </View>
             )}
 
             {isLocked === false && (

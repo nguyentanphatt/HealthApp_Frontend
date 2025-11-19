@@ -114,9 +114,29 @@ export const formatDateTimeRange = (startTime: number | null, endTime: string | 
 };
 
 //format activity date and time range
-export const formatTimeRange = (startTime: number | null, endTime: string | number) => {
-    const startDate = new Date(startTime || 0);
-    const endDate = new Date(endTime);
+export const formatTimeRange = (
+    startTime: number | string | null,
+    endTime: number | string | null
+) => {
+    const parseTime = (value: number | string | null): Date => {
+        if (typeof value === "number") {
+            return new Date(value);
+        }
+        if (typeof value === "string" && value.trim() !== "") {
+            const numeric = Number(value);
+            if (Number.isFinite(numeric)) {
+                return new Date(numeric);
+            }
+            const parsed = Date.parse(value);
+            if (!Number.isNaN(parsed)) {
+                return new Date(parsed);
+            }
+        }
+        return new Date(0);
+    };
+
+    const startDate = parseTime(startTime);
+    const endDate = parseTime(endTime);
 
     const startTimeStr = startDate.toLocaleTimeString('vi-VN', {
         hour: '2-digit',
@@ -129,6 +149,10 @@ export const formatTimeRange = (startTime: number | null, endTime: string | numb
         minute: '2-digit',
         hour12: false
     });
+
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+        return 'Invalid Date';
+    }
 
     return `${startTimeStr} - ${endTimeStr}`;
 

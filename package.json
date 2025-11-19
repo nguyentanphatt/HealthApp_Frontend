@@ -23,6 +23,7 @@
     "dayjs": "^1.11.18",
     "eas-cli": "^16.19.1",
     "expo": "^54.0.22",
+    "expo-auth-session": "~7.0.9",
     "expo-background-fetch": "^14.0.7",
     "expo-blur": "~15.0.7",
     "expo-checkbox": "~5.0.7",
@@ -75,6 +76,7 @@
     "react-native-youtube-iframe": "^2.4.1",
     "tailwind-merge": "^3.3.1",
     "tailwind-variants": "^3.1.1",
+    "undefined": "expo-auth-session/providers/google",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
