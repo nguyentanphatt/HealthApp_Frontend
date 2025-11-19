@@ -1,6 +1,4 @@
 import { images } from "@/constants/image";
-import { useAppTheme } from "@/context/appThemeContext";
-import { useUnits } from "@/context/unitContext";
 import i18n from "@/plugins/i18n";
 import { sendOtp, verifyOtp } from "@/services/user";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -14,8 +12,6 @@ import { Image, Text, TouchableOpacity, View } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
 const Verify = () => {
   const router = useRouter()
-  const { theme, loadFromAPI: loadThemeFromAPI } = useAppTheme();
-  const { loadFromAPI: loadUnitsFromAPI } = useUnits();
   const [email, setEmail] = useState("");
   const [type, setType] = useState("");
   const [otp, setOtp] = useState("");

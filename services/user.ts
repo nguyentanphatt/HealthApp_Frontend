@@ -1,4 +1,4 @@
-import { NewTokens, OtpData, UserProfile, UserSetting, WeeklyGoal } from "@/constants/type";
+import { NewTokens, OtpData, User, UserProfile, UserSetting, WeeklyGoal } from "@/constants/type";
 import { privateClient, publicClient } from "./client";
 
 export const signup = async (email: string, password: string):Promise<{success:boolean,message:string, userId:string}> => {
@@ -225,6 +225,23 @@ export const changePassword = async ({
 export const getInfoUserLogin = async ():Promise<{success:boolean, data: {userId:string, email:string}}> => {
   try {
     const response = await privateClient.get("/api/auth/me");
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+export const googleSigninAPI = async (name: string, email: string, imageUrl: string):Promise<{success:boolean, message:string, data: {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+}}> => {
+  try {
+    const response = await publicClient.post("/api/auth/google", {
+      name,
+      email,
+      imageUrl,
+    });
     return response.data
   } catch (error) {
     throw error
