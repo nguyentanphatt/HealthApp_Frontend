@@ -4,7 +4,7 @@
     "slug": "HealthApp",
     "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.jpg",
+    "icon": "./assets/images/icon.png",
     "scheme": "HealthApp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.jpg",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -31,12 +31,13 @@
         "googleMaps": {
           "apiKey": "process.env.GOOGLE_MAPS_API_KEY"
         }
-      }
+      },
+      "windowSoftInputMode": "adjustResize"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/icon.jpg"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       [
@@ -50,7 +51,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/icon.jpg",
+          "image": "./assets/images/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -60,7 +61,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icon.jpg",
+          "icon": "./assets/images/icon.png",
           "color": "#ffffff"
         }
       ]

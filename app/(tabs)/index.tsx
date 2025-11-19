@@ -201,7 +201,7 @@ export default function HomeScreen() {
 
   const userProfileMutation = useMutation({
     mutationFn: async () => {
-      return await getUserProfile()
+        return await getUserProfile()
     },
     onSuccess: (response) => {
       setUser(response)

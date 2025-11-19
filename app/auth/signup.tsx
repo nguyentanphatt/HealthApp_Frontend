@@ -67,16 +67,16 @@ const Signup = () => {
 
   return (
     <View className="font-lato-regular flex-1 items-center py-10 h-full">
-      <Text className="text-2xl font-bold text-center py-20">{t("Đăng ký")}</Text>
+      <Text className="text-2xl font-bold text-center py-16">{t("Đăng ký")}</Text>
       <Image
         source={images.star}
         className="-z-10 absolute top-1/5 -right-[10%] w-[100px] h-[100px]"
       />
       <Image
         source={images.star}
-        className="-z-10 absolute top-[20%] -left-[15%] w-[100px] h-[100px]"
+        className="-z-10 absolute top-[100px] -left-[15%] w-[100px] h-[100px]"
       />
-      <View className="flex-1 items-center justify-center w-full gap-[6%] z-10 bg-white/40 backdrop-blur-md px-5">
+      <View className="flex-1 items-center justify-start w-full gap-10 z-10 bg-white/40 backdrop-blur-md px-5">
         <InputWithIcon
           icon="envelope"
           placeholder="Email"
@@ -125,12 +125,12 @@ const Signup = () => {
         >
           <Text className="text-white">{t("Đăng ký")}</Text>
         </TouchableOpacity>
-        <View className="flex flex-row items-center justify-center gap-1">
+        <View className="hidden flex flex-row items-center justify-center gap-1">
           <View className="w-[100px] h-0.5 bg-gray-400" />
           <Text>{t("hoặc")}</Text>
           <View className="w-[100px] h-0.5 bg-gray-400" />
         </View>
-        <TouchableOpacity className="flex items-center justify-center p-4 rounded-md bg-white shadow-sm">
+        <TouchableOpacity className="hidden flex items-center justify-center p-4 rounded-md bg-white shadow-sm">
           <Image source={images.googleicon} className="size-[25px]" />
         </TouchableOpacity>
         <View className="flex items-center gap-2">
@@ -140,7 +140,7 @@ const Signup = () => {
               {t("Đăng nhập")}
             </Link>
           </Text>
-          <Text className="text-black/50">{t("Duy trì trạng thái đăng xuất")}</Text>
+          <Text className="hidden text-black/50">{t("Duy trì trạng thái đăng xuất")}</Text>
         </View>
       </View>
     </View>

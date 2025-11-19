@@ -51,14 +51,20 @@ const Page = () => {
     },
     {
       id: 4,
+      settingName: t("Thay đổi mật khẩu"),
+      isSwitch: false,
+      href: '/user/setting/changepassword'
+    },
+    {
+      id: 5,
       settingName: t("Đăng xuất"),
       isSwitch: false,
       href: '/user/setting/delete'
-    },
+    }
   ];
 
   const handlePress = async (id: number, href?: string) => {
-    if (id === 4) {
+    if (id === 5) {
       openModal("confirm", {
         title: t("đăng xuất"),
         onConfirm: () => {
@@ -78,7 +84,8 @@ const Page = () => {
         console.log("Không thể mở đường dẫn: ", url);
 
       }
-    } else {
+    }
+    else {
       router.push(href as Href);
     }
   }

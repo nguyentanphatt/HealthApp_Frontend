@@ -229,6 +229,7 @@ export interface UpdateSleepRecordResponse {
 }
 
 export interface UserSetting {
+  email?: string,
   userId: string,
   height: string
   weight: string,

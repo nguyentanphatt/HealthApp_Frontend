@@ -48,10 +48,6 @@ function InnerRoot() {
           >
             <Stack.Screen name="introduction" />
             <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="auth/signin" />
-            <Stack.Screen name="water/index" />
-            <Stack.Screen name="water/edit/index" />
-            <Stack.Screen name="food/index" />
           </Stack>
           <ToastContainer />
         </UnitProvider>

@@ -203,12 +203,28 @@ export const verifyResetPassword = async (email: string, otp: string):Promise<{s
   }
 }
 
-export const resetPassword = async (email: string, newPassword: string):Promise<{success:boolean,message:string}> => {
+
+export const changePassword = async ({
+  email,
+  newPassword,
+}: {
+  email: string;
+  newPassword: string;
+}): Promise<{ success: boolean; message: string }> => {
   try {
     const response = await publicClient.post("/api/auth/reset-password", {
       email,
       newPassword,
     });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getInfoUserLogin = async ():Promise<{success:boolean, data: {userId:string, email:string}}> => {
+  try {
+    const response = await privateClient.get("/api/auth/me");
     return response.data
   } catch (error) {
     throw error

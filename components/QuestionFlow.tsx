@@ -102,8 +102,10 @@ const QuestionFlow = ({ onComplete }: QuestionFlowProps) => {
                   className="text-lg text-center"
                   style={{
                     color: isSelected
-                      ? (theme.mode === "dark" ? theme.colors.textPrimary : "#000")
-                      : "#000"
+                      ? "#fff"
+                      : theme.mode === "dark"
+                        ? theme.colors.textPrimary
+                        : "#000",
                   }}
                 >
                   {answer.answer}
