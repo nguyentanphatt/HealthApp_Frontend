@@ -1,17 +1,19 @@
 import InputWithIcon from "@/components/InputWithIcon";
 import { images } from "@/constants/image";
 import i18n from "@/plugins/i18n";
-import { sendOtp, signup } from "@/services/user";
+import { googleSigninAPI, sendOtp, signup } from "@/services/user";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useToastStore } from "@/stores/useToast";
 import { validateConfirmPassword, validateEmail, validatePassword } from "@/utils/validate";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from "@react-native-google-signin/google-signin";
 import { Link, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, Text, TouchableOpacity, View } from "react-native";
-
 const Signup = () => {
   const router = useRouter()
+  const setTokens = useAuthStore(state => state.setTokens)
   const { addToast } = useToastStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -63,6 +65,53 @@ const Signup = () => {
       addToast(response.message, "error");
     }
   };
+
+  //Comment this when testing on local expo go
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: "424764431800-foqjtm63t5bm82qtcsmr1g3r596rmkjc.apps.googleusercontent.com",
+    });
+  },[])
+
+  const googleSignin = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (isSuccessResponse(response)) {
+        const {idToken, user} = response.data
+        const {name, email, photo} = user
+        console.log("name", name);
+        console.log("email", email);
+        console.log("photo", photo);
+        const res = await googleSigninAPI(name || "", email || "", photo || "");
+        if (res.success) {
+          addToast(res.message, "success");
+          setTokens(res.data.accessToken, res.data.refreshToken)
+          router.push("/(tabs)");
+        } else {
+          addToast(res.message, "error");
+        }
+      } else {
+        addToast(t("Đăng nhập thất bại"), "error");
+      }
+    } catch (error) {
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.IN_PROGRESS:
+            addToast(t("Đang xử lý..."), "error");
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            addToast(t("Play services không khả dụng"), "error");
+            break;
+          default:
+            addToast(t("Đã xảy ra lỗi"), "error");
+        }
+      } else {
+        addToast(t("Đã xảy ra lỗi"), "error");
+      }
+    }
+  };
+  //
 
 
   return (
@@ -125,12 +174,12 @@ const Signup = () => {
         >
           <Text className="text-white">{t("Đăng ký")}</Text>
         </TouchableOpacity>
-        <View className="hidden flex flex-row items-center justify-center gap-1">
+        <View className="flex flex-row items-center justify-center gap-1">
           <View className="w-[100px] h-0.5 bg-gray-400" />
           <Text>{t("hoặc")}</Text>
           <View className="w-[100px] h-0.5 bg-gray-400" />
         </View>
-        <TouchableOpacity className="hidden flex items-center justify-center p-4 rounded-md bg-white shadow-sm">
+        <TouchableOpacity className="flex items-center justify-center p-4 rounded-md bg-white shadow-sm" onPress={googleSignin}>
           <Image source={images.googleicon} className="size-[25px]" />
         </TouchableOpacity>
         <View className="flex items-center gap-2">
@@ -140,7 +189,7 @@ const Signup = () => {
               {t("Đăng nhập")}
             </Link>
           </Text>
-          <Text className="hidden text-black/50">{t("Duy trì trạng thái đăng xuất")}</Text>
+          <Text className="text-black/50">{t("Duy trì trạng thái đăng xuất")}</Text>
         </View>
       </View>
     </View>

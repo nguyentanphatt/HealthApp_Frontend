@@ -1,11 +1,12 @@
 import InputWithIcon from "@/components/InputWithIcon";
 import { images } from "@/constants/image";
 import i18n from "@/plugins/i18n";
-import { signin } from "@/services/user";
+import { googleSigninAPI, signin } from "@/services/user";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useToastStore } from "@/stores/useToast";
 import { validateEmail } from "@/utils/validate";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from "@react-native-google-signin/google-signin";
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { Href, Link, useRouter } from "expo-router";
@@ -62,14 +63,14 @@ const Signin = () => {
     },
   })
   //Comment this when testing on local expo go
-  /* useEffect(() => {
+  useEffect(() => {
     GoogleSignin.configure({
       webClientId: "424764431800-foqjtm63t5bm82qtcsmr1g3r596rmkjc.apps.googleusercontent.com",
     });
-  },[]) */
+  },[])
 
   const googleSignin = async () => {
-    /* try {
+    try {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
       if (isSuccessResponse(response)) {
@@ -104,7 +105,7 @@ const Signin = () => {
       } else {
         addToast(t("Đã xảy ra lỗi"), "error");
       }
-    } */
+    }
   };
   //
 
@@ -156,7 +157,7 @@ const Signin = () => {
         >
           <Text className="text-white">{t("Đăng nhập")}</Text>
         </TouchableOpacity>
-        <View className="hidden flex flex-row items-center justify-center gap-1">
+        <View className="flex flex-row items-center justify-center gap-1">
           <View className="w-[100px] h-0.5 bg-gray-400" />
           <Text>or</Text>
           <View className="w-[100px] h-0.5 bg-gray-400" />
@@ -165,13 +166,13 @@ const Signin = () => {
           <Image source={images.googleicon} className="size-[25px]" />
         </TouchableOpacity>
         <View className="flex items-center gap-2">
-          <Text className="text-black/50">
+          <Text className="text-black/50">  
             {t("Không có tài khoản ?")}{" "}
             <Link href={"/auth/signup"} className="text-cyan-blue">
               {t("Đăng ký ngay")}
             </Link>
           </Text>
-          <Text className="hidden text-black/50">{t("Duy trì trạng thái đăng xuất")}</Text>
+          <Text className="text-black/50">{t("Duy trì trạng thái đăng xuất")}</Text>
         </View>
       </View>
     </View>
