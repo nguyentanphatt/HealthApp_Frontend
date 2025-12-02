@@ -7,11 +7,13 @@ import { formatDateTimeRange } from '@/utils/convertTime';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 
 const Page = () => {
     const { id } = useLocalSearchParams();
+    const { t } = useTranslation();
     const { theme } = useAppTheme();
     const router = useRouter();
     const [data, setData] = useState<any>(null);
@@ -44,14 +46,16 @@ const Page = () => {
             }
         }
         fetchActivityData();
+        
     },[])
+    console.log("data", data);
   return (
     <View className='flex-1 pt-12 font-lato' style={{ backgroundColor: theme.colors.background }}>
       <View className="flex flex-row items-center justify-between px-4 py-10">
         <TouchableOpacity onPress={() => router.push("/(tabs)")}>
           <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
         </TouchableOpacity>
-        <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>Lịch sử</Text>
+        <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{t("Lịch sử")}</Text>
         <View style={{ width: 24 }} />
       </View>
     <ScrollView
@@ -72,39 +76,39 @@ const Page = () => {
       </View>
 
       <View className="rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4" style={{ backgroundColor: theme.colors.card }}>
-        <Text className="text-lg" style={{ color: theme.colors.textSecondary }}>Thông tin chi tiết</Text>
+        <Text className="text-lg" style={{ color: theme.colors.textSecondary }}>{t("Thông tin chi tiết")}</Text>
         <View className='flex-row items-center justify-between'>
           <View className='w-[45%] flex gap-3'>
             <ActivityResult
               icon="clock"
-              title="Tổng thời gian"
+              title={t("Tổng thời gian")}
               result={ decimalToHHMMSS(data?.totalTime ?? 0)}
             />
             <ActivityResult
               icon="person-walking"
-              title="Số bước"
+              title={t("Số bước")}
               result={`${data?.stepCount ?? 0} bước`}
             />
             <ActivityResult
               icon="gauge"
-              title="Vận tốc trung bình"
+              title={t("Vận tốc trung bình")}
               result={`${Number(data?.avgSpeed).toFixed(1) ?? 0} km/h`}
             />
           </View>
           <View className='w-[45%] flex gap-3'>
             <ActivityResult
               icon="bolt"
-              title="Thời gian hoạt động"
+              title={t("Thời gian hoạt động")}
               result={decimalToHHMMSS(data?.activeTime ?? 0)}
             />
             <ActivityResult
               icon="fire"
-              title="Lượng calo"
+              title={t("Lượng calo")}
               result={`${Number(data?.kcal).toFixed(1) ?? 0} kcal`}
             />
             <ActivityResult
               icon="gauge-high"
-              title="Vận tốc tối đa"
+              title={t("Vận tốc tối đa")}
               result={`${Number(data?.maxSpeed).toFixed(1) ?? 0} km/h`}
             />
           </View>
@@ -112,7 +116,7 @@ const Page = () => {
       </View>
 
       <View className="rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4" style={{ backgroundColor: theme.colors.card }}>
-        <Text className="text-lg" style={{ color: theme.colors.textSecondary }}>Bản đồ hoạt động</Text>
+        <Text className="text-lg" style={{ color: theme.colors.textSecondary }}>{t("Bản đồ hoạt động")}</Text>
         {locations && locations.length > 0 ? (
           <MapView
             ref={mapRef}

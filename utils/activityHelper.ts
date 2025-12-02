@@ -29,18 +29,23 @@ export const formatTime = (milliseconds: number) => {
 };
 
 export const decimalToHHMMSS = (decimal: number): string => {
-    const minutes = Math.floor(decimal);
-    const seconds = Math.round((decimal - minutes) * 100);
-  
+    let minutes = Math.floor(decimal);
+    let seconds = Math.round((decimal - minutes) * 100);
+
+    if (seconds >= 60) {
+        minutes += Math.floor(seconds / 60);
+        seconds = seconds % 60;
+    }
+
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
-  
+
     const hh = hours.toString().padStart(2, "0");
     const mm = remainingMinutes.toString().padStart(2, "0");
     const ss = seconds.toString().padStart(2, "0");
-  
+
     return `${hh}:${mm}:${ss}`;
-  }
+}
 
 export const formatSpeed = (speedMs: number) => {
     const speedKmh = (speedMs * 3.6).toFixed(1);
@@ -64,16 +69,14 @@ export const formatDistanceRT = (distanceMeters: number): string => {
     }
 }
 
-// Calo
 export const calculateCaloriesFromMV = (mv: number, intervalMs: number = 30): number => {
     // EE = 4.83 × MV + 122.02 (kcal/h)
     const eePerHour = 4.83 * mv + 122.02;
-    const eePerSecond = eePerHour / 3600; // kcal/s
+    const eePerSecond = eePerHour / 3600;
     const eePerInterval = eePerSecond * (intervalMs / 1000);
     return eePerInterval;
 };
 
-// Active time
 export const calculateActiveTime = (
     startTime: number | null,
     pauseStartTime: number | null,
@@ -86,13 +89,11 @@ export const calculateActiveTime = (
     return totalElapsed - totalPause;
 };
 
-// Average speed
 export const calculateAverageSpeed = (distance: number, activeTimeMs: number): number => {
     const totalTime = activeTimeMs / 1000;
     return totalTime > 0 ? distance / totalTime : 0;
 };
 
-// Save activity data to AsyncStorage
 export const saveActivityDataToStorage = async (data: {
     distance: number;
     stepCount: number;
@@ -128,7 +129,6 @@ export const saveActivityDataToStorage = async (data: {
     console.log("data:", data);
 };
 
-// Calculate total distance from positions array
 export const calculateTotalDistance = (positions: LatLng[]): number => {
     return positions.reduce((acc, _, i, arr) => {
         if (i === 0) return 0;
@@ -136,13 +136,11 @@ export const calculateTotalDistance = (positions: LatLng[]): number => {
     }, 0);
 };
 
-// Check location permission
 export const checkLocationPermission = async (): Promise<boolean> => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     return status === "granted";
 };
 
-// Request Activity Recognition permission on Android
 export const requestActivityRecognitionPermission = async (): Promise<void> => { 
     if (Platform.OS === 'android') {
         try {

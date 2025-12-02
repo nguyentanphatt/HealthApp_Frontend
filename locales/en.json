@@ -231,5 +231,14 @@
   "Đã gửi mã OTP": "OTP sent successfully",
   "Lỗi khi xác thực OTP": "Error verifying OTP",
   "Đã gửi lại mã OTP": "OTP resent successfully",
-  "Vui lòng điền đầy đủ thông tin": "Please fill in all information"
+  "Vui lòng điền đầy đủ thông tin": "Please fill in all information",
+  "Thông tin chi tiết": "Detailed information",
+  "Tổng thời gian": "Total time",
+  "Số bước": "Steps",
+  "Vận tốc trung bình": "Average speed",
+  "Thời gian hoạt động": "Active time",
+  "Lượng calo": "Calories",
+  "Vận tốc tối đa": "Max speed",
+  "Bản đồ hoạt động": "Activity map",
+  "Lịch sử": "History"
 }

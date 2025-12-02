@@ -39,14 +39,12 @@ export const UnitProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [units, setUnits] = useState<Units>(defaultUnits);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load units from API first, then fallback to AsyncStorage
   useEffect(() => {
     loadUnits();
   }, []);
 
   const loadUnits = async () => {
     try {
-      // Only try to load from API if user is authenticated
       const accessToken = useAuthStore.getState().accessToken;
       if (accessToken) {
         try {
@@ -60,17 +58,14 @@ export const UnitProvider: React.FC<{ children: React.ReactNode }> = ({ children
               language: (userSettings.language as "vi" | "en") || defaultUnits.language,
             };
             setUnits(apiUnits);
-            // Save to AsyncStorage for offline support
             await AsyncStorage.setItem(UNITS_STORAGE_KEY, JSON.stringify(apiUnits));
             setIsLoaded(true);
             return;
           }
         } catch (error) {
-          // If API fails, fallback to AsyncStorage
           console.error('Error loading units from API:', error);
         }
       }
-      // Fallback to AsyncStorage if not authenticated or API fails
       await loadUnitsFromStorage();
     } catch (error) {
       console.error('Error loading units:', error);
