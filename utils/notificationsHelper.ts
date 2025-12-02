@@ -4,19 +4,16 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { convertISOToTimestamp } from "./convertTime";
 
-
-// Khởi tạo categories (nút action)
 export async function registerCategories() {
   await Notifications.setNotificationCategoryAsync("water-reminder", [
     {
       identifier: "ADD_WATER",
       buttonTitle: "+ Thêm",
-      options: { opensAppToForeground: false }, // không bật app
+      options: { opensAppToForeground: false },
     },
   ]);
 }
 
-// Xin quyền notification
 export async function registerForPushNotificationsAsync() {
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {

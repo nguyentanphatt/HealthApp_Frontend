@@ -158,7 +158,6 @@ export function useAppTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error("useAppTheme must be used within ThemeProvider");
   
-  // Force light mode for auth pages
   const segments = useSegments();
   const segmentString = segments.join("/");
   const isAuthPage = segmentString.includes("introduction") || 

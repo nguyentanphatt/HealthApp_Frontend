@@ -1,50 +1,115 @@
-# Welcome to your Expo app 👋
+## HealthApp – Frontend
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+HealthApp is a personal health tracking application (activity, water, sleep, nutrition, etc.) built with Expo + React Native.
 
-## Get started
+---
 
-1. Install dependencies
+## Main Features
+
+- **Health overview**
+  - Dashboard showing steps, distance, calories, sleep, water intake, and recent activities.
+
+- **Activity tracking**
+  - Real-time GPS tracking: distance, current / average / max speed.
+  - Step counting using Accelerometer, estimating movement intensity (MV) and calories burned.
+  - Save and view activity history, with a detailed session screen.
+
+- **Water management**
+  - Set and edit daily water intake goals.
+  - Receive water intake reminders.
+
+- **Sleep tracking**
+  - Record sleep duration and view basic statistics.
+
+- **Nutrition tracking**
+  - List and view food details.
+  - Add new foods (upload).
+
+- **Health news & articles**
+  - List of articles, view details, create new articles.
+
+- **Account & user settings**
+  - Sign up, sign in, forgot password, verify account.
+  - Update profile, change password.
+  - Configure measurement units (kg/lb, cm/inch, etc.), language, policy, and measurement settings.
+
+---
+
+## Tech Stack
+
+- **React Native** + **Expo Router** (file-based routing).
+- **TypeScript**.
+- **Expo SDK**:
+  - `expo-location` – GPS tracking.
+  - `expo-sensors` (Accelerometer) – step counting and movement intensity.
+  - `expo-notifications` (via helpers/services) – reminders and tracking status.
+- **React Native Maps** – display map and activity routes.
+- **AsyncStorage** – local persistence (tracking session, pause state, etc.).
+- **State management**: Zustand (`stores/useAuthStore`, `useUserStore`, `useToast`, `useModalStore`, …).
+- **i18n / multi-language**: JSON locale files under `locales/` (e.g. `en.json`).
+
+---
+
+## Project Structure
+
+- `app/`
+  - `(tabs)/` – main tab screens.
+  - `activity/` – activity tracking, history, statistics.
+  - `auth/` – sign in, sign up, forgot password, verify.
+  - `food/`, `sleep/`, `water/`, `work/`, `news/`, `user/setting/` – feature modules.
+- `components/`
+  - Reusable UI like `ActivityCard`, `ReminderList`, `LockScreen`, etc.
+- `hooks/`
+  - `useActivityTracking.ts` – centralized activity tracking logic (GPS, steps, sync, countdown, …).
+  - `useUnits.ts`, `useNotification.ts` – utility hooks.
+- `context/`
+  - `appThemeContext.tsx`, `unitContext.tsx` – theme and unit settings.
+- `stores/`
+  - Zustand stores for auth, user, toast, modal, etc.
+- `utils/`
+  - `activityHelper.ts` – activity calculations (distance, speed, time, calories, …).
+  - `activityNotificationService.ts`, `notificationsHelper.ts` – notification helpers.
+  - `convertTime.ts`, `convertMeasure.ts`, `validate.ts` – shared utilities.
+
+---
+
+## Setup & Run
+
+1. **Install dependencies**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. **Start the app (dev)**
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+   You can then open the app via:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   - Expo Go on a physical device.
+   - Android Emulator / iOS Simulator.
+   - A development build (if configured).
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## Useful Scripts
 
-When you're ready, run:
+Common scripts (may vary depending on `package.json`):
 
-```bash
-npm run reset-project
-```
+- `npm start` / `expo start`: start the dev server.
+- `npm run android`: run on Android emulator/device.
+- `npm run ios`: run on iOS simulator (macOS).
+- `npm run web`: run on web (if supported).
+- `npm run lint`: run linter (if configured).
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
+## Learn More
 
-## Learn more
+- Expo → https://docs.expo.dev  
+- Zustand → https://docs.pmnd.rs/zustand  
+- TanStack Query → https://tanstack.com/query  
+- i18n → https://react.i18next.com  
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.

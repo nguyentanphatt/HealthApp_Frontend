@@ -26,11 +26,9 @@ async function bootstrapLanguage() {
       await i18n.changeLanguage(stored);
     }
   } catch (_e) {
-    // ignore and keep default
   }
 }
 
-// fire and forget
 bootstrapLanguage();
 
 export default i18n;

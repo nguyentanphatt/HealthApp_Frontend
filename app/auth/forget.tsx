@@ -1,7 +1,7 @@
 import InputWithIcon from "@/components/InputWithIcon";
 import { images } from "@/constants/image";
 import i18n from "@/plugins/i18n";
-import { resetPassword, sendOtp, verifyResetPassword } from "@/services/user";
+import { changePassword, sendOtp, verifyResetPassword } from "@/services/user";
 import { useToastStore } from "@/stores/useToast";
 import { validateConfirmPassword, validateEmail, validatePassword } from "@/utils/validate";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -9,6 +9,7 @@ import { Link, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+
 
 const Signup = () => {
     const router = useRouter()
@@ -71,7 +72,7 @@ const Signup = () => {
     const handleResetPassword = async () => {
         const response = await verifyResetPassword(email, otp);
         if (response.success) {
-            const resetResponse = await resetPassword(email, password);
+            const resetResponse = await changePassword({email, newPassword: password});
             if (resetResponse.success) {
                 router.push('/auth/signin')
             }
