@@ -1,4 +1,5 @@
 import { WaterStatus, WeatherResponse } from '@/constants/type';
+import { useAppTheme } from '@/context/appThemeContext';
 import { useUnits } from '@/context/unitContext';
 import { convertTemperature, convertWater } from '@/utils/convertMeasure';
 import { FontAwesome6 } from '@expo/vector-icons';
@@ -17,8 +18,9 @@ const Weather = ({
 }) => {
   const {units} = useUnits()
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   return (
-    <View className="flex flex-row items-center justify-between gap-10 bg-white rounded-md shadow-md p-4">
+    <View className="flex flex-row items-center justify-between gap-10 rounded-md shadow-md p-4" style={{ backgroundColor: theme.colors.card }}>
       <View className="flex flex-row items-center gap-2.5 max-w-[55%]">
         <View
           className="size-12 rounded-full flex items-center justify-center"
@@ -45,14 +47,14 @@ const Weather = ({
         </View>
 
         <View>
-          <Text className="text-xl">
+          <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>
             {t("Nhiệt độ hôm nay là")} {" "}
             <Text className="font-bold">{convertTemperature(weatherReport.temp, units.temperature)}°{units.temperature}</Text>, {t("độ ẩm là")} {" "}
             <Text className="font-bold">{weatherReport.humidity} %</Text>
           </Text>
-          <Text className="text-lg text-black/60">
+          <Text className="text-lg" style={{ color: theme.colors.textSecondary }}>
             {t("Chúng tôi khuyến nghị bạn nên uống ít nhất")} {" "}
-            <Text className="font-bold text-black">
+            <Text className="font-bold" style={{ color: theme.colors.textPrimary }}>
               {convertWater(weatherReport.recommended, units.water)} {units.water}
             </Text>
           </Text>
@@ -64,7 +66,7 @@ const Weather = ({
             disabled
             className="self-center flex-row items-center justify-center bg-gray-200 px-4 py-3 rounded-full"
           >
-            <Text className="text-black">{t("Thêm ngay")}</Text>
+            <Text className="text-white" style={{ color: theme.colors.textPrimary }}>{t("Thêm ngay")}</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -73,7 +75,7 @@ const Weather = ({
             }
             className="self-center flex-row items-center justify-center bg-cyan-blue px-4 py-3 rounded-full"
           >
-            <Text className="text-white">{t("Thêm ngay")}</Text>
+            <Text className="text-white" style={{ color: theme.colors.textPrimary }}>{t("Thêm ngay")}</Text>
           </TouchableOpacity>
         )}
       </View>

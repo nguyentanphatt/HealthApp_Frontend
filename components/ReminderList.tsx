@@ -1,8 +1,9 @@
 import { WaterReminder } from "@/constants/type";
+import { useAppTheme } from "@/context/appThemeContext";
 import { convertISOToTimestamp } from "@/utils/convertTime";
 import { scheduleReminders } from "@/utils/notificationsHelper";
 import { Href, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, TouchableOpacity, View } from "react-native";
 import ReminderCard from "./ReminderCard";
@@ -12,11 +13,21 @@ const ReminderList = ({
 }: {
   data: WaterReminder[];
 }) => {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const [showAll, setShowAll] = useState(false);
-  const displayedData = showAll ? data : data.slice(0, 3);
+  const [enabledMap, setEnabledMap] = useState<Record<string, boolean>>({});
+  const displayedData = useMemo(() => (showAll ? data : data.slice(0, 3)), [showAll, data]);
   const { t } = useTranslation();
 	const hasScheduled = useRef(false);
+
+  useEffect(() => {
+    const map: Record<string, boolean> = {};
+    data.forEach((reminder) => {
+      map[reminder.id] = reminder.enabled;
+    });
+    setEnabledMap(map);
+  }, [data]);
 
   useEffect(() => {
     if (hasScheduled.current) return;
@@ -30,7 +41,6 @@ const ReminderList = ({
         return ts > now;
       });
 
-      console.log("water reminders to schedule: ", validReminders);
       await scheduleReminders(validReminders);
     };
 
@@ -38,10 +48,12 @@ const ReminderList = ({
   }, [data]);
   return (
     <View>
-      {displayedData.map((item, index) => (
+      {displayedData.map((item, index) => {
+        const itemEnabled = enabledMap[item.id] ?? item.enabled;
+        return (
         <TouchableOpacity
           key={index}
-          disabled={!item.enabled}
+          disabled={!itemEnabled}
           onPress={() =>
             router.push(
               `/water/notification/edit?id=${item.id}&message=${item.message}&expiresIn=${item.expiresIn}` as Href
@@ -49,13 +61,22 @@ const ReminderList = ({
           }
           className="mb-2.5"
         >
-          <ReminderCard key={item.id} amount={item.message} time={item.expiresIn} id={item.id} enabled={item.enabled} />
+          <ReminderCard
+            key={item.id}
+            amount={item.message}
+            time={item.expiresIn}
+            id={item.id}
+            enabled={itemEnabled}
+            onToggleEnabled={(id, enabled) => {
+              setEnabledMap((prev) => ({ ...prev, [id]: enabled }));
+            }}
+          />
         </TouchableOpacity>
-      ))}
+      )})}
 
       {data.length > 3 && (
         <TouchableOpacity onPress={() => setShowAll(!showAll)} className="py-5">
-          <Text className="text-lg text-center text-black/60 font-semibold">
+          <Text className="text-lg text-center font-semibold" style={{ color: theme.colors.textSecondary }}>
             {showAll ? t("Ẩn bớt") : t("Xem thêm")}
           </Text>
         </TouchableOpacity>

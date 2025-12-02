@@ -1,6 +1,7 @@
 import FilterSelector from '@/components/FilterSelector';
 import { options, sortOptions } from '@/constants/data';
 import { images } from '@/constants/image';
+import { useAppTheme } from '@/context/appThemeContext';
 import { getBlogs, getBlogsByUserId, likeBlog } from '@/services/blog';
 import { useUserStore } from '@/stores/useUserStore';
 import { FontAwesome6 } from '@expo/vector-icons';
@@ -13,7 +14,6 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
-// Configure dayjs with timezone plugins
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -21,6 +21,7 @@ const News = () => {
   const router = useRouter();
   const { type } = useLocalSearchParams();
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const [selectedTag, setSelectedTag] = useState({ label: "Tất cả", value: "all" });
   const [selectedSort, setSelectedSort] = useState({ label: "Mới nhất", value: "newest" });
   const [page, setPage] = useState(1);
@@ -194,49 +195,27 @@ const News = () => {
   const initialLoading = (type === 'user' ? isLoadingByUserId : isLoading) && page === 1;
   if (initialLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#000" />
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.textPrimary} />
       </View>
     );
   }
 
 
   return (
-    <View className="flex-1 relative">
-      <ScrollView
-        className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
-        stickyHeaderIndices={[0]}
-        contentContainerStyle={{ paddingBottom: 50 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#19B1FF"
-            colors={["#19B1FF"]}
-          />
-        }
-        onScroll={({ nativeEvent }) => {
-          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
-          if (isCloseToBottom) {
-            loadMore();
-          }
-        }}
-        scrollEventThrottle={400}
-      >
-        <View className="flex bg-[#f6f6f6] pt-16">
+    <View className="flex-1 pt-12 relative" style={{ backgroundColor: theme.colors.background }}>
+      <View className="flex px-4" style={{ backgroundColor: theme.colors.background }}>
           <View className='flex flex-row items-center justify-between'>
             {type === "user" ? (
-              <TouchableOpacity onPress={() => router.push(`/(tabs)/news` as Href)} className='size-14 bg-[#f6f6f6] rounded-full flex items-center justify-center'>
-                <FontAwesome6 name="chevron-left" size={24} color="black" />
+              <TouchableOpacity onPress={() => router.push(`/(tabs)/news` as Href)} className='size-14 rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.secondaryCard }}>
+                <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
               </TouchableOpacity>
             ) : (
-              <View className='size-14 bg-[#f6f6f6] rounded-full' />
+              <View className='size-14 rounded-full' style={{ backgroundColor: theme.colors.background }} />
             )}
-            <Text className="text-2xl font-bold  self-center">{type === "user" ? t("Cá nhân") : t("Cộng đồng")}</Text>
+            <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{type === "user" ? t("Cá nhân") : t("Cộng đồng")}</Text>
             <TouchableOpacity onPress={() => router.push(`/(tabs)/news?type=user` as Href)}>
-              <Image source={user?.imageUrl ? { uri: user.imageUrl } : images.noImg} className='size-14 bg-red-500 rounded-full' />
+              <Image source={user?.imageUrl ? { uri: user.imageUrl } : images.noImg} className='size-14 bg-gray-300 rounded-full' />
             </TouchableOpacity>
           </View>
           <View className='flex flex-row items-center justify-between py-5'>
@@ -255,7 +234,26 @@ const News = () => {
             />
           </View>
         </View>
-
+      <ScrollView
+        className="flex-1 gap-2.5 font-lato-regular" style={{ backgroundColor: theme.colors.background }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#19B1FF"
+            colors={["#19B1FF"]}
+          />
+        }
+        onScroll={({ nativeEvent }) => {
+          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+          if (isCloseToBottom) {
+            loadMore();
+          }
+        }}
+        scrollEventThrottle={400}
+      >
         {allBlogs.length === 0 && (
           <View className="py-4 items-center">
             <Text className="text-cyan-blue">{t("Không có bài viết")}</Text>
@@ -263,8 +261,8 @@ const News = () => {
         )}
 
         {allBlogs.map((item, idx) => (
-          <TouchableOpacity className=' py-2.5' key={idx} onPress={() => router.push(`/news/details/${item.id}` as Href)}>
-            <View className='relative bg-white rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4'>
+          <TouchableOpacity className='px-4 py-2.5' key={idx} onPress={() => router.push(`/news/details/${item.id}` as Href)}>
+            <View className='relative rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4' style={{ backgroundColor: theme.colors.card }}>
               <Image
                 source={item.image ? { uri: item.image } : images.noImg}
                 className='w-full h-[150px] rounded-lg'
@@ -272,15 +270,15 @@ const News = () => {
                 height={250}
               />
               <View className='absolute top-4 right-4 flex items-center justify-center bg-cyan-blue rounded-full px-4 py-2'>
-                <Text className='text-white'>{t(getCategoryLabel(item.category))}</Text>
+                <Text className='' style={{ color: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" }}>{t(getCategoryLabel(item.category))}</Text>
               </View>
-              <Text className='text-center text-3xl font-bold'>{item.title}</Text>
+              <Text className='text-center text-3xl font-bold' style={{ color: theme.colors.textPrimary }}>{item.title}</Text>
 
               <View className=''>
                 <Text
                   numberOfLines={2}
                   ellipsizeMode="tail"
-                  className="text-black/70 text-xl leading-5"
+                  className="text-xl leading-5" style={{ color: theme.colors.textSecondary }}
                 >
                   {item.content}
                 </Text>
@@ -294,21 +292,21 @@ const News = () => {
                         <Image source={images.heart} className='w-[17px] h-[15px]' width={20} height={20} />
                       </View>
                     ) : (
-                      <FontAwesome6 name="heart" size={20} color="red" />
+                      <FontAwesome6 name="heart" size={20} color="#ff6467" />
                     )}
                     <Text className="text-red-400 font-semibold w-[20px] text-center">{item.likes}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
-              <View className='w-full h-[1px] bg-black/20 my-4' />
+              <View className='w-full h-[1px] my-4' style={{ backgroundColor: theme.colors.border }} />
               <View className='flex flex-row items-center gap-5'>
                 <View className='flex flex-row items-center gap-2'>
-                  <FontAwesome6 name="user" size={20} color="black" />
-                  <Text className='text-black/60 text-lg'>{item.userName}</Text>
+                  <FontAwesome6 name="user" size={20} color={theme.colors.textPrimary} />
+                  <Text className='text-lg' style={{ color: theme.colors.textSecondary }}>{item.userName}</Text>
                 </View>
                 <View className='flex flex-row items-center gap-2 ml-2'>
-                  <FontAwesome6 name="calendar" size={20} color="black" />
-                  <Text className='text-black/60 text-lg'>
+                  <FontAwesome6 name="calendar" size={20} color={theme.colors.textPrimary} />
+                  <Text className='text-lg' style={{ color: theme.colors.textSecondary }}>
                     {dayjs(item.createAt).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm')}
                   </Text>
                 </View>
@@ -316,9 +314,9 @@ const News = () => {
               </View>
               {item.updateAt && (
                 <View className='w-full flex flex-row items-center'>
-                  <Text className='text-black/60'>{"("}{t("Ngày cập nhật:")}</Text>
+                  <Text className='' style={{ color: theme.colors.textSecondary }}>{"("}{t("Ngày cập nhật:")}</Text>
 
-                  <Text className='text-black text ml-2'>
+                  <Text className='ml-2' style={{ color: theme.colors.textPrimary }}>
                     {dayjs(item.updateAt).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm')}{")"}
                   </Text>
                 </View>
@@ -339,7 +337,7 @@ const News = () => {
       <TouchableOpacity
         onPress={() => router.push(`/news/add` as Href)}
         className='absolute bottom-4 right-4 w-[60px] h-[60px] flex items-center justify-center bg-cyan-blue rounded-full shadow-lg'>
-        <FontAwesome6 name="plus" size={24} color="white" />
+        <FontAwesome6 name="plus" size={24} color={theme.mode === "dark" ? theme.colors.textPrimary : "#fff"} />
       </TouchableOpacity>
     </View>
   )

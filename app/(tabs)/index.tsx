@@ -6,6 +6,7 @@ import ProgressItem from "@/components/ProgressItem";
 import WaterVector from "@/components/vector/WaterVector";
 import WeeklyGoalItem from "@/components/WeeklyGoalItem";
 import { Activity } from "@/constants/type";
+import { useAppTheme } from "@/context/appThemeContext";
 import { useUnits as useUnitsContext } from "@/context/unitContext";
 import { useUnits } from "@/hooks/useUnits";
 import { getAllActivities } from "@/services/activity";
@@ -22,16 +23,19 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import isoWeek from "dayjs/plugin/isoWeek";
 import { Href, router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Animated, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { tv } from "tailwind-variants";
 
+dayjs.extend(isoWeek);
+
 export default function HomeScreen() {
   const setUser = useUserStore(state => state.setUser)
   const { units } = useUnits()
-  const { setUnit } = useUnitsContext()
+  const { setUnit, loadFromAPI: loadUnitsFromAPI } = useUnitsContext()
   const { openModal } = useModalStore();
   const { closeModal } = useModalStore();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -40,7 +44,10 @@ export default function HomeScreen() {
   const [sessionId, setSessionId] = useState("");
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const { theme, loadFromAPI: loadThemeFromAPI } = useAppTheme();
   const [showAll, setShowAll] = useState(false);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+  const hasLoadedSettings = useRef(false);
 
   useEffect(() => {
     const loadTempLanguage = async () => {
@@ -57,6 +64,27 @@ export default function HomeScreen() {
     loadTempLanguage();
   }, [setUnit]);
 
+  useEffect(() => {
+    // Only load settings once when component mounts
+    if (hasLoadedSettings.current) return;
+    
+    const loadSettings = async () => {
+      try {
+        hasLoadedSettings.current = true;
+        setLoadingSettings(true);
+        await Promise.all([
+          loadUnitsFromAPI(),
+          loadThemeFromAPI()
+        ]);
+      } catch (error) {
+        console.error('Error loading settings from API:', error);
+      } finally {
+        setLoadingSettings(false);
+      }
+    };
+    loadSettings();
+  }, []);
+
   const {
     data: activityData,
     isLoading: loadingActivityData,
@@ -68,11 +96,16 @@ export default function HomeScreen() {
     select: (res) => res.data
   });
 
+  const weekStart = selectedDate !== 0
+    ? dayjs.unix(selectedDate).startOf('isoWeek')
+    : dayjs().startOf('isoWeek');
+  const weekKey = weekStart.valueOf();
+
   const {
     data: weeklyGoal,
     isLoading: loadingWeeklyGoal,
   } = useQuery({
-    queryKey: ["weeklyGoal", { date: selectedDate }],
+    queryKey: ["weeklyGoal", weekKey],
     queryFn: () =>
       getWeeklyGoal(
         selectedDate !== 0
@@ -84,8 +117,8 @@ export default function HomeScreen() {
   });
 
   const { data: workoutDailyData, isLoading: loadingWorkoutDailyData } = useQuery({
-    queryKey: ["workoutDailyData"],
-    queryFn: () => workoutDaily({ date: selectedDate }),
+    queryKey: ["workoutDailyData", selectedDate],
+    queryFn: () => workoutDaily({ date: selectedDate ? selectedDate * 1000 : undefined }),
     staleTime: 1000 * 60 * 5,
     select: (res) => res.data,
   });
@@ -168,7 +201,7 @@ export default function HomeScreen() {
 
   const userProfileMutation = useMutation({
     mutationFn: async () => {
-      return await getUserProfile()
+        return await getUserProfile()
     },
     onSuccess: (response) => {
       setUser(response)
@@ -214,7 +247,7 @@ export default function HomeScreen() {
   }
 
   const card = tv({
-    base: "flex-1 bg-white mr-1 rounded-md p-4 shadow-md",
+    base: "flex-1 mr-1 rounded-md p-4 shadow-md bg-white",
     variants: {
       type: {
         left: "mr-1",
@@ -224,9 +257,17 @@ export default function HomeScreen() {
     },
   });
 
+  if (loadingSettings) {
+    return (
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.textPrimary} />
+      </View>
+    );
+  }
+
   return (
-    <View className="flex-1 px-4 font-lato-regular">
-      <View className="bg-[#f6f6f6] pt-16">
+    <View className="flex-1 font-lato-regular">
+      <View className="pt-16 px-4" style={{ backgroundColor: theme.colors.background }}>
         <CalendarSwiper
           selectedDate={
             selectedDate
@@ -243,13 +284,12 @@ export default function HomeScreen() {
         className="flex-1"
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex-1 gap-2.5">
-          <Card title={t("Mục tiêu tuần")}  
-            
+        <View className="flex-1 gap-2.5 px-4" style={{ backgroundColor: theme.colors.background }}>
+          <Card title={t("Mục tiêu tuần")}
           >
             {loadingWeeklyGoal ? <>
               <View className="h-[140px] flex items-center justify-center">
-                <ActivityIndicator size="large" color="#000" />
+                <ActivityIndicator size="large" color={theme.colors.textPrimary} />
               </View>
             </> : <>
               <View className="flex flex-row items-start justify-between h-[140px]">
@@ -301,27 +341,33 @@ export default function HomeScreen() {
           </Card>
 
           <Card title={t("Hoạt động hôm nay")}>
-            <View className="flex flex-col gap-3">
-              <ProgressItem
-                color="#00FF55"
-                index={workoutDailyData?.workoutMinutes ?? 0}
-                unit={t("phút")}
-                icon="clock"
-              />
-              <ProgressItem
-                color="#00D4FF"
-                index={workoutDailyData?.steps ?? 0}
-                unit={t("bước")}
-                icon="person-running"
-              />
-              <ProgressItem color="#FFF200" index={workoutDailyData?.calories ?? 0} unit="kcal" icon="bolt" />
-            </View>
+            {loadingWorkoutDailyData ?
+              <View className="h-[110px] flex items-center justify-center">
+                <ActivityIndicator size="large" color={theme.colors.textPrimary} />
+              </View> : <>
+                <View className="flex flex-col gap-3 h-[110px]">
+                  <ProgressItem
+                    color="#00FF55"
+                    index={Number(workoutDailyData?.workoutMinutes.toFixed(0) ?? 0)}
+                    unit={t("phút")}
+                    icon="clock"
+                  />
+                  <ProgressItem
+                    color="#00D4FF"
+                    index={workoutDailyData?.steps ?? 0}
+                    unit={t("bước")}
+                    icon="person-running"
+                  />
+                  <ProgressItem color="#FFF200" index={workoutDailyData?.calories ?? 0} unit="kcal" icon="bolt" />
+                </View>
+              </>
+            }
           </Card>
 
           {sessionId && (
-            <TouchableOpacity onPress={() => router.push('/activity' as Href)} className="flex p-4 items-center justify-between bg-white shadow-md rounded-md">
-              <Text className="text-xl text-black/60">{t("Bạn đang có buổi tập tạm dừng")}</Text>
-              <Text className="text-2xl font-bold">{t("Tiếp tục tập")}</Text>
+            <TouchableOpacity onPress={() => router.push('/activity' as Href)} className="flex p-4 items-center justify-between shadow-md rounded-md" style={{ backgroundColor: theme.colors.card }}>
+              <Text className="text-xl" style={{ color: theme.colors.textSecondary }}>{t("Bạn đang có buổi tập tạm dừng")}</Text>
+              <Text className="text-2xl font-bold" style={{ color: theme.colors.textPrimary }}>{t("Tiếp tục tập")}</Text>
             </TouchableOpacity>
           )}
 
@@ -340,8 +386,8 @@ export default function HomeScreen() {
                 }
                 animated={true}
               />
-              <Text className="text-black/60 text-xl h-[30px]">
-                <Text className="font-bold text-3xl text-black">
+              <Text className="text-xl h-[30px]" style={{ color: theme.colors.textSecondary }}>
+                <Text className="font-bold text-3xl" style={{ color: theme.colors.textPrimary }}>
                   {convertWater(waterStatus?.currentIntake ?? 0, units.water)}
                 </Text>
                 / {convertWater(waterStatus?.dailyGoal ?? 0, units.water)} {units.water}
@@ -355,7 +401,7 @@ export default function HomeScreen() {
                 href={`/sleep?selectedDate=${selectedDate}`}
               >
                 <TouchableOpacity onPress={() => router.push(`/sleep?selectedDate=${selectedDate}`)} className="self-center flex-row items-center justify-center px-6 py-3 bg-cyan-blue rounded-full">
-                  <Text className="text-white">{t("Chọn thời gian")}</Text>
+                  <Text className="" style={{ color: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" }}>{t("Chọn thời gian")}</Text>
                 </TouchableOpacity>
               </FunctionCard>
               <FunctionCard
@@ -365,24 +411,24 @@ export default function HomeScreen() {
                 href={`/food?selectedDate=${selectedDate}`}
               >
                 <TouchableOpacity onPress={() => router.push(`/food?selectedDate=${selectedDate}`)} className="self-center flex-row items-center justify-center px-6 py-3 bg-cyan-blue rounded-full">
-                  <Text className="text-white">{t("Nhập số liệu")}</Text>
+                  <Text className="" style={{ color: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" }}>{t("Nhập số liệu")}</Text>
                 </TouchableOpacity>
               </FunctionCard>
             </View>
           </View>
 
-          <TouchableOpacity onPress={() => handleActivity()} className="flex-1 flex-row p-4 items-center justify-between bg-white shadow-md rounded-md">
-            <View className="size-20 rounded-full bg-black/20 flex items-center justify-center">
-              <FontAwesome6 name="person-running" size={28} color="black" />
+          <TouchableOpacity onPress={() => handleActivity()} className="flex-1 flex-row p-4 items-center justify-between rounded-md" style={{ backgroundColor: theme.colors.card }}>
+            <View className="size-20 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.colors.secondaryCard }}>
+              <FontAwesome6 name="person-running" size={28} color={theme.colors.textPrimary} />
             </View>
-            <Text className="text-2xl font-bold">{t("Vận động")}</Text>
-            <View className="size-20 rounded-full bg-black/20 flex items-center justify-center">
-              <FontAwesome6 name="angles-right" size={28} color="black" />
+            <Text className="text-2xl font-bold" style={{ color: theme.colors.textPrimary }}>{t("Vận động")}</Text>
+            <View className="size-20 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.colors.secondaryCard }}>
+              <FontAwesome6 name="angles-right" size={28} color={theme.colors.textPrimary} />
             </View>
           </TouchableOpacity>
-          {loadingActivityData ? <ActivityIndicator size="large" color="#000" /> : <>
+          {loadingActivityData ? <ActivityIndicator size="large" color={theme.colors.textPrimary} /> : <>
             {filteredActivityData.length > 0 && (
-              <Text className="text-xl text-black/60 text-center">{t("Buổi tập hôm nay")}</Text>
+              <Text className="text-xl text-center" style={{ color: theme.colors.textSecondary }}>{t("Buổi tập hôm nay")}</Text>
             )}
             {displayedActivityData.map((activity: Activity, index: number) => (
               <ActivityCard key={activity.sessionId || index} activity={activity} index={index} />
@@ -390,7 +436,7 @@ export default function HomeScreen() {
 
             {filteredActivityData.length > 3 && (
               <TouchableOpacity onPress={() => setShowAll(!showAll)} className="mb-6 items-center">
-                <Text className="text-lg text-center text-black/60 font-semibold">
+                <Text className="text-lg text-center font-semibold" style={{ color: theme.colors.textSecondary }}>
                   {showAll ? t("Ẩn bớt") : t("Xem thêm")}
                 </Text>
               </TouchableOpacity>

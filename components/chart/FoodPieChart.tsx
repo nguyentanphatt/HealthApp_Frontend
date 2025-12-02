@@ -1,4 +1,5 @@
 import { FoodDetail } from "@/constants/type";
+import { useAppTheme } from "@/context/appThemeContext";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -6,10 +7,11 @@ import { PieChart } from "react-native-gifted-charts";
 
 const FoodPieChart = ({ data }: { data: FoodDetail[] }) => {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const [actualData, setActualData] = useState([
-    { value: 0, color: "#009FFF", gradientCenterColor: "#006DFF", text: "0%" }, // Protein
-    { value: 0, color: "#93FCF8", gradientCenterColor: "#3BE9DE", text: "0%" }, // Tinh bột
-    { value: 0, color: "#BDB2FA", gradientCenterColor: "#8F80F3", text: "0%" }, // Chất béo
+    { value: 0, color: "#009FFF", gradientCenterColor: "#006DFF", text: "0%" },
+    { value: 0, color: "#93FCF8", gradientCenterColor: "#3BE9DE", text: "0%" },
+    { value: 0, color: "#BDB2FA", gradientCenterColor: "#8F80F3", text: "0%" },
   ]);
 
   const pieData01 = [
@@ -34,7 +36,6 @@ const FoodPieChart = ({ data }: { data: FoodDetail[] }) => {
   ];
 
   useEffect(() => {
-    // Tính tổng protein, starch, fat từ data
     const totalProtein = data.reduce(
       (sum, item) => sum + (item.protein || 0),
       0
@@ -70,13 +71,13 @@ const FoodPieChart = ({ data }: { data: FoodDetail[] }) => {
 
 
   return (
-    <View className="bg-white rounded-md shadow-md p-4 mt-10">
-      <Text className="font-bold text-xl mb-5">{t("Tỉ lệ dinh dưỡng")}</Text>
+    <View className="rounded-md shadow-md p-4 mt-10" style={{ backgroundColor: theme.colors.card }}>
+      <Text className="font-bold text-xl mb-5" style={{ color: theme.colors.textPrimary }}>{t("Tỉ lệ dinh dưỡng")}</Text>
       <View className="flex flex-row items-center justify-between">
         <View>
           <PieChart
             data={pieData01}
-            textColor="black"
+            textColor={theme.colors.textPrimary}
             radius={80}
             textSize={24}
             strokeWidth={1}
@@ -92,7 +93,7 @@ const FoodPieChart = ({ data }: { data: FoodDetail[] }) => {
                 ? emptyActualData
                 : actualData
             }
-            textColor="black"
+            textColor={theme.colors.textPrimary}
             radius={80}
             textSize={20}
             strokeWidth={1}
@@ -104,51 +105,51 @@ const FoodPieChart = ({ data }: { data: FoodDetail[] }) => {
       </View>
       <View className="flex-row items-center justify-center gap-7 pt-10">
         <View className="flex-1 pr-4">
-          <Text className="font-semibold text-center mb-2">{t("Đề xuất")}</Text>
+          <Text className="font-semibold text-center mb-2" style={{ color: theme.colors.textPrimary }}>{t("Đề xuất")}</Text>
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-row items-center gap-2">
               <View className="size-4 rounded-full bg-[#009FFF]" />
-              <Text>{t("Chất đạm")}</Text>
+              <Text style={{ color: theme.colors.textPrimary }}>{t("Chất đạm")}</Text>
             </View>
-            <Text>{pieData01[0].text}</Text>
+            <Text style={{ color: theme.colors.textPrimary }}>{pieData01[0].text}</Text>
           </View>
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-row items-center gap-2">
               <View className="size-4 rounded-full bg-[#93FCF8]" />
-              <Text>{t("Tinh bột")}</Text>
+              <Text style={{ color: theme.colors.textPrimary }}>{t("Tinh bột")}</Text>
             </View>
-            <Text>{pieData01[1].text}</Text>
+            <Text style={{ color: theme.colors.textPrimary }}>{pieData01[1].text}</Text>
           </View>
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
               <View className="size-4 rounded-full bg-[#BDB2FA]" />
-              <Text>{t("Chất béo")}</Text>
+              <Text style={{ color: theme.colors.textPrimary }}>{t("Chất béo")}</Text>
             </View>
-            <Text>{pieData01[2].text}</Text>
+            <Text style={{ color: theme.colors.textPrimary }}>{pieData01[2].text}</Text>
           </View>
         </View>
         <View className="flex-1 pl-4">
-          <Text className="font-semibold text-center mb-2">{t("Thực tế")}</Text>
+          <Text className="font-semibold text-center mb-2" style={{ color: theme.colors.textPrimary }}>{t("Thực tế")}</Text>
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-row items-center gap-2">
               <View className="size-4 rounded-full bg-[#009FFF]" />
-              <Text>{t("Chất đạm")}</Text>
+              <Text style={{ color: theme.colors.textPrimary }}>{t("Chất đạm")}</Text>
             </View>
-            <Text>{actualData[0].text}</Text>
+            <Text style={{ color: theme.colors.textPrimary }}>{actualData[0].text}</Text>
           </View>
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-row items-center gap-2">
               <View className="size-4 rounded-full bg-[#93FCF8]" />
-              <Text>{t("Tinh bột")}</Text>
+              <Text style={{ color: theme.colors.textPrimary }}>{t("Tinh bột")}</Text>
             </View>
-            <Text>{actualData[1].text}</Text>
+            <Text style={{ color: theme.colors.textPrimary }}>{actualData[1].text}</Text>
           </View>
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
               <View className="size-4 rounded-full bg-[#BDB2FA]" />
-              <Text>{t("Chất béo")}</Text>
+              <Text style={{ color: theme.colors.textPrimary }}>{t("Chất béo")}</Text>
             </View>
-            <Text>{actualData[2].text}</Text>
+            <Text style={{ color: theme.colors.textPrimary }}>{actualData[2].text}</Text>
           </View>
         </View>
       </View>

@@ -2,6 +2,7 @@ import { images } from "@/constants/image";
 import i18n from "@/plugins/i18n";
 import { sendOtp, verifyOtp } from "@/services/user";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useToastStore } from "@/stores/useToast";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
@@ -9,7 +10,6 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
-import Toast from "react-native-toast-message";
 const Verify = () => {
   const router = useRouter()
   const [email, setEmail] = useState("");
@@ -18,6 +18,7 @@ const Verify = () => {
   const [timeLeft, setTimeLeft] = useState(5 * 60);
   const setTokens = useAuthStore(state => state.setTokens)
   const { t } = useTranslation(); 
+  const { addToast } = useToastStore();
   useEffect(() => {
     const loadLanguage = async () => {
       try {
@@ -57,7 +58,6 @@ const Verify = () => {
         setType(type);
         await AsyncStorage.removeItem("email");
         await AsyncStorage.removeItem("type");
-        // Send OTP after setting email
         sendOtp(storedEmail);
       }
     };
@@ -68,39 +68,27 @@ const Verify = () => {
     try {
      const response = await verifyOtp(email, otp);
      if(response.success){
-      //await saveAuthData(response.data)
       setTokens(response.data.accessToken, response.data.refreshToken)
+      
       if(type === 'signup'){
-        Toast.show({
-          type: "success",
-          text1: "Đăng ký thành công",
-        });
+        console.log("Đăng ký thành công");
         router.push("/(tabs)");
       } else {
-        Toast.show({
-          type: "success",
-          text1: "Đăng nhập thành công"
-        });
+        console.log("Đăng nhập thành công");
         router.push("/(tabs)");
       }
 
      } 
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
-      Toast.show({
-        type: "error",
-        text1: err.response?.data.message,
-      });
+      addToast(err.response?.data.message || t("Lỗi khi xác thực OTP"), "error");
     }
   }
 
   const resend = async () => {
     try {
       await sendOtp(email)
-      Toast.show({
-        type: "success",
-        text1: t("Đã gửi lại mã OTP"),
-      });
+      addToast(t("Đã gửi lại mã OTP"), "success");
     } catch (error) {
       throw error
     }

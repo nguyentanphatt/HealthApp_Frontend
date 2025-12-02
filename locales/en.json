@@ -222,6 +222,14 @@
   "Quãng đường": "Distance",
   "Bước chân theo ngày": "Steps by day",
   "Calo theo ngày": "Calories by day",
-  "Không có dữ liệu": "No data"
-
+  "Không có dữ liệu": "No data",
+  "Đã có tài khoản?": "Already have an account?",
+  "Quyền ghi âm": "Microphone permission",
+  "Quyền chụp ảnh": "Camera permission",
+  "Quyền định vị": "Location permission",
+  "Quyền ứng dụng": "Application permissions",
+  "Đã gửi mã OTP": "OTP sent successfully",
+  "Lỗi khi xác thực OTP": "Error verifying OTP",
+  "Đã gửi lại mã OTP": "OTP resent successfully",
+  "Vui lòng điền đầy đủ thông tin": "Please fill in all information"
 }

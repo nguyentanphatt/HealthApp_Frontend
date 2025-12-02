@@ -36,7 +36,7 @@ export const saveActivityData = async (
   kcal: number, 
   totalTime: number, 
   activeTime: number,
-): Promise<{success: boolean, message: string}> => {
+): Promise<{success: boolean, data: Activity}> => {
   try {
       const response = await privateClient.post("/api/run/activity", {
           type,

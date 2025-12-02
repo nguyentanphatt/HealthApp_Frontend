@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/context/appThemeContext';
 import { getWorkoutVideoById } from '@/services/workout';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +13,7 @@ const Page = () => {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const { t } = useTranslation();
+    const { theme } = useAppTheme();
     const [activeTime, setActiveTime] = useState(0);
     const [isWorkoutActive, setIsWorkoutActive] = useState(false);
     const [kcal, setKcal] = useState(0);
@@ -81,15 +83,15 @@ const Page = () => {
     }
 
     return (
-        <View className='flex-1 relative bg-[#f6f6f6] pt-12 px-4'>
+        <View className='flex-1 relative pt-12 px-4' style={{ backgroundColor: theme.colors.background }}>
             <View className="flex flex-row items-center justify-between pb-8">
                 <TouchableOpacity onPress={() => (router.push('/(tabs)/work' as Href))} className="w-[30px]">
-                    <FontAwesome6 name="chevron-left" size={24} color="black" />
+                    <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
                 </TouchableOpacity>
-                <Text className="text-2xl font-bold text-center py-5">
+                <Text className="text-2xl font-bold text-center py-5" style={{ color: theme.colors.textPrimary }}>
                     {t("Chi tiết bài tập")}
                 </Text>
-                <View className="w-[30px] rounded-full bg-[#f6f6f6]" />
+                <View className="w-[30px] rounded-full" style={{ backgroundColor: theme.colors.secondaryCard }} />
             </View>
             <View className='bg-black rounded-lg overflow-hidden' style={{ aspectRatio: 16 / 9 }}>
                 <YoutubePlayer
@@ -100,21 +102,21 @@ const Page = () => {
             </View>
 
             {!isWorkoutActive && (
-                <View className='p-4 bg-white rounded-md shadow-md my-4'>
-                    <Text className='text-xl font-bold mb-4'>{video?.video?.title}</Text>
-                    <Text className='text-sm text-gray-600 mb-4'>{video?.video?.description}</Text>
-                    <Text className='text-sm text-gray-600 mb-4'>by {video?.video?.channelTitle}</Text>
+                <View className='p-4 rounded-md shadow-md my-4' style={{ backgroundColor: theme.colors.card }}>
+                    <Text className='text-xl font-bold mb-4' style={{ color: theme.colors.textPrimary }}>{video?.video?.title}</Text>
+                    <Text className='text-sm mb-4' style={{ color: theme.colors.textSecondary }}>{video?.video?.description}</Text>
+                    <Text className='text-sm mb-4' style={{ color: theme.colors.textSecondary }}>by {video?.video?.channelTitle}</Text>
                 </View>
             )}
 
             <View className={`absolute bottom-32 left-0 right-0 items-center justify-start gap-5 ${isWorkoutActive ? 'bottom-64' : 'bottom-32'}`}>
-                <View className='flex items-center justify-center bg-white rounded-md shadow-md p-2 w-[45%]'>
-                    <Text className='text-lg text-black/60'>Thời gian</Text>
-                    <Text className='text-xl text-black font-bold'>{formatTimeFromSeconds(activeTime)}</Text>
+                <View className='flex items-center justify-center rounded-md shadow-md p-2 w-[45%]' style={{ backgroundColor: theme.colors.card }}>
+                    <Text className='text-lg' style={{ color: theme.colors.textSecondary }}>Thời gian</Text>
+                    <Text className='text-xl font-bold' style={{ color: theme.colors.textPrimary }}>{formatTimeFromSeconds(activeTime)}</Text>
                 </View>
-                <View className='flex items-center justify-center bg-white rounded-md shadow-md p-2 w-[45%]'>
-                    <Text className='text-lg text-black/60'>Kcal</Text>
-                    <Text className='text-xl text-black font-bold'>{kcal} kcal</Text>
+                <View className='hidden items-center justify-center rounded-md shadow-md p-2 w-[45%]' style={{ backgroundColor: theme.colors.card }}>
+                    <Text className='text-lg' style={{ color: theme.colors.textSecondary }}>Kcal</Text>
+                    <Text className='text-xl font-bold' style={{ color: theme.colors.textPrimary }}>{kcal} kcal</Text>
                 </View>
 
                 <TouchableOpacity

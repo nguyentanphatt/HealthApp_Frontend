@@ -229,12 +229,14 @@ export interface UpdateSleepRecordResponse {
 }
 
 export interface UserSetting {
+  email?: string,
   userId: string,
   height: string
   weight: string,
   water: string,
   temp: string,
   language: string
+  theme: string
 }
 
 export interface UserProfile {
@@ -302,8 +304,8 @@ export interface VideoType {
 
 export interface Activity {
   sessionId: string;
-  startTime: number;
-  endTime: number;
+  startTime: string | number;
+  endTime: string | number;
   distanceKm: number;
   stepCount: number;
   kcal: number;

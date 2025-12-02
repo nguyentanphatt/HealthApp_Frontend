@@ -1,3 +1,4 @@
+import { useAppTheme } from "@/context/appThemeContext";
 import { useTranslation } from "react-i18next";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 
@@ -16,6 +17,7 @@ interface ActionModalProps {
 
 export default function ActionModal({ visible, closeModal , title, options }: ActionModalProps) {
     const { t } = useTranslation();
+    const { theme } = useAppTheme();
     return (
         <Modal
             visible={visible}
@@ -24,8 +26,8 @@ export default function ActionModal({ visible, closeModal , title, options }: Ac
             onRequestClose={closeModal}
         >
             <View className="flex-1 justify-end bg-black/50">
-                <View className="bg-white rounded-t-3xl p-6">
-                    <Text className="text-xl font-bold text-center mb-4">{title}</Text>
+                <View className="rounded-t-3xl p-6" style={{ backgroundColor: theme.colors.card }}>
+                    <Text className="text-xl font-bold text-center mb-4" style={{ color: theme.colors.textPrimary }}>{title}</Text>
                     {options.map((option, index) => (
                         <TouchableOpacity
                             key={index}

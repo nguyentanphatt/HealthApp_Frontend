@@ -18,8 +18,13 @@ module.exports = ({ config }) => {
         },
       },
     },
+    // Preserve existing extras (including eas.projectId) and extend with envs
     extra: {
-      EXPO_PUBLIC_BACKEND_URL: process.env.EXPO_PUBLIC_BACKEND_URL,
+      ...(base.extra || {}),
+      EXPO_PUBLIC_BACKEND_URL: process.env.EXPO_PUBLIC_BACKEND_URL || base.extra?.EXPO_PUBLIC_BACKEND_URL,
+      eas: {
+        ...(base.extra && base.extra.eas ? base.extra.eas : {}),
+      },
     },
   };
 };

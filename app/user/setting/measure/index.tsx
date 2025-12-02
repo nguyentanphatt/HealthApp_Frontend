@@ -1,3 +1,4 @@
+import { useAppTheme } from "@/context/appThemeContext";
 import { useUnits } from "@/context/unitContext";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -9,6 +10,7 @@ const Page = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const { units, setUnit, isLoaded } = useUnits();
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const measureData = [
     { key: "height", label: "Chiều cao", options: ["cm", "ft"] },
     { key: "weight", label: "Cân nặng", options: ["kg", "g"] },
@@ -27,22 +29,23 @@ const Page = () => {
 
   return (
     <ScrollView
-      className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
+      className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular"
+      style={{ backgroundColor: theme.colors.background }}
       stickyHeaderIndices={[0]}
       contentContainerStyle={{ paddingBottom: 50 }}
       showsVerticalScrollIndicator={false}
     >
-      <View className="flex bg-[#f6f6f6] pt-16">
+      <View className="flex pt-16" style={{ backgroundColor: theme.colors.background }}>
         <View className="flex flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()}>
-            <FontAwesome6 name="chevron-left" size={24} color="black" />
+            <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
           <Text className="text-2xl font-bold  self-center">{t("Đơn vị đo")}</Text>
           <View style={{ width: 24 }} />
         </View>
       </View>
       <View className="flex gap-4 py-8">
-        <View className="flex w-full gap-4 bg-white rounded-md shadow-md p-4">
+        <View className="flex w-full gap-4 rounded-md shadow-md p-4" style={{ backgroundColor: theme.colors.secondaryCard }}>
           {measureData.map((item, idx) => (
             <View key={item.key} className="flex gap-4 relative">
               <TouchableOpacity
@@ -51,7 +54,7 @@ const Page = () => {
                   setOpenDropdown(openDropdown === item.key ? null : item.key)
                 }
               >
-                <Text className="text-xl">{t(item.label)}</Text>
+                <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>{t(item.label)}</Text>
                 <View>
                   <Text className="text-xl text-cyan-blue">
                     {units[item.key]}
@@ -61,10 +64,8 @@ const Page = () => {
 
               {openDropdown === item.key && (
                 <View
-                  className="absolute top-8 right-0 bg-white rounded-md shadow-lg z-50 w-[50px] flex items-center justify-center"
-                  style={{
-                    elevation: 5,
-                  }}
+                  className="absolute top-8 right-0 rounded-md shadow-lg z-50 w-[50px] flex items-center justify-center"
+                  style={{ backgroundColor: theme.colors.secondaryCard, elevation: 5 }}
                 >
                   {item.options.map((opt) => (
                     <TouchableOpacity
@@ -76,11 +77,13 @@ const Page = () => {
                       className="p-2"
                     >
                       <Text
-                        className={`text-xl ${
-                          units[item.key] === opt
-                            ? "text-cyan-blue font-semibold"
-                            : "text-black"
-                        }`}
+                        className={`text-xl ${units[item.key] === opt ? "font-semibold" : ""}`}
+                        style={{
+                          color:
+                            units[item.key] === opt
+                              ? "#19B1FF"
+                              : theme.colors.textPrimary,
+                        }}
                       >
                         {opt}
                       </Text>
@@ -90,7 +93,7 @@ const Page = () => {
               )}
 
               {idx === measureData.length - 1 ? null : (
-                <View className="w-full h-0.5 bg-black/30" />
+                <View className="w-full h-0.5" style={{ backgroundColor: theme.colors.border }} />
               )}
             </View>
           ))}

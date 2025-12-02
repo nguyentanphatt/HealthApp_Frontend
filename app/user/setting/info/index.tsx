@@ -155,7 +155,7 @@ const Page = () => {
                 <TouchableOpacity onPress={() => router.back()}>
                     <FontAwesome6 name="chevron-left" size={24} color="black" />
                 </TouchableOpacity>
-                <Text className="text-3xl font-bold text-center py-5">
+                <Text className="text-2xl font-bold text-center py-5">
                     {t("Cập nhật thông tin")}
                 </Text>
                 <View style={{ width: 24 }} />
@@ -370,40 +370,6 @@ const Page = () => {
                     </View>
                 </View>
             </Modal>
-
-            {/* <Modal
-                visible={visible}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setVisible(false)}
-            >
-                <View className="flex-1 items-center justify-center bg-black/30">
-                    <View className="flex items-center justify-center p-4 bg-white w-[90%] rounded-md">
-                        <Text className="text-lg font-bold mb-4">
-                            {t("Dữ liệu chưa được lưu, bạn có muốn thoát ?")}
-                        </Text>
-
-                        <View className="flex flex-row items-center justify-between">
-                            <TouchableOpacity
-                                onPress={() => router.push('/(tabs)/profile')}
-                                className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
-                            >
-                                <Text className="text-xl text-black font-bold ">{t("Thoát")}</Text>
-                            </TouchableOpacity>
-                            <Text>|</Text>
-                            <TouchableOpacity
-                                onPress={() =>
-                                    handleUpdateUserInfo(userName, height, weight, gender, birthday, profileImage ?? "")
-
-                                }
-                                className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full"
-                            >
-                                <Text className="text-xl text-black font-bold ">{t("Lưu")}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal> */}
         </ScrollView >
     )
 }

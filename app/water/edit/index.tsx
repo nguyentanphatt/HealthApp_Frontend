@@ -1,3 +1,5 @@
+import TimeWheelPicker from "@/components/TimeWheelPicker";
+import { useAppTheme } from "@/context/appThemeContext";
 import { useUnits } from "@/hooks/useUnits";
 import { updateWaterRecord } from "@/services/water";
 import { useModalStore } from "@/stores/useModalStore";
@@ -15,10 +17,9 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import Toast from "react-native-toast-message";
-import WheelPickerExpo from "react-native-wheel-picker-expo";
 
 const Page = () => {
+  const { theme } = useAppTheme();
   const { openModal } = useModalStore();
   const { amount, time, type } = useLocalSearchParams<{
     amount: string;
@@ -27,7 +28,7 @@ const Page = () => {
   }>();
   const queryClient = useQueryClient();
 
-  const { units, displayWater, inputToBaseWater } = useUnits();
+  const { units, inputToBaseWater } = useUnits();
   const initAmount = Number(amount) || 250;
   const initialValue =
     units.water === "ml"
@@ -44,22 +45,6 @@ const Page = () => {
   const [selectedHour, setSelectedHour] = useState(initHour);
   const [selectedMinute, setSelectedMinute] = useState(initMinute);
 
-  const hours = Array.from({ length: 24 }, (_, i) => ({
-    label: (i + 1).toString(),
-    value: i,
-  }));
-
-  const minutes = Array.from({ length: 60 }, (_, i) => ({
-    label: i.toString().padStart(2, "0"),
-    value: i,
-  }));
-
-  const times = 9;
-  const repeatedHours = Array.from({ length: times }).flatMap(() => hours);
-  const middleHoursIndex = Math.floor(times / 2) * hours.length;
-
-  const repeatedMinutes = Array.from({ length: times }).flatMap(() => minutes);
-  const middleMinutesIndex = Math.floor(times / 2) * minutes.length;
 
   const handleSave = async (
     amount: number,
@@ -92,10 +77,8 @@ const Page = () => {
         );
         if (response.success) {
           queryClient.invalidateQueries({ queryKey: ["waterStatus"] });
-          Toast.show({
-            type: "success",
-            text1: response.message,
-          });
+          console.log("response", response);
+          
           router.push("/water");
         }
       }
@@ -132,86 +115,44 @@ const Page = () => {
   }, [isChanged]);
 
   return (
-    <View className="flex-1 gap-2.5 px-4 py-10 h-[300px] font-lato-regular">
+    <View className="flex-1 gap-2.5 px-4 pt-12 h-[300px] font-lato-regular">
       <View className="flex flex-row items-center justify-between py-5">
         <TouchableOpacity onPress={() => router.back()}>
-          <FontAwesome6 name="chevron-left" size={24} color="black" />
+          <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
         </TouchableOpacity>
-        <Text className="text-2xl font-bold self-center">{t("Chỉnh sửa")}</Text>
+        <Text className="text-2xl font-bold self-center" style={{ color: theme.colors.textPrimary }}>{t("Chỉnh sửa")}</Text>
         <View style={{ width: 24 }} />
       </View>
-      <View className="flex items-center justify-center bg-white p-2 rounded-md shadow-md mb-1">
-        <Text className="text-xl font-bold">{t("Lượng nước")} ({units.water})</Text>
-        <View className="border-b-2 border-black max-w-[200px] h-[50px]">
+      <View className="flex items-center justify-center p-2 rounded-md shadow-md mb-1" style={{ backgroundColor: theme.colors.card }}>
+        <Text className="text-xl font-bold" style={{ color: theme.colors.textPrimary }}>{t("Lượng nước")} ({units.water})</Text>
+        <View className="border-b-2 border-black max-w-[200px] h-[50px]" style={{ borderColor: theme.colors.border }}>
           <TextInput
             className="text-2xl font-bold"
             defaultValue={initialValue.toString()}
             keyboardType="numeric"
             onChangeText={(text) => setSelectedAmount(Number(text))}
+            style={{ color: theme.colors.textPrimary }}
           />
         </View>
       </View>
 
-      <Text className="text-xl font-bold">{t("Thời gian")}</Text>
-      <View className="flex flex-row items-center justify-center bg-white rounded-md shadow-md p-4">
-        <WheelPickerExpo
-          height={240}
-          width={150}
-          initialSelectedIndex={middleHoursIndex + initHour - 1}
-          items={repeatedHours}
-          selectedStyle={{
-            borderColor: "gray",
-            borderWidth: 0,
+      <Text className="text-xl font-bold" style={{ color: theme.colors.textPrimary }}>{t("Thời gian")}</Text>
+      <View className="flex flex-row items-center justify-center rounded-md shadow-md p-4" style={{ backgroundColor: theme.colors.card }}>
+        <TimeWheelPicker
+          initialHour={initHour}
+          initialMinute={initMinute}
+          onChange={(hour, minute) => {
+            setSelectedHour(hour-1);
+            setSelectedMinute(minute);
           }}
-          renderItem={({ label }) => {
-            return (
-              <Text
-                style={{
-                  fontSize: 28,
-                  fontWeight: "500",
-                }}
-              >
-                {label}
-              </Text>
-            );
-          }}
-          onChange={({ item }) => setSelectedHour(item.value)}
-        />
-
-        <Text style={{ fontSize: 32, fontWeight: "600", marginHorizontal: 8 }}>
-          :
-        </Text>
-
-        <WheelPickerExpo
-          height={240}
-          width={150}
-          initialSelectedIndex={middleMinutesIndex + initMinute}
-          items={repeatedMinutes}
-          selectedStyle={{
-            borderColor: "gray",
-            borderWidth: 0,
-          }}
-          renderItem={({ label }) => {
-            return (
-              <Text
-                style={{
-                  fontSize: 28,
-                  fontWeight: "500",
-                }}
-              >
-                {label}
-              </Text>
-            );
-          }}
-          onChange={({ item }) => setSelectedMinute(item.value)}
         />
       </View>
       <View className="flex flex-row items-center justify-between">
         <TouchableOpacity
           onPress={() => router.back()}
-          className="flex-row items-center justify-center w-[45%] bg-white py-3 rounded-md shadow-md"
+          className="flex-row items-center justify-center w-[45%] py-3 rounded-md shadow-md" style={{ backgroundColor: theme.colors.card }}
         >
-          <Text className="text-xl text-black font-bold ">{t("Hủy")}</Text>
+          <Text className="text-xl text-black font-bold " style={{ color: theme.colors.textPrimary }}>{t("Hủy")}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {

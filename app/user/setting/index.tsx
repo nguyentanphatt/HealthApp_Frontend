@@ -1,15 +1,18 @@
 import { useAppTheme } from "@/context/appThemeContext";
+import { useModalStore } from "@/stores/useModalStore";
 import { FontAwesome6 } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Href, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
+import { Linking, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 
 const Page = () => {
   const router = useRouter();
   const { theme, toggle } = useAppTheme();
   const isEnabled = theme.mode === "dark";
   const [privacyEnabled, setPrivacyEnabled] = useState(false);
+  const { openModal } = useModalStore();
   const { t } = useTranslation();
   const overallData = [
     {
@@ -30,27 +33,62 @@ const Page = () => {
 
   const privateData = [
     {
-      settingName: t("Thông tin vị trí"),
-      isSwitch: true,
-    },
-    {
+      id: 1,
       settingName: t("Thông tin bảo mật"),
       isSwitch: false,
     },
     {
+      id: 2,
       settingName: t("Quyền"),
       isSwitch: false,
+      href: '/user/setting/policy'
     },
     {
+      id: 3,
       settingName: t("Cập nhật thông tin cá nhân"),
       isSwitch: false,
       href: '/user/setting/info'
     },
     {
-      settingName: t("Xóa dữ liệu cá nhân"),
+      id: 4,
+      settingName: t("Thay đổi mật khẩu"),
       isSwitch: false,
+      href: '/user/setting/changepassword'
     },
+    {
+      id: 5,
+      settingName: t("Đăng xuất"),
+      isSwitch: false,
+      href: '/user/setting/delete'
+    }
   ];
+
+  const handlePress = async (id: number, href?: string) => {
+    if (id === 5) {
+      openModal("confirm", {
+        title: t("đăng xuất"),
+        onConfirm: () => {
+          AsyncStorage.clear();
+          AsyncStorage.setItem("hasSeenIntroduction", "true");
+          router.push("/auth/signin" as Href);
+        },
+      });
+    }
+    else if (id === 1) {
+      let url = 'https://www.freeprivacypolicy.com/live/0110d8b7-8fa1-4c5d-a461-3080383b11d8'
+      const supported = await Linking.canOpenURL(url);
+
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        console.log("Không thể mở đường dẫn: ", url);
+
+      }
+    }
+    else {
+      router.push(href as Href);
+    }
+  }
   return (
     <ScrollView
       className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular"
@@ -102,7 +140,7 @@ const Page = () => {
         <View className="flex w-full gap-4 rounded-md shadow-md p-4" style={{ backgroundColor: theme.colors.card }}>
           {privateData.map((item, idx) => (
             <View key={idx} className="flex gap-4">
-              <TouchableOpacity onPress={() => router.push(item.href as Href)} className="flex-row items-center justify-between h-[30px]">
+              <TouchableOpacity onPress={() => handlePress(item.id, item.href)} className="flex-row items-center justify-between h-[30px]">
                 <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>{item.settingName}</Text>
                 {item.isSwitch && (
                   <Switch

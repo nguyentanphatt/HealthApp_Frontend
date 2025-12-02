@@ -3,16 +3,28 @@ import { introductionData } from "@/constants/data";
 import i18n from "@/plugins/i18n";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from "react-i18next";
-import { Image, Text, TouchableOpacity, View } from 'react-native';
-import Swiper from 'react-native-swiper';
+import {
+  Dimensions,
+  FlatList,
+  Image,
+  ListRenderItem,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const Introduction = () => {
     const router = useRouter()
     const [selectedIndex, setSelectedIndex] = useState(0)
     const [currentLanguage, setCurrentLanguage] = useState<'vi' | 'en'>('vi')
     const { t } = useTranslation();
-    // Load language from storage on mount
+    const flatListRef = useRef<FlatList>(null);
+
     useEffect(() => {
       const loadLanguage = async () => {
         try {
@@ -45,54 +57,134 @@ const Introduction = () => {
       await AsyncStorage.setItem('temp_language', newLang);
       await i18n.changeLanguage(newLang);
     };
+
+    const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const contentOffsetX = event.nativeEvent.contentOffset.x;
+      const index = Math.round(contentOffsetX / SCREEN_WIDTH);
+      setSelectedIndex(index);
+    };
+
+    const renderItem: ListRenderItem<typeof introductionData[0]> = ({ item }) => (
+      <View
+        style={{ 
+          width: SCREEN_WIDTH,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: 20,
+          paddingVertical: 40
+        }}
+      >
+        <View 
+          style={{ 
+            position: 'relative',
+            width: '100%',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 280,
+            marginBottom: 20
+          }}
+        >
+          <Image
+            source={item.blurBg}
+            style={{ 
+              position: 'absolute',
+              width: 550,
+              height: 550,
+              opacity: 0.5,
+              zIndex: -1
+            }}
+            resizeMode="contain"
+          />
+          <Image
+            source={item.image}
+            style={{ 
+              width: '85%',
+              maxWidth: 280,
+              height: 250
+            }}
+            resizeMode="contain"
+          />
+        </View>
+        <View 
+          style={{ 
+            width: SCREEN_WIDTH - 40,
+            paddingHorizontal: 20,
+            alignItems: 'center'
+          }}
+        >
+          <Text 
+            style={{ 
+              fontSize: 24,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              color: '#000',
+              width: '100%',
+              marginBottom: 12
+            }}
+            numberOfLines={2}
+          >
+            {t(item.title)}
+          </Text>
+          <Text 
+            style={{ 
+              fontSize: 16,
+              textAlign: 'center',
+              color: '#666',
+              width: '100%',
+              lineHeight: 22
+            }}
+            numberOfLines={3}
+          >
+            {t(item.description)}
+          </Text>
+        </View>
+      </View>
+    );
+
   return (
-    <View className="font-lato-regular flex-1 items-center justify-center gap-20 py-16 w-full relative">
+    <View className="font-lato-regular flex-1 items-center justify-center w-full relative" style={{ paddingTop: 60 }}>
       <TouchableOpacity
         onPress={toggleLanguage}
-        className="absolute top-12 right-4 px-6 py-3 z-50"
+        style={{
+          position: 'absolute',
+          top: 60,
+          right: 16,
+          paddingHorizontal: 24,
+          paddingVertical: 12,
+          zIndex: 50
+        }}
       >
         <Text className="text-lg font-bold text-cyan-blue">
           {currentLanguage === 'vi' ? 'EN' : 'VI'}
         </Text>
       </TouchableOpacity>
-      <Swiper
-        loop={false}
-        showsPagination={false}
-        onIndexChanged={setSelectedIndex}
-        className="h-[400px]"
-      >
-        {introductionData.map((item) => (
-          <View
-            key={item.id}
-            className="flex-1 items-center justify-center gap-10"
-          >
-            <Image
-              source={item.image}
-              className="w-[90%] h-[300px] mt-32"
-              resizeMode="contain"
-            />
-            <Image
-              source={item.blurBg}
-              className="w-[450px] h-[450px] absolute -z-10 top-1/8 left-[20%] rounded-full"
-            />
-            <View className="flex gap-5 px-12 ">
-              <Text className="font-bold text-2xl text-center">
-                {t(item.title)}
-              </Text>
-              <Text className="text-base text-center text-black/50">
-                {t(item.description)}
-              </Text>
-            </View>
-          </View>
-        ))}
-      </Swiper>
-      <View className="flex flex-row">
+      <View style={{ flex: 1, width: '100%' }}>
+        <FlatList
+          ref={flatListRef}
+          data={introductionData}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          style={{ width: '100%' }}
+          contentContainerStyle={{ width: SCREEN_WIDTH * introductionData.length }}
+          getItemLayout={(_, index) => ({
+            length: SCREEN_WIDTH,
+            offset: SCREEN_WIDTH * index,
+            index,
+          })}
+        />
+      </View>
+      <View className="flex flex-row mb-10">
         {introductionData.map((item, index) => (
           <AnimatedIndicator key={item.id} active={selectedIndex === index} />
         ))}
       </View>
       <TouchableOpacity
-        className="flex items-center justify-center py-4 w-[230px] bg-cyan-blue rounded-full"
+        className="flex items-center justify-center py-4 mb-20 w-[230px] bg-cyan-blue rounded-full"
         onPress={handleContinue}
       >
         <Text className="text-white">{t("Bắt đầu")}</Text>

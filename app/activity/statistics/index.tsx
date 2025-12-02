@@ -1,4 +1,6 @@
 import ActivityResult from '@/components/ActivityResult'
+import { darkMapStyle, lightMapStyle } from '@/constants/mapStyle'
+import { useAppTheme } from '@/context/appThemeContext'
 import { deleteAllLocations, saveLocation, updateActivityData } from '@/services/activity'
 import { formatDistanceRT, formatTime, TrackedPoint } from '@/utils/activityHelper'
 import { formatActivityDateTimeRange } from '@/utils/convertTime'
@@ -28,6 +30,7 @@ type Data = {
 
 const Page = () => {
   const router = useRouter()
+  const { theme } = useAppTheme();
   const mapRef = useRef<MapView | null>(null);
   const [data, setData] = useState<Data>();
   const queryClient = useQueryClient();
@@ -92,6 +95,7 @@ const Page = () => {
                 totalTime: activityData.elapsed / 1000,
                 activeTime: activityData.activeTime / 1000,
               });
+
             } catch (error) {
               throw error;
             }
@@ -127,38 +131,37 @@ const Page = () => {
 
 
   return (
-    <ScrollView
-      className="flex-1 px-4 font-lato-regular bg-[#f6f6f6]"
-      stickyHeaderIndices={[0]}
-      contentContainerStyle={{ paddingBottom: 50 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <View className="flex flex-row items-center justify-between bg-[#f6f6f6] pt-16 pb-10">
+    <View className='flex-1 pt-12 font-lato-regular' style={{ backgroundColor: theme.colors.background }}>
+      <View className="flex flex-row items-center justify-between px-4 py-10">
         <TouchableOpacity onPress={() => {
           queryClient.invalidateQueries({ queryKey: ["activityData"] });
           router.push("/(tabs)")
 
         }}>
-          <FontAwesome6 name="chevron-left" size={24} color="black" />
+          <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
         </TouchableOpacity>
-        <Text className="text-2xl font-bold  self-center">Kết quả</Text>
+        <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>Kết quả</Text>
         <View style={{ width: 24 }} />
       </View>
-
-      <View className="bg-white rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4">
-        <Text className="text-lg text-black/60">{formatActivityDateTimeRange(data?.startTime || null, data?.endTime || null)}</Text>
+    <ScrollView
+      className="flex-1 px-4 font-lato-regular" style={{ backgroundColor: theme.colors.background }}
+      contentContainerStyle={{ paddingBottom: 50 }}
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4" style={{ backgroundColor: theme.colors.card }}>
+        <Text className="text-lg" style={{ color: theme.colors.textSecondary }}>{formatActivityDateTimeRange(data?.startTime || null, data?.endTime || null)}</Text>
         <View className="flex-row items-center justify-center mt-3 ">
           <View className='border-4 border-[#19B1FF] w-[70px] h-[70px] rounded-full p-2 items-center justify-center'>
             <FontAwesome6 name="person-running" size={28} color="#19B1FF" />
           </View>
         </View>
-        <Text className="text-3xl text-black font-bold text-center">
+        <Text className="text-3xl font-bold text-center" style={{ color: theme.colors.textPrimary }}>
           {formatDistanceRT(data?.distance || 0)}
         </Text>
       </View>
 
-      <View className="bg-white rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4">
-        <Text className="text-lg text-black/60">Thông tin chi tiết</Text>
+      <View className="rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4" style={{ backgroundColor: theme.colors.card }}>
+        <Text className="text-lg" style={{ color: theme.colors.textSecondary }}>Thông tin chi tiết</Text>
         <View className='flex-row items-center justify-between'>
           <View className='w-[45%] flex gap-3'>
             <ActivityResult
@@ -197,12 +200,13 @@ const Page = () => {
         </View>
       </View>
 
-      <View className="bg-white rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4">
-        <Text className="text-lg text-black/60">Bản đồ hoạt động</Text>
+      <View className="rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4 mt-4" style={{ backgroundColor: theme.colors.card }}>
+        <Text className="text-lg" style={{ color: theme.colors.textSecondary }}>Bản đồ hoạt động</Text>
         <MapView
           provider={PROVIDER_GOOGLE}
           ref={mapRef}
           style={{ width: '100%', height: 300 }}
+          customMapStyle={theme.mode === "dark" ? darkMapStyle : lightMapStyle}
           initialRegion={{
             latitude: data?.positions?.[0]?.latitude ?? 21.0278,
             longitude: data?.positions?.[0]?.longitude ?? 105.8342,
@@ -241,6 +245,7 @@ const Page = () => {
         </MapView>
       </View>
     </ScrollView>
+    </View>
   )
 }
 

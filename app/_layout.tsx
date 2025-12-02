@@ -1,5 +1,6 @@
 import AppRefreshWatcher from "@/components/AppRefreshWatcher";
 import GlobalModal from "@/components/GlobalModal";
+import ToastContainer from "@/components/ToastContainer";
 import { ThemeProvider, useAppTheme } from "@/context/appThemeContext";
 import { UnitProvider } from "@/context/unitContext";
 import { useNotifications } from "@/hooks/useNotification";
@@ -10,7 +11,6 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import Toast from "react-native-toast-message";
 import "../global.css";
 import "../plugins/i18n";
 
@@ -48,12 +48,8 @@ function InnerRoot() {
           >
             <Stack.Screen name="introduction" />
             <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="auth/signin" />
-            <Stack.Screen name="water/index" />
-            <Stack.Screen name="water/edit/index" />
-            <Stack.Screen name="food/index" />
           </Stack>
-          <Toast swipeable visibilityTime={3000} topOffset={50} />
+          <ToastContainer />
         </UnitProvider>
       </QueryClientProvider>
   );

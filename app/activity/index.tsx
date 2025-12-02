@@ -1,4 +1,6 @@
 import LockScreen from '@/components/LockScreen';
+import { darkMapStyle, lightMapStyle } from '@/constants/mapStyle';
+import { useAppTheme } from '@/context/appThemeContext';
 import { getActivityById, getAllLocations, saveActivityData, saveLocation, updateActivityData } from '@/services/activity';
 import {
     LatLng,
@@ -23,9 +25,12 @@ import { Accelerometer } from 'expo-sensors';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, AppState, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE, Polygon, Polyline, Region } from "react-native-maps";
+import { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import { runOnJS } from 'react-native-worklets';
 
 const Page = () => {
     const router = useRouter();
+    const { theme } = useAppTheme();
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [positions, setPositions] = useState<TrackedPoint[]>([]);
     const [current, setCurrent] = useState<LatLng | null>(null);
@@ -98,7 +103,7 @@ const Page = () => {
         };
 
         const subscription = AppState.addEventListener('change', handleAppStateChange);
-        
+
         // Set initial app state
         AsyncStorage.setItem('last_app_state', Date.now().toString());
 
@@ -113,7 +118,7 @@ const Page = () => {
                 const wasActive = activeStr === 'true';
                 const currentTime = Date.now();
                 const lastStateTime = lastAppState ? parseInt(lastAppState) : 0;
-                
+
                 // If app was killed more than 30s then reset session 
                 if (wasActive && storedId && (currentTime - lastStateTime > 30000 || !lastAppState)) {
                     console.log('App was killed, resetting activity session');
@@ -151,7 +156,7 @@ const Page = () => {
                             const maxSpeedNum = Number(server?.maxSpeed ?? 0) || 0;
                             const stepCountNum = Number(server?.stepCount ?? 0) || 0;
                             const distanceMNum = Number(server?.distanceM ?? (Number(server?.distanceKm ?? 0) * 1000)) || 0;
-                            
+
                             const [appPauseTime, isPausedStr, pauseStartStr, totalPauseStr] = await AsyncStorage
                                 .multiGet(['app_pause_time', 'activity_is_paused', 'activity_pause_start', 'activity_total_pause'])
                                 .then(entries => entries.map(e => e?.[1] ?? null));
@@ -399,12 +404,12 @@ const Page = () => {
             try {
                 await AsyncStorage.setItem('activity_tracking_active', 'true');
                 await AsyncStorage.setItem('activity_start_time', String(now));
-                await AsyncStorage.multiRemove(['activity_is_paused', 'activity_pause_start', 'activity_total_pause', 'app_pause_time']).catch(() => {});
+                await AsyncStorage.multiRemove(['activity_is_paused', 'activity_pause_start', 'activity_total_pause', 'app_pause_time']).catch(() => { });
             } catch { }
 
             // Start simple notification
             await simpleNotificationService.startTrackingNotification();
-            
+
             subscriptionRef.current = await Location.watchPositionAsync(
                 {
                     accuracy: Location.Accuracy.BestForNavigation,
@@ -455,7 +460,6 @@ const Page = () => {
     };
 
     const stopTracking = async () => {
-        AsyncStorage.removeItem('activity_session_id');
         let finalCalories = 0;
         if (mvCountRef.current > 0) {
             const avgMV = mvSumRef.current / mvCountRef.current;
@@ -467,6 +471,8 @@ const Page = () => {
             }
         }
 
+        const endTime = Date.now();
+
         saveActivityDataToStorage({
             distance: totalDistanceMeters,
             stepCount,
@@ -477,6 +483,7 @@ const Page = () => {
             caloriesBurned: finalCalories,
             currentMV,
             startTime: startTimeRef.current,
+            endTime,
             elapsed,
             activeTime
         });
@@ -495,7 +502,7 @@ const Page = () => {
         hasCreatedFirstSnapshotRef.current = false;
         AsyncStorage.removeItem('activity_tracking_active').catch(() => { });
         AsyncStorage.removeItem('activity_start_time').catch(() => { });
-        AsyncStorage.multiRemove(['activity_is_paused', 'activity_pause_start', 'activity_total_pause', 'app_pause_time']).catch(() => {});
+        AsyncStorage.multiRemove(['activity_is_paused', 'activity_pause_start', 'activity_total_pause', 'app_pause_time']).catch(() => { });
     };
 
     const handlePause = () => {
@@ -509,8 +516,8 @@ const Page = () => {
                 AsyncStorage.multiSet([
                     ['activity_total_pause', String(totalPauseTimeRef.current)],
                     ['activity_is_paused', 'false']
-                ]).catch(() => {});
-                AsyncStorage.removeItem('activity_pause_start').catch(() => {});
+                ]).catch(() => { });
+                AsyncStorage.removeItem('activity_pause_start').catch(() => { });
             }
         } else {
             const now = Date.now();
@@ -520,51 +527,52 @@ const Page = () => {
                 ['activity_pause_start', String(now)],
                 ['activity_is_paused', 'true'],
                 ['activity_total_pause', String(totalPauseTimeRef.current)]
-            ]).catch(() => {});
+            ]).catch(() => { });
         }
         setIsPause(!isPause);
     };
+
+    const fade = useSharedValue(0);
+    const scale = useSharedValue(0.5);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        opacity: fade.value,
+        transform: [{ scale: scale.value }],
+    }));
 
     const startCountdown = () => {
         setShowCountdown(true);
         setCountdown(3);
         fadeAnim.setValue(0);
 
-        const animateCountdown = (number: number) => {
-            Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 300,
-                useNativeDriver: true,
-            }).start(() => {
-                setTimeout(() => {
-                    Animated.timing(fadeAnim, {
-                        toValue: 0,
-                        duration: 300,
-                        useNativeDriver: true,
-                    }).start();
-                }, 400);
-            });
+        const animateCountdown = (num: number) => {
+            fade.value = 0;
+            scale.value = 0.5;
+
+            // fade in + scale up
+            fade.value = withTiming(1, { duration: 300 });
+            scale.value = withTiming(1, { duration: 300 });
+
+            // fade out sau 400ms
+            fade.value = withDelay(400, withTiming(0, { duration: 300 }));
         };
 
         animateCountdown(3);
 
-        const countdownInterval = setInterval(() => {
-            setCountdown((prev) => {
-                if (prev <= 1) {
-                    clearInterval(countdownInterval);
-                    Animated.timing(fadeAnim, {
-                        toValue: 0,
-                        duration: 300,
-                        useNativeDriver: true,
-                    }).start(() => {
-                        setShowCountdown(false);
-                        startTracking();
-                    });
-                    return 3;
-                }
-                animateCountdown(prev - 1);
-                return prev - 1;
-            });
+        let current = 3;
+        const interval = setInterval(() => {
+            current -= 1;
+            if (current <= 0) {
+                clearInterval(interval);
+                // kết thúc countdown
+                fade.value = withTiming(0, { duration: 300 }, () => {
+                    runOnJS(setShowCountdown)(false);
+                    runOnJS(startTracking)();
+                });
+            } else {
+                runOnJS(setCountdown)(current);
+                animateCountdown(current);
+            }
         }, 1000);
     };
 
@@ -594,7 +602,7 @@ const Page = () => {
         currentSpeedRef.current = currentSpeed;
         maxSpeedRef.current = maxSpeed;
         currentMVRef.current = currentMV;
-      }, [positions, stepCount, currentSpeed, maxSpeed, currentMV]);
+    }, [positions, stepCount, currentSpeed, maxSpeed, currentMV]);
 
 
     useEffect(() => {
@@ -640,7 +648,7 @@ const Page = () => {
                 activeTime: currentActiveTime
             };
 
-            console.log('Activity snapshot', snapshot);
+            //console.log('Activity snapshot', snapshot);
 
             try {
                 isSyncingRef.current = true;
@@ -667,8 +675,8 @@ const Page = () => {
                         totalTimeNum,
                         activeTimeNum,
                     );
-                    console.log("data created");
-                
+                    console.log("data created", res.data);
+
                     const createdId = (res as any)?.sessionId ?? (res as any)?.data?.sessionId ?? null;
                     if (createdId != null) {
                         sessionIdRef.current = Number(createdId);
@@ -689,8 +697,6 @@ const Page = () => {
                         activeTime: activeTimeNum,
                     });
 
-                    console.log("data updated in db", response);
-                    
                     const unsynced = positionsRef.current
                         .filter(p => p.time > lastSyncedLocationTimeRef.current)
                         .map(({ latitude, longitude, time }) => ({ latitude, longitude, time }));
@@ -715,45 +721,45 @@ const Page = () => {
     }, [isStart, isPause]);
 
     return (
-        <View className="flex-1 gap-2.5 py-10 font-lato-regular bg-[#f6f6f6]">
+        <View className="flex-1 gap-2.5 py-10 font-lato-regular" style={{ backgroundColor: theme.colors.background }}>
             {isStart ? (
                 <View className='flex items-center justify-center gap-5 mt-12'>
                     <View className='flex flex-row items-center justify-center gap-5'>
-                        <View className='flex items-center justify-center bg-white rounded-md shadow-md p-2 w-[45%]'>
-                            <Text className='text-lg text-black/60'>Thời gian</Text>
-                            <Text className='text-xl text-black font-bold'>{formatTime(activeTime)}</Text>
+                        <View className='flex items-center justify-center rounded-md shadow-md p-2 w-[45%]' style={{ backgroundColor: theme.colors.card }}>
+                            <Text className='text-lg' style={{ color: theme.colors.textSecondary }}>Thời gian</Text>
+                            <Text className='text-xl font-bold' style={{ color: theme.colors.textPrimary }}>{formatTime(activeTime)}</Text>
                         </View>
-                        <View className='flex items-center justify-center bg-white rounded-md shadow-md p-2 w-[45%]'>
-                            <Text className='text-lg text-black/60'>Tốc độ hiện tại</Text>
-                            <Text className='text-xl text-black font-bold'>{formatSpeed(currentSpeed)}</Text>
+                        <View className='flex items-center justify-center rounded-md shadow-md p-2 w-[45%]' style={{ backgroundColor: theme.colors.card }}>
+                            <Text className='text-lg' style={{ color: theme.colors.textSecondary }}>Tốc độ hiện tại</Text>
+                            <Text className='text-xl font-bold' style={{ color: theme.colors.textPrimary }}>{formatSpeed(currentSpeed)}</Text>
                         </View>
                     </View>
                     <View className='flex flex-row items-center justify-center gap-5'>
-                        <View className='flex items-center justify-center bg-white rounded-md shadow-md p-2 w-[45%]'>
-                            <Text className='text-lg text-black/60'>Khoảng cách</Text>
-                            <Text className='text-xl text-black font-bold'>{formatDistanceRT(totalDistanceMeters)}</Text>
+                        <View className='flex items-center justify-center rounded-md shadow-md p-2 w-[45%]' style={{ backgroundColor: theme.colors.card }}>
+                            <Text className='text-lg' style={{ color: theme.colors.textSecondary }}>Khoảng cách</Text>
+                            <Text className='text-xl font-bold' style={{ color: theme.colors.textPrimary }}>{formatDistanceRT(totalDistanceMeters)}</Text>
                         </View>
-                        <View className='flex items-center justify-center bg-white rounded-md shadow-md p-2 w-[45%]'>
-                            <Text className='text-lg text-black/60'>Bước đi</Text>
-                            <Text className='text-xl text-black font-bold'>{stepCount}</Text>
+                        <View className='flex items-center justify-center rounded-md shadow-md p-2 w-[45%]' style={{ backgroundColor: theme.colors.card }}>
+                            <Text className='text-lg' style={{ color: theme.colors.textSecondary }}>Bước đi</Text>
+                            <Text className='text-xl font-bold' style={{ color: theme.colors.textPrimary }}>{stepCount}</Text>
                         </View>
                     </View>
                 </View>
             ) : (
                 <View className="flex flex-row items-center justify-between px-4 pt-10">
                     <TouchableOpacity onPress={() => router.push("/(tabs)")} className='w-[30px]'>
-                        <FontAwesome6 name="chevron-left" size={24} color="black" />
+                        <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
                     </TouchableOpacity>
-                    <Text className="text-2xl font-bold  self-center">Vận động</Text>
+                    <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>Vận động</Text>
                     <View style={{ width: 24 }} />
                 </View>
             )}
 
             {hasPermission === false ? (
-                <View className="m-4 p-4 bg-white rounded-xl">
-                    <Text className="text-base mb-3">Ứng dụng cần quyền truy cập vị trí để theo dõi quãng đường.</Text>
+                <View className="m-4 p-4 rounded-xl" style={{ backgroundColor: theme.colors.card }}>
+                    <Text className="text-base mb-3" style={{ color: theme.colors.textSecondary }}>Ứng dụng cần quyền truy cập vị trí để theo dõi quãng đường.</Text>
                     <TouchableOpacity onPress={ensurePermission} className="bg-cyan-500 rounded-lg p-3">
-                        <Text className="text-white text-center font-bold">Cấp quyền vị trí</Text>
+                        <Text className="text-white text-center font-bold" style={{ color: theme.colors.textPrimary }}>Cấp quyền vị trí</Text>
                     </TouchableOpacity>
                 </View>
             ) : (
@@ -761,6 +767,7 @@ const Page = () => {
                     ref={mapRef}
                     provider={PROVIDER_GOOGLE}
                     style={{ width: '100%', height: isStart ? '50%' : '60%', marginTop: isStart ? 20 : 50 }}
+                    customMapStyle={theme.mode === "dark" ? darkMapStyle : lightMapStyle}
                     scrollEnabled={!isLocked}
                     zoomEnabled={!isLocked}
                     rotateEnabled={!isLocked}
@@ -780,35 +787,24 @@ const Page = () => {
                 </MapView>
             )}
 
-            {isStart && (
-                <View className='absolute bottom-[30%] right-4'>
-                    <TouchableOpacity
-                        onPress={() => setShowPolygon((s) => !s)}
-                        className="bg-white px-4 py-3 rounded-lg"
-                    >
-                        <Text>{showPolygon ? "Đường đi: bật" : "Đường đi: tắt"}</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-
             {isLocked === false && (
                 <View className='absolute bottom-[10%] -translate-x-1/2 left-1/2'>
                     {isStart ? (
                         <View className='flex-row items-center justify-center gap-10'>
-                            <TouchableOpacity onPress={() => { setIsLocked(true) }} className='size-[60px] rounded-full flex items-center justify-center bg-black/10'>
-                                <FontAwesome6 name="lock" size={20} color="black" />
+                            <TouchableOpacity onPress={() => { setIsLocked(true) }} className='size-[60px] rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.card }}>
+                                <FontAwesome6 name="lock" size={20} color={theme.colors.textPrimary} />
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={handlePause} className='size-[90px] rounded-full flex items-center justify-center bg-black/10'>
-                                <FontAwesome6 name={isPause ? "play" : "pause"} size={36} color="black" />
+                            <TouchableOpacity onPress={handlePause} className='size-[90px] rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.card }}>
+                                <FontAwesome6 name={isPause ? "play" : "pause"} size={36} color={theme.colors.textPrimary} />
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={() => { setIsStart(!isStart), stopTracking(), router.push("/activity/statistics" as Href) }} className='size-[60px] rounded-full flex items-center justify-center bg-black/10'>
-                                <FontAwesome6 name="xmark" size={20} color="black" />
+                            <TouchableOpacity onPress={() => { setIsStart(!isStart), stopTracking(), router.push("/activity/statistics" as Href) }} className='size-[60px] rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.card }}>
+                                <FontAwesome6 name="xmark" size={20} color={theme.colors.textPrimary} />
                             </TouchableOpacity>
 
                         </View>
                     ) : (
-                        <TouchableOpacity onPress={() => { setIsStart(!isStart), startCountdown() }} className='size-[90px] rounded-full flex items-center justify-center bg-black/10'>
-                            <FontAwesome6 name="person-walking" size={36} color="black" />
+                        <TouchableOpacity onPress={() => { setIsStart(!isStart), startCountdown() }} className='size-[90px] rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.card }}>
+                            <FontAwesome6 name="person-walking" size={36} color={theme.colors.textPrimary} />
                         </TouchableOpacity>
                     )}
 
@@ -819,21 +815,12 @@ const Page = () => {
                 <View className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
                     <Animated.Text
                         className="text-[200px] font-bold text-white"
-                        style={{
-                            opacity: fadeAnim,
-                            transform: [{
-                                scale: fadeAnim.interpolate({
-                                    inputRange: [0, 1],
-                                    outputRange: [0.5, 1],
-                                })
-                            }]
-                        }}
+                        style={animatedStyle}
                     >
                         {countdown}
                     </Animated.Text>
                 </View>
             )}
-
             {isLocked && (
                 <LockScreen setIsLocked={setIsLocked} />
             )}

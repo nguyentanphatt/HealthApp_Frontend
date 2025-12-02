@@ -92,7 +92,7 @@ const Profile = () => {
 
         {isLoadingReportData ? (
           <View className="flex items-center justify-center w-full">
-            <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>Loading...</Text>
+            <Text className="text-xl" style={{ color: theme.colors.textPrimary }}>{t("Đang tải dữ liệu...")}</Text>
           </View>
         ) : (
           <>

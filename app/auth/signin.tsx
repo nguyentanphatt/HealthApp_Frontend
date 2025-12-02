@@ -1,21 +1,31 @@
 import InputWithIcon from "@/components/InputWithIcon";
 import { images } from "@/constants/image";
 import i18n from "@/plugins/i18n";
-import { signin } from "@/services/user";
+import { googleSigninAPI, signin } from "@/services/user";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useToastStore } from "@/stores/useToast";
+import { validateEmail } from "@/utils/validate";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from "@react-native-google-signin/google-signin";
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { Link, useRouter } from "expo-router";
+import { Href, Link, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, Text, TouchableOpacity, View } from "react-native";
-import Toast from "react-native-toast-message";
 
 const Signin = () => {
   const router = useRouter();
+  const setTokens = useAuthStore(state => state.setTokens)
+  const { addToast } = useToastStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { t } = useTranslation();
+  const [errorMessage, setErrorMessage] = useState({
+    email: "",
+    password: "",
+  });
+  const [apiError, setApiError] = useState("");
 
   useEffect(() => {
     const loadLanguage = async () => {
@@ -33,7 +43,7 @@ const Signin = () => {
 
 
   const signinMutation = useMutation({
-    mutationFn: async ({email, password}: {email: string, password: string}) => {
+    mutationFn: async ({ email, password }: { email: string, password: string }) => {
       return await signin(email, password)
     },
 
@@ -47,27 +57,61 @@ const Signin = () => {
 
     onError: (error) => {
       const err = error as AxiosError<{ message: string }>;
-      const msg = err.response?.data?.message || "Đăng nhập thất bại!";
-      console.log("err", err);
-      Toast.show({
-        type: "error",
-        text1: msg,
-      });
+      const msg = err.response?.data?.message || t("Đăng nhập thất bại!");
+      addToast(msg, "error");
+      console.log("err", msg);
     },
   })
+  //Comment this when testing on local expo go
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: "424764431800-foqjtm63t5bm82qtcsmr1g3r596rmkjc.apps.googleusercontent.com",
+    });
+  },[])
 
+  const googleSignin = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (isSuccessResponse(response)) {
+        const {idToken, user} = response.data
+        const {name, email, photo} = user
+        console.log("name", name);
+        console.log("email", email);
+        console.log("photo", photo);
+        const res = await googleSigninAPI(name || "", email || "", photo || "");
+        if (res.success) {
+          addToast(res.message, "success");
+          setTokens(res.data.accessToken, res.data.refreshToken)
+          router.push("/(tabs)");
+        } else {
+          addToast(res.message, "error");
+        }
+      } else {
+        addToast(t("Đăng nhập thất bại"), "error");
+      }
+    } catch (error) {
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.IN_PROGRESS:
+            addToast(t("Đang xử lý..."), "error");
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            addToast(t("Play services không khả dụng"), "error");
+            break;
+          default:
+            addToast(t("Đã xảy ra lỗi"), "error");
+        }
+      } else {
+        addToast(t("Đã xảy ra lỗi"), "error");
+      }
+    }
+  };
+  //
 
-  const googleSignin = () => {
-    //Signin with google
-    //Return data to storage in database
-  }
-
-  const localData = () => {
-    //Setup an AsyncStorage to store data
-  }
 
   return (
-    <View className="font-lato-regular flex-1 items-center py-10 h-full relative">
+    <View className="font-lato-regular flex-1 items-center pt-10 h-full">
       <Text className="text-2xl font-bold text-center py-20">{t("Đăng nhập")}</Text>
       <Image
         source={images.star}
@@ -75,14 +119,19 @@ const Signin = () => {
       />
       <Image
         source={images.star}
-        className="-z-10 absolute top-[20%] -left-[15%] w-[100px] h-[100px]"
+        className="-z-10 absolute top-[100px] -left-[15%] w-[100px] h-[100px]"
       />
-      <View className="flex-1 items-center justify-center w-full gap-[7%] z-10 bg-white/40 backdrop-blur-md px-5">
+      <View className="flex-1 items-center justify-start w-full gap-7 z-10 bg-white/40 backdrop-blur-md px-5">
         <InputWithIcon
           icon="envelope"
           placeholder={t("Email")}
           value={email}
           onChangeText={setEmail}
+          onBlur={() => {
+            const emailError = validateEmail(email);
+            setErrorMessage((prev) => ({ ...prev, email: t(emailError) }));
+          }}
+          error={errorMessage.email}
         />
 
         <View className="w-full">
@@ -93,13 +142,18 @@ const Signin = () => {
             value={password}
             onChangeText={setPassword}
           />
-          <Text className="text-sm text-black/50 self-end">
-            {t("Quên mật khẩu ?")}
-          </Text>
+          <TouchableOpacity onPress={() => router.push("/auth/forget" as Href)}>
+            <Text className="text-sm text-black/50 self-end pt-4">
+              {t("Quên mật khẩu ?")}
+            </Text>
+          </TouchableOpacity>
         </View>
         <TouchableOpacity
           className="flex items-center justify-center py-4 w-full bg-cyan-blue rounded-full"
-          onPress={() => signinMutation.mutate({email, password})}
+          onPress={() => {
+            setApiError("");
+            signinMutation.mutate({ email, password });
+          }}
         >
           <Text className="text-white">{t("Đăng nhập")}</Text>
         </TouchableOpacity>
@@ -108,11 +162,11 @@ const Signin = () => {
           <Text>or</Text>
           <View className="w-[100px] h-0.5 bg-gray-400" />
         </View>
-        <TouchableOpacity className="flex items-center justify-center p-4 rounded-md bg-white shadow-sm">
+        <TouchableOpacity className=" flex items-center justify-center p-4 rounded-md bg-white shadow-sm" onPress={googleSignin}>
           <Image source={images.googleicon} className="size-[25px]" />
         </TouchableOpacity>
         <View className="flex items-center gap-2">
-          <Text className="text-black/50">
+          <Text className="text-black/50">  
             {t("Không có tài khoản ?")}{" "}
             <Link href={"/auth/signup"} className="text-cyan-blue">
               {t("Đăng ký ngay")}

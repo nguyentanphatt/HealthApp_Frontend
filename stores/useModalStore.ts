@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type ModalType = "waterwheel" | "action" | "imageview" | "timepicker" | "delete" | null
+type ModalType = "waterwheel" | "action" | "imageview" | "timepicker" | "delete" | "confirm" | null
 
 type ModalState = {
     modalType: ModalType;

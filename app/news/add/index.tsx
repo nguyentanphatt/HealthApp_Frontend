@@ -1,4 +1,5 @@
 import { categoryBlog } from '@/constants/data'
+import { useAppTheme } from '@/context/appThemeContext'
 import { createNewBlog, getBlogById, updateBlog } from '@/services/blog'
 import { useModalStore } from '@/stores/useModalStore'
 import { FontAwesome6 } from '@expo/vector-icons'
@@ -14,6 +15,7 @@ const index = () => {
     const { openModal } = useModalStore();
     const { id } = useLocalSearchParams();
     const { t } = useTranslation();
+    const { theme } = useAppTheme();
     const queryClient = useQueryClient();
     const [selectedTag, setSelectedTag] = useState({ label: "Khác", value: "other" });
     const [images, setImages] = useState<string[]>([]);
@@ -22,8 +24,8 @@ const index = () => {
     const scrollViewRef = useRef<ScrollView>(null);
     const contentInputRef = useRef<TextInput>(null);
     const shouldAutoScrollRef = useRef(false);
-    
-    const { data: blog, isLoading } = useQuery({
+
+    const { data: blog } = useQuery({
         queryKey: ["blog", id],
         queryFn: () => getBlogById(id as string),
         select: (res) => res.blogs[0],
@@ -35,14 +37,13 @@ const index = () => {
             setContent(blog.content);
             setImages([blog.image]);
             setSelectedTag({ label: blog.category, value: blog.category });
-            // Do not auto scroll when prefilling edit data
             shouldAutoScrollRef.current = false;
         }
     }, [id]);
 
     const pickImage = async () => {
         contentInputRef.current?.blur();
-        
+
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ["images"],
             quality: 1,
@@ -56,9 +57,9 @@ const index = () => {
     };
 
     const takePhoto = async () => {
-        
+
         contentInputRef.current?.blur();
-        
+
         let result = await ImagePicker.launchCameraAsync({
             quality: 1,
         });
@@ -68,14 +69,14 @@ const index = () => {
     };
 
     const createMutation = useMutation({
-        mutationFn: ({title, image, content, category}: {title:string, image:string, content:string, category:string}) => {
+        mutationFn: ({ title, image, content, category }: { title: string, image: string, content: string, category: string }) => {
             const timestamp = new Date().getTime();
             return createNewBlog(title, image, content, timestamp, category);
         },
         onSuccess: (data) => {
-            queryClient.invalidateQueries({ 
-                predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"), 
-                refetchType: 'active' 
+            queryClient.invalidateQueries({
+                predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"),
+                refetchType: 'active'
             });
             Toast.show({
                 type: "success",
@@ -94,13 +95,13 @@ const index = () => {
     })
 
     const updateMutation = useMutation({
-        mutationFn: ({id, title, image, content, category}: {id:string, title:string, image:string, content:string, category:string}) => {
+        mutationFn: ({ id, title, image, content, category }: { id: string, title: string, image: string, content: string, category: string }) => {
             return updateBlog(id, title, image, content, category);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ 
-                predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"), 
-                refetchType: 'active' 
+            queryClient.invalidateQueries({
+                predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey[0] === "blogs" || q.queryKey[0] === "blogsByUserId"),
+                refetchType: 'active'
             });
             Toast.show({
                 type: "success",
@@ -145,14 +146,14 @@ const index = () => {
         }
     };
 
-    const logData = (title:string, image:string, content:string, category:string) => {
+    const logData = (title: string, image: string, content: string, category: string) => {
         const date = new Date();
         const timestamp = date.getTime();
         let filename = "";
-        if(image){
+        if (image) {
             filename = image.split('/').pop() || '';
         }
-        
+
         console.log("title", title);
         console.log("image", image);
         console.log("filename", filename);
@@ -162,19 +163,19 @@ const index = () => {
     }
 
     return (
-        <ScrollView 
+        <ScrollView
             ref={scrollViewRef}
-            className='flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]'
+            className='flex-1 gap-2.5 px-4 pb-10 font-lato-regular' style={{ backgroundColor: theme.colors.background }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             stickyHeaderIndices={[0]}
         >
-            <View className="flex bg-[#f6f6f6] pt-16 py-10">
+            <View className="flex pt-16 py-10" style={{ backgroundColor: theme.colors.background }}>
                 <View className="flex flex-row items-center justify-between">
                     <TouchableOpacity onPress={() => router.back()}>
-                        <FontAwesome6 name="chevron-left" size={24} color="black" />
+                        <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
                     </TouchableOpacity>
-                    <Text className="text-2xl font-bold self-center ml-2">{id ? t("Sửa bài viết") : t("Thêm bài viết")}</Text>
+                    <Text className="text-2xl font-bold self-center ml-2" style={{ color: theme.colors.textPrimary }}>{id ? t("Sửa bài viết") : t("Thêm bài viết")}</Text>
                     <TouchableOpacity onPress={handleSave}>
                         <Text className="text-xl font-bold text-cyan-blue self-center">{id ? t("Sửa") : t("Lưu")}</Text>
                     </TouchableOpacity>
@@ -182,19 +183,25 @@ const index = () => {
             </View>
             <View className='flex gap-2.5'>
                 <View>
-                    <Text className='text-xl font-bold'>
+                    <Text className='text-xl font-bold' style={{ color: theme.colors.textPrimary }}>
                         {t("Tiêu đề")}
                     </Text>
                     <TextInput
                         placeholder={t("Tiêu đề")}
-                        className="bg-white text-lg border-2 rounded-md border-black/20 p-2 mt-4"
+                        placeholderTextColor={theme.colors.textSecondary}
+                        className="text-lg border-2 rounded-md p-2 mt-4"
                         value={title}
                         onChangeText={(text) => setTitle(text)}
+                        style={{
+                            backgroundColor: theme.colors.card,
+                            color: theme.colors.textPrimary,
+                            borderColor: theme.colors.border,
+                        }}
                     />
                 </View>
 
                 <View>
-                    <Text className="font-bold text-xl">{t("Chủ đề")}</Text>
+                    <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Chủ đề")}</Text>
                     <View className="flex-row gap-3 mt-4">
                         <FlatList
                             data={categoryBlog}
@@ -207,11 +214,25 @@ const index = () => {
                                 return (
                                     <TouchableOpacity
                                         onPress={() => setSelectedTag(item)}
-                                        className={`px-4 py-2 rounded-full ${isSelectedTag ? "bg-cyan-blue" : "bg-white"}`}
-                                        style={{ marginRight: 0 }}
+                                        className={`px-4 py-2 rounded-full`}
+                                        style={{
+                                            marginRight: 0,
+                                            backgroundColor: isSelectedTag
+                                                ? "#19B1FF"
+                                                : theme.mode === "dark"
+                                                    ? theme.colors.card
+                                                    : "#fff",
+                                        }}
                                     >
                                         <Text
-                                            className={`text-lg ${isSelectedTag ? "text-white" : "text-black"}`}
+                                            className={`text-lg`}
+                                            style={{
+                                                color: isSelectedTag
+                                                    ? "#fff"
+                                                    : theme.mode === "dark"
+                                                        ? theme.colors.textPrimary
+                                                        : "#000",
+                                            }}
                                         >
                                             {t(item.label)}
                                         </Text>
@@ -224,11 +245,12 @@ const index = () => {
                 </View>
 
                 <View>
-                    <Text className="font-bold text-xl">{t("Nội dung")}</Text>
+                    <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Nội dung")}</Text>
                     <TextInput
                         ref={contentInputRef}
                         placeholder={t("Nội dung")}
-                        className="text-lg border-2 rounded-md border-black/20 p-2 mt-4 bg-white"
+                        placeholderTextColor={theme.colors.textSecondary}
+                        className="text-lg border-2 rounded-md p-2 mt-4"
                         multiline
                         textAlignVertical="top"
                         value={content}
@@ -253,7 +275,10 @@ const index = () => {
                                 }, 10);
                             }
                         }}
-                        style={{ 
+                        style={{
+                            backgroundColor: theme.colors.card,
+                            color: theme.colors.textPrimary,
+                            borderColor: theme.colors.border,
                             minHeight: 100,
                             textAlignVertical: 'top'
                         }}
@@ -261,18 +286,18 @@ const index = () => {
                 </View>
 
                 <View>
-                    <Text className="font-bold text-xl">{t("Ảnh chủ đề")}</Text>
+                    <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Ảnh chủ đề")}</Text>
                     <TouchableOpacity onPress={() => openModal("action", {
                         title: t("Chọn ảnh"),
                         options: [
                             { label: t("Thư viện"), onPress: pickImage, backgroundColor: "#D1D5DC", textColor: 'black' },
                             { label: t("Chụp ảnh"), onPress: takePhoto, backgroundColor: "#D1D5DC", textColor: 'black' }
                         ]
-                    })} className="w-full h-64 bg-white rounded-md shadow-md flex items-center justify-center border-dashed border-2 border-black/20 mt-4">
+                    })} className="w-full h-64 rounded-md shadow-md flex items-center justify-center border-dashed border-2 mt-4" style={{ backgroundColor: theme.colors.card, borderColor: theme.colors.border }}>
                         <View className="size-20 flex items-center justify-center bg-cyan-blue/20 rounded-full">
-                            <FontAwesome6 name="image" color="black" size={24} />
+                            <FontAwesome6 name="image" color={theme.colors.textPrimary} size={24} />
                         </View>
-                        <Text className="text-xl text-center">{t("Chọn ảnh")}</Text>
+                        <Text className="text-xl text-center" style={{ color: theme.colors.textPrimary }}>{t("Chọn ảnh")}</Text>
                     </TouchableOpacity>
                     <View className="pt-4">
                         {images.length > 0 && <Text>{t("Ảnh đã chọn")} ({images.length})</Text>}
@@ -301,7 +326,7 @@ const index = () => {
                         </View>
                     </View>
                 </View>
-                  <View className='h-[100px] bg-[#f6f6f6]'/>          
+                <View className='h-[100px]' style={{ backgroundColor: theme.colors.background }} />
             </View >
         </ScrollView>
     )

@@ -1,7 +1,11 @@
 import React from "react";
 import { View } from "react-native";
 
-const ProgressBar = ({ color, value }: { color: string, value: number }) => {
+const clamp = (num: number, min: number, max: number) => Math.max(min, Math.min(num, max));
+
+const ProgressBar = ({ color, value, max }: { color: string, value: number, max: number }) => {
+  const safeMax = max > 0 ? max : 1;
+  const percentage = clamp((value / safeMax) * 100, 0, 100);
   return (
     <View className="relative w-56 h-7">
       <View
@@ -9,9 +13,9 @@ const ProgressBar = ({ color, value }: { color: string, value: number }) => {
         style={{ backgroundColor: `${color}33` }}
       />
       <View
-        className="size-7 rounded-full"
-        style={{backgroundColor: color, width: `${value}%` }}
-      />  
+        className="h-7 rounded-full"
+        style={{ backgroundColor: color, width: `${percentage}%` }}
+      />
     </View>
   );
 };

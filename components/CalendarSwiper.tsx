@@ -1,18 +1,11 @@
+import { useAppTheme } from "@/context/appThemeContext";
 import i18n from "@/plugins/i18n";
 import { convertDayToVN } from "@/utils/convertTime";
+import { FontAwesome6 } from "@expo/vector-icons";
 import dayjs from "dayjs";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  FlatList,
-  LayoutChangeEvent,
-  ListRenderItem,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { LayoutChangeEvent, Modal, PanResponder, Text, TouchableOpacity, View } from "react-native";
+import DateTimePicker from "react-native-ui-datepicker";
 
 type DayItem = {
   day: string;
@@ -22,7 +15,6 @@ type DayItem = {
 
 const ITEM_WIDTH = 60;
 const ITEM_MARGIN = 6;
-const ITEM_TOTAL = ITEM_WIDTH + ITEM_MARGIN * 2;
 
 export default function CalendarSwiper({
   onDateChange,
@@ -31,30 +23,42 @@ export default function CalendarSwiper({
   onDateChange?: (date: string, timestamp: number) => void;
   selectedDate?: string;
 }) {
+  const { theme } = useAppTheme();
   const [days, setDays] = useState<DayItem[]>([]);
   const [localSelected, setLocalSelected] = useState<string>(
     selectedDate ?? dayjs().format("YYYY-MM-DD")
   );
   const [containerWidth, setContainerWidth] = useState<number>(0);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerDate, setPickerDate] = useState<Date>(new Date());
 
-  const listRef = useRef<FlatList<DayItem> | null>(null);
-  const earliestDate = useRef(dayjs());
-  const initialScrollDone = useRef(false);
+  const TODAY_STR = dayjs().format("YYYY-MM-DD");
 
-  // init days 90 ngày
+  const [endDate, setEndDate] = useState<dayjs.Dayjs>(() => {
+    const initial = dayjs(localSelected);
+    return initial.isAfter(dayjs()) ? dayjs() : initial;
+  });
+
   useEffect(() => {
-    const today = dayjs();
-    const start = today.subtract(90, "day");
-    const initialDays = generateDays(start, 91);
-    setDays(initialDays);
-    earliestDate.current = start;
-  }, []);
+    const start = endDate.subtract(4, "day");
+    const generated = generateDays(start, 5);
+    setDays(generated);
+  }, [endDate]);
 
   useEffect(() => {
     if (selectedDate) {
       setLocalSelected(selectedDate);
+      const picked = dayjs(selectedDate);
+      const today = dayjs();
+      const clamped = picked.isAfter(today) ? today : picked;
+      const windowEnd = endDate;
+      const windowStart = endDate.subtract(4, "day");
+      const isOutside = clamped.isBefore(windowStart, "day") || clamped.isAfter(windowEnd, "day");
+      if (isOutside) {
+        setEndDate(clamped);
+      }
     }
-  }, [selectedDate, days, containerWidth]);
+  }, [selectedDate]);
 
   const generateDays = (start: dayjs.Dayjs, count: number): DayItem[] => {
     return Array.from({ length: count }).map((_, i) => {
@@ -67,95 +71,57 @@ export default function CalendarSwiper({
     });
   };
 
-  const prependDays = useCallback(() => {
-    const newStart = earliestDate.current.subtract(90, "day");
-    const newDays = generateDays(newStart, 90);
-
-    setDays((prev) => [...newDays, ...prev]);
-    earliestDate.current = newStart;
-
-    requestAnimationFrame(() => {
-      listRef.current?.scrollToOffset({
-        offset: ITEM_TOTAL * newDays.length,
-        animated: false,
-      });
-    });
-  }, []);
-
-  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetX = e.nativeEvent.contentOffset.x;
-    if (offsetX < 100) {
-      prependDays();
-    }
-  };
-
   const handleSelectDate = (date: string) => {
     setLocalSelected(date);
     onDateChange?.(date, new Date(date).getTime());
-    // Do not auto-align on user selection
   };
 
-  const scrollToIndexAligned = (fullDate: string, animated: boolean) => {
-    const idx = days.findIndex((d) => d.fullDate === fullDate);
-    if (idx === -1 || !listRef.current) return;
-
-    if (!containerWidth || containerWidth <= 0) {
-      try {
-        listRef.current.scrollToIndex({
-          index: idx,
-          animated,
-          viewPosition: 1,
-        });
-      } catch (e) {
-        listRef.current.scrollToOffset({ offset: ITEM_TOTAL * idx, animated });
-      }
-      return;
-    }
-
-    const offset = Math.max(0, (idx + 1) * ITEM_TOTAL - containerWidth);
-
-    listRef.current.scrollToOffset({ offset, animated });
+  const applyPickedDate = (date?: Date) => {
+    if (!date) return;
+    const picked = dayjs(date);
+    const end = picked.isAfter(dayjs()) ? dayjs() : picked;
+    const selectedStr = end.format("YYYY-MM-DD");
+    setLocalSelected(selectedStr);
+    setEndDate(end);
+    onDateChange?.(selectedStr, end.valueOf());
   };
-
-  useEffect(() => {
-    if (days.length > 0 && containerWidth > 0 && !initialScrollDone.current) {
-      const lastIndex = days.length - 1;
-      const offset = Math.max(0, (lastIndex + 1) * ITEM_TOTAL - containerWidth);
-      requestAnimationFrame(() => {
-        listRef.current?.scrollToOffset({ offset, animated: false });
-        initialScrollDone.current = true;
-      });
-    }
-  }, [days, containerWidth]);
 
   const onContainerLayout = (e: LayoutChangeEvent) => {
     setContainerWidth(e.nativeEvent.layout.width);
   };
 
-  const renderItem: ListRenderItem<DayItem> = ({ item }) => {
+  const renderItem = (item: DayItem) => {
     const isSelected = item.fullDate === localSelected;
+    const isFuture = dayjs(item.fullDate).isAfter(dayjs(), "day");
     return (
       <TouchableOpacity
-        onPress={() => handleSelectDate(item.fullDate)}
+        key={item.fullDate}
+        onPress={() => !isFuture && handleSelectDate(item.fullDate)}
+        className="h-16 rounded-lg items-center justify-center"
         style={[
-          styles.item,
           { width: ITEM_WIDTH, marginHorizontal: ITEM_MARGIN },
-          isSelected ? styles.itemSelected : styles.itemUnselected,
+          isSelected ? { backgroundColor: "#19B1FF" } : { backgroundColor: theme.colors.card },
+          isFuture ? { opacity: 0.4 } : null,
         ]}
-        activeOpacity={0.7}
+        activeOpacity={1}
+        disabled={isFuture}
       >
         <Text
+          className="text-sm font-bold"
           style={[
-            styles.dayText,
-            isSelected ? styles.textWhite : styles.textBlack,
+            isSelected
+              ? { color: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" }
+              : { color: theme.colors.textSecondary },
           ]}
         >
           {item.day}
         </Text>
         <Text
+          className="text-sm"
           style={[
-            styles.dateText,
-            isSelected ? styles.textWhite : styles.textBlack,
+            isSelected
+              ? { color: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" }
+              : { color: theme.colors.textSecondary },
           ]}
         >
           {item.date}
@@ -164,69 +130,95 @@ export default function CalendarSwiper({
     );
   };
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 15 && Math.abs(g.dy) < 10,
+      onPanResponderRelease: (_, g) => {
+        if (g.dx > 40) {
+          setEndDate((prev) => prev.subtract(5, "day"));
+        } else if (g.dx < -40) {
+          setEndDate((prev) => {
+            const candidate = prev.add(5, "day");
+            const today = dayjs();
+            return candidate.isAfter(today) ? today : candidate;
+          });
+        }
+      },
+    })
+  ).current;
+
   return (
-    <View 
-      onLayout={onContainerLayout} 
-      style={{ 
+    <View
+      onLayout={onContainerLayout}
+      style={{
         paddingVertical: 12,
         zIndex: 20,
         elevation: 5
       }}
     >
-      <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 8 }}>
-        {i18n?.language && i18n.language.startsWith("en")
-          ? dayjs(localSelected).format("MMMM, YYYY")
-          : "Tháng " + dayjs(localSelected).format("M YYYY")}
-      </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <Text style={{ fontSize: 16, fontWeight: "700", color: theme.colors.textPrimary }}>
+          {i18n?.language && i18n.language.startsWith("en")
+            ? dayjs(localSelected).format("MMMM, YYYY")
+            : "Tháng " + dayjs(localSelected).format("M YYYY")}
+        </Text>
+        <TouchableOpacity onPress={() => { setPickerDate(dayjs(localSelected).toDate()); setPickerOpen(true); }}>
+          <FontAwesome6 name="calendar-days" size={20} color={theme.colors.textPrimary} />
+        </TouchableOpacity>
+      </View>
 
-      <FlatList
-        ref={listRef}
-        horizontal
-        data={days}
-        keyExtractor={(item) => item.fullDate}
-        renderItem={renderItem}
-        showsHorizontalScrollIndicator={false}
-        getItemLayout={(_, index) => ({
-          length: ITEM_TOTAL,
-          offset: ITEM_TOTAL * index,
-          index,
-        })}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        extraData={localSelected}
-        contentContainerStyle={{ paddingRight: ITEM_MARGIN }}
-        // Đảm bảo touch events không bị chặn
-        pointerEvents="auto"
-        removeClippedSubviews={false}
-      />
+      <View {...panResponder.panHandlers} style={{ alignItems: "center" }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+          {days.map(renderItem)}
+        </View>
+      </View>
+
+      <Modal visible={pickerOpen} transparent animationType="fade" onRequestClose={() => setPickerOpen(false)}>
+        <View style={{ flex: 1, backgroundColor: "#0008", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <View style={{ width: "100%", borderRadius: 12, padding: 12, backgroundColor: theme.colors.card }}>
+            <DateTimePicker
+              mode="single"
+              date={pickerDate}
+              onChange={(params: any) => setPickerDate(params?.date ?? new Date())}
+              locale={i18n.language}
+              maxDate={new Date()}
+              styles={{
+                day_cell: { borderRadius: 20, width: 40, height: 40 },
+                today: { borderColor: theme.colors.tint, borderWidth: 1 },
+                selected: { backgroundColor: theme.colors.tint, borderRadius: 5 },
+                selected_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" },
+                disabled: { opacity: 0.4 },
+                disabled_label: { color: theme.colors.textSecondary },
+                button_next_image: { tintColor: theme.mode === "dark" ? "#fff" : "#000" },
+                button_prev_image: { tintColor: theme.mode === "dark" ? "#fff" : "#000" },
+                month_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                year_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                year: { borderWidth: 0 },
+                year_selector_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                header: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                month: { borderWidth: 0 },
+                month_selector_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                day_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                today_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+                selected_month: { borderWidth: 1, borderColor: theme.colors.tint },
+                selected_year: { borderWidth: 1, borderColor: theme.colors.tint },
+                weekday_label: { color: theme.mode === "dark" ? theme.colors.textPrimary : "#000" },
+              }}
+            />
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 12, marginTop: 12 }}>
+              <TouchableOpacity onPress={() => setPickerOpen(false)} style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
+                <Text style={{ color: theme.colors.textSecondary }}>{i18n.t?.("Huỷ") ?? "Huỷ"}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => { const chosen = pickerDate ?? new Date(); setPickerOpen(false); applyPickedDate(chosen); }}
+                style={{ paddingHorizontal: 12, paddingVertical: 8 }}
+              >
+                <Text style={{ color: theme.colors.tint, fontWeight: "700" }}>{i18n.t?.("Chọn") ?? "Chọn"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  item: {
-    height: 64,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  itemSelected: {
-    backgroundColor: "#00BFFF",
-  },
-  itemUnselected: {
-    backgroundColor: "#E6E6E6",
-  },
-  dayText: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  dateText: {
-    fontSize: 14,
-  },
-  textWhite: {
-    color: "#fff",
-  },
-  textBlack: {
-    color: "#000",
-  },
-});

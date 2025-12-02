@@ -1,5 +1,6 @@
 import ActionModal from '@/components/modal/ActionModal';
 import { images } from '@/constants/image';
+import { useAppTheme } from '@/context/appThemeContext';
 import { deleteBlog, getBlogById, likeBlog } from '@/services/blog';
 import { useModalStore } from '@/stores/useModalStore';
 import { useUserStore } from '@/stores/useUserStore';
@@ -15,6 +16,7 @@ const NewsDetails = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const queryClient = useQueryClient();
   const user = useUserStore((state) => state.user);
   const [isLiked, setIsLiked] = useState(false);
@@ -118,8 +120,8 @@ const NewsDetails = () => {
 
   if (isLoading || !blog) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#000" />
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.textPrimary} />
       </View>
     );
   }
@@ -127,31 +129,31 @@ const NewsDetails = () => {
   return (
     <View className='flex-1 relative'>
       <ScrollView
-        className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular bg-[#f6f6f6]"
+        className="flex-1 gap-2.5 px-4 pb-10 font-lato-regular" style={{ backgroundColor: theme.colors.background }}
         stickyHeaderIndices={[0]}
         contentContainerStyle={{ paddingBottom: 50 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex bg-[#f6f6f6] pt-16 py-10">
+        <View className="flex pt-16 py-10" style={{ backgroundColor: theme.colors.background }}>
           <View className="flex flex-row items-center justify-between">
-            <TouchableOpacity onPress={() => router.push(`/(tabs)/news` as Href)} className='size-[24px] rounded-full bg-[#f6f6f6] flex items-center justify-center'>
-              <FontAwesome6 name="chevron-left" size={24} color="black" />
+            <TouchableOpacity onPress={() => router.push(`/(tabs)/news` as Href)} className='size-[24px] rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.secondaryCard }}>
+              <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
             </TouchableOpacity>
-            <Text className="text-2xl font-bold  self-center">{t("Bài viết")}</Text>
+            <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{t("Bài viết")}</Text>
             {blog[0]?.userName === user?.fullName ? (
-              <TouchableOpacity onPress={() => setShowAction(true)} className='size-[24px] rounded-full bg-[#f6f6f6] flex items-center justify-center'>
-                <FontAwesome6 name="ellipsis-vertical" size={24} color="black" />
+              <TouchableOpacity onPress={() => setShowAction(true)} className='size-[24px] rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.secondaryCard }}>
+                <FontAwesome6 name="ellipsis-vertical" size={24} color={theme.colors.textPrimary} />
               </TouchableOpacity>
             ) : (
-              <View className='size-[14px] rounded-full bg-[#f6f6f6]' />
+              <View className='size-[14px] rounded-full' style={{ backgroundColor: theme.colors.background }} />
             )}
           </View>
         </View>
         <View className="flex items-center justify-center gap-2">
-          <Text className="text-3xl font-bold">{blog[0]?.title}</Text>
+          <Text className="text-3xl font-bold" style={{ color: theme.colors.textPrimary }}>{blog[0]?.title}</Text>
           <View className='flex flex-row items-center justify-center gap-2 mb-10'>
-            <Text className='text-black/60 text-lg'>{blog[0]?.userName}</Text>
-            <Text className='text-black/60 text-lg'>{dayjs(blog[0]?.createAt).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm')}</Text>
+            <Text className='text-lg' style={{ color: theme.colors.textSecondary }}>{blog[0]?.userName}</Text>
+            <Text className='text-lg' style={{ color: theme.colors.textSecondary }}>{dayjs(blog[0]?.createAt).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm')}</Text>
           </View>
           <Image
             source={blog[0]?.image ? { uri: blog[0].image } : images.noImg}
@@ -159,7 +161,7 @@ const NewsDetails = () => {
             height={300}
             className="w-[350px] h-[300px] rounded-lg"
           />
-          <Text className="text-base self-start text-black/70">{blog[0]?.content}</Text>
+          <Text className="text-base self-start" style={{ color: theme.colors.textSecondary }}>{blog[0]?.content}</Text>
 
 
         </View>
@@ -167,14 +169,14 @@ const NewsDetails = () => {
       <TouchableOpacity
         onPress={() => router.push(`/news/add` as Href)}
         className='absolute bottom-28 right-4 w-[60px] h-[60px] flex items-center justify-center bg-cyan-blue rounded-full'>
-        <FontAwesome6 name="share" size={24} color="white" />
+        <FontAwesome6 name="share" size={24} color={theme.mode === "dark" ? theme.colors.textPrimary : "#fff"} />
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => likeBlogMutation.mutate(blog[0]?.id)}
         className='absolute bottom-8 right-4 w-[60px] h-[60px] flex items-center justify-center bg-red-400 rounded-full'>
-        {!isLiked ? <FontAwesome6 name="heart" size={24} color="white" /> : (
+        {!isLiked ? <FontAwesome6 name="heart" size={24} color={theme.mode === "dark" ? theme.colors.textPrimary : "#fff"} /> : (
           <View className='flex items-center justify-center'>
-            <Image source={images.heart} className='w-[25px] h-[22px]' width={24} height={24} />
+            <Image source={images.heart} className='w-[26px] h-[23px]' width={24} height={24} style={{ tintColor: theme.mode === "dark" ? theme.colors.textPrimary : "#fff" }} />
           </View>
         )}
       </TouchableOpacity>
@@ -189,7 +191,7 @@ const NewsDetails = () => {
               router.push(`/news/add?id=${id}` as Href);
             },
             backgroundColor: '#19B1FF',
-            textColor: 'white',
+            textColor: theme.mode === "dark" ? theme.colors.textPrimary : "#fff",
           },
           {
             label: t('Xóa'),
@@ -198,7 +200,7 @@ const NewsDetails = () => {
               setShowAction(false);
             },
             backgroundColor: '#ef4444',
-            textColor: 'white',
+            textColor: theme.mode === "dark" ? theme.colors.textPrimary : "#fff",
           }
         ]}
       />
