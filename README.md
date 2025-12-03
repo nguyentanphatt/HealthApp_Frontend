@@ -77,15 +77,12 @@ HealthApp is a personal health tracking application (activity, water, sleep, nut
 
 1. **Install dependencies**
 
-   ```bash
-   npm install
-   ```
+**Description:**  
+A wellness mobile application that helps users track their daily habits including water intake, running activity, sleep quality, and nutrition.
 
 2. **Start the app (dev)**
 
-   ```bash
-   npx expo start
-   ```
+---
 
    You can then open the app via:
 
