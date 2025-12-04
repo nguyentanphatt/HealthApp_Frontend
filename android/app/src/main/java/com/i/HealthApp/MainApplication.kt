@@ -2,7 +2,7 @@ package com.i.HealthApp
 
 import android.app.Application
 import android.content.res.Configuration
-
+import com.i.HealthApp.ScreenMonitorPackage
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactNativeHost
@@ -24,7 +24,7 @@ class MainApplication : Application(), ReactApplication {
           override fun getPackages(): List<ReactPackage> {
             val packages = PackageList(this).packages
             // Packages that cannot be autolinked yet can be added manually here, for example:
-            // packages.add(MyReactNativePackage())
+            packages.add(ScreenMonitorPackage())
             return packages
           }
 

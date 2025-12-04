@@ -10,8 +10,15 @@ const WaterWheelModal = ({ title, items, initialValue, currentDate, handleConfir
     [items]
   );
 
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  // Find the initial index based on initialValue
+  const initialIndex = useMemo(() => {
+    const index = data.findIndex((item: { label: string; value: number }) => item.value === initialValue);
+    return index >= 0 ? index : 0;
+  }, [data, initialValue]);
+
+  const [selectedIndex, setSelectedIndex] = useState(initialIndex);
   const listRef = useRef<FlatList<{ label: string; value: number }>>(null);
+
 
   const CONTAINER_HEIGHT = 240;
   const ITEM_HEIGHT = 48;
@@ -62,6 +69,13 @@ const WaterWheelModal = ({ title, items, initialValue, currentDate, handleConfir
                 data={data}
                 keyExtractor={(_, index) => `w-${index}`}
                 getItemLayout={getItemLayout}
+                initialScrollIndex={initialIndex}
+                onScrollToIndexFailed={(info) => {
+                  const wait = new Promise(resolve => setTimeout(resolve, 500));
+                  wait.then(() => {
+                    listRef.current?.scrollToIndex({ index: info.index, animated: false });
+                  });
+                }}
                 showsVerticalScrollIndicator={false}
                 snapToInterval={ITEM_HEIGHT}
                 decelerationRate="fast"

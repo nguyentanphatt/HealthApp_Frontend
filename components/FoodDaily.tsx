@@ -34,7 +34,7 @@ const FoodDaily = ({title, data, selectedDate}:{title:string, data:FoodDetail[],
           <TouchableOpacity
             onPress={() => router.push(`/food/details/${item.recordId}?selectedDate=${selectedDate}` as Href)}
           >
-            <View className="w-[340px] items-center justify-center pr-4 flex gap-4">
+            <View className="w-[360px] items-center justify-center pr-4 flex gap-4">
               <Image
                 source={item.imageUrl ? { uri: item.imageUrl } : images.food01}
                 width={300}
