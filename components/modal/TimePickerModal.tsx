@@ -23,8 +23,16 @@ const TimeWheelModal = ({
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={closeModal}>
-      <TouchableOpacity className="flex-1 items-center justify-center bg-black/30" onPress={closeModal}>
-        <View className="flex items-center justify-center p-4 w-[90%] rounded-md" style={{ backgroundColor: theme.colors.card }}>
+      <View className="flex-1 items-center justify-center bg-black/30">
+        <TouchableOpacity
+          className="absolute top-0 left-0 right-0 bottom-0"
+          activeOpacity={1}
+          onPress={closeModal}
+        />
+        <View
+          className="flex items-center justify-center p-4 w-[90%] rounded-md"
+          style={{ backgroundColor: theme.colors.card }}
+        >
           {title && <Text className="text-2xl font-bold mb-4" style={{ color: theme.colors.textPrimary }}>{title}</Text>}
 
           <TimeWheelPicker
@@ -46,7 +54,7 @@ const TimeWheelModal = ({
             <Text className="text-xl text-white font-bold">Xác nhận</Text>
           </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     </Modal>
   );
 };

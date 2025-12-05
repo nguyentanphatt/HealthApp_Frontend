@@ -26,9 +26,14 @@ const Page = () => {
         ? 360
         : Number(convertWater(250, units.water).toFixed(2));
 
+  // Get current time for initial values
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+
   const [selectedAmount, setSelectedAmount] = useState(initialValue);
-  const [selectedHour, setSelectedHour] = useState(6);
-  const [selectedMinute, setSelectedMinute] = useState(30);
+  const [selectedHour, setSelectedHour] = useState(currentHour);
+  const [selectedMinute, setSelectedMinute] = useState(currentMinute);
 
   const handleSave = async (
     amount: number,

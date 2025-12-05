@@ -3,6 +3,7 @@ import CircularTimePicker from "@/components/CircularTimePicker";
 import { useAppTheme } from "@/context/appThemeContext";
 import { CreateSleepRecord, getSleepStatus, UpdateSleepRecord } from "@/services/sleep";
 import { formatTimeForDisplay, utcTimeToVnTime, vnDateAndTimeToUtcTimestamp, vnTimeToUtcTimestamp } from "@/utils/convertTime";
+import { scheduleSleepNotification } from "@/utils/notificationsHelper";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -12,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { ActivityIndicator, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 import { BarChart, LineChart } from "react-native-gifted-charts";
 import Toast from "react-native-toast-message";
+import {screenMonitor} from "@/services/screenMonitor";
 
 const Page = () => {
   const router = useRouter();
@@ -67,7 +69,28 @@ const Page = () => {
 
   }, [selectedDate, queryClient]);
 
+
   const hasSleepData = sleepStatus?.history && (sleepStatus.history as any[]).length > 0;
+
+  useEffect(() => {
+    if (hasSleepData && sleepStatus?.history?.[0]) {
+      const sleepRecord = sleepStatus.history[0];
+      const startTime = utcTimeToVnTime(new Date(sleepRecord.startAt).getTime());
+      const endTime = utcTimeToVnTime(new Date(sleepRecord.endedAt).getTime());
+
+      const startTimeStr = `${String(startTime.hour).padStart(2, '0')}:${String(startTime.minute).padStart(2, '0')}`;
+      const endTimeStr = `${String(endTime.hour).padStart(2, '0')}:${String(endTime.minute).padStart(2, '0')}`;
+
+      // Start screen monitoring
+      screenMonitor.startTracking(startTimeStr, endTimeStr);
+
+      return () => {
+        const logs = screenMonitor.stopTracking();
+        console.log('[Screen Monitor] Final logs:', logs);
+        // Save logs to backend here if needed
+      };
+    }
+  }, [hasSleepData, sleepStatus?.history?.[0]]);
 
   const stackData = [
     {
@@ -164,6 +187,30 @@ const Page = () => {
     }
   }, [sleepStatus?.history?.[0]?.qualityScore, moods]);
 
+  // Schedule notification when sleep data exists
+  useEffect(() => {
+    if (sleepStatus?.history?.[0]) {
+      const sleepRecord = sleepStatus.history[0];
+      const startTime = utcTimeToVnTime(new Date(sleepRecord.startAt).getTime());
+      const endTime = utcTimeToVnTime(new Date(sleepRecord.endedAt).getTime());
+
+      const startTimeStr = `${String(startTime.hour).padStart(2, '0')}:${String(startTime.minute).padStart(2, '0')}`;
+      const endTimeStr = `${String(endTime.hour).padStart(2, '0')}:${String(endTime.minute).padStart(2, '0')}`;
+
+      // Only schedule if we're viewing today's data (selectedDate is 0 or today)
+      const isToday = selectedDate === 0 ||
+        Math.abs(selectedDate - Math.floor(Date.now() / 1000)) < 86400;
+
+      if (isToday) {
+        scheduleSleepNotification(startTimeStr, endTimeStr).then(success => {
+          if (success) {
+            console.log("Sleep notification re-scheduled on load");
+          }
+        });
+      }
+    }
+  }, [sleepStatus?.history?.[0], selectedDate]);
+
   const handleSetSleepTime = async (startTime: string, endTime: string, isAllWeek: boolean) => {
     const startTimeHour = Number(startTime.split(":")[0]);
     const startTimeMinute = Number(startTime.split(":")[1]);
@@ -188,6 +235,12 @@ const Page = () => {
     try {
       const response = await CreateSleepRecord(startTimeTimestamp.toString(), endTimeTimestamp.toString(), isAllWeek);
       if (response.success) {
+        // Schedule sleep notification
+        const notificationScheduled = await scheduleSleepNotification(startTime, endTime);
+        if (notificationScheduled) {
+          console.log("Sleep notification scheduled successfully");
+        }
+
         Toast.show({
           type: "success",
           text1: t("Thêm giờ ngủ thành công"),
@@ -304,7 +357,7 @@ const Page = () => {
               {t("Từ")} {(() => {
                 const startTime = utcTimeToVnTime(new Date(sleepStatus?.history[0].startAt).getTime());
                 const endTime = utcTimeToVnTime(new Date(sleepStatus?.history[0].endedAt).getTime());
-                return `${formatTimeForDisplay(startTime.hour, startTime.minute)} ${t("giờ")} ${t("tới")} ${formatTimeForDisplay(endTime.hour, endTime.minute)} ${t("giờ")}`;
+                return `${formatTimeForDisplay(startTime.hour, startTime.minute)} ${t("tới")} ${formatTimeForDisplay(endTime.hour, endTime.minute)}`;
               })()}
             </Text>
           </View>

@@ -3,6 +3,7 @@ import InfoCard from "@/components/InfoCard";
 import ReminderList from "@/components/ReminderList";
 import WaterVector from "@/components/vector/WaterVector";
 import WaterHistory from "@/components/WaterHistory";
+import * as Location from 'expo-location';
 import Weather from "@/components/Weather";
 import { WaterStatus, WeatherResponse } from "@/constants/type";
 import { useAppTheme } from "@/context/appThemeContext";
@@ -87,9 +88,34 @@ const Page = () => {
   } = useQuery({
     queryKey: ["weatherReport"],
     queryFn: async () => {
-      const ip = await getIp();
-      return WeatherSuggest(ip);
+      try {
+        // Request location permissions
+        const { status } = await Location.requestForegroundPermissionsAsync();
+
+        if (status !== 'granted') {
+          console.log('Location permission denied');
+          // Fallback to IP-based location
+          const ip = await getIp();
+          return WeatherSuggest(ip);
+        }
+
+        // Get current position
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+
+        const { latitude, longitude } = location.coords;
+        console.log('User location:', latitude, longitude);
+        // Pass coordinates to your weather service
+        return WeatherSuggest(`${latitude},${longitude}`);
+      } catch (error) {
+        console.error('Location error:', error);
+        // Fallback to IP-based location
+        const ip = await getIp();
+        return WeatherSuggest(ip);
+      }
     },
+    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
   });
 
   const {

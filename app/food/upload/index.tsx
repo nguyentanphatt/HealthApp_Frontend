@@ -53,16 +53,16 @@ const Page = () => {
           console.log(`Upload ảnh ${i + 1} thành công:`, res);
           if (res.success) {
             if (res.name === "Invalid") {
-              console.log("Ảnh ${i + 1} sai");
+              console.log(`Ảnh ${i + 1} sai`);
             } else {
-              console.log("Ảnh ${i + 1} thành công");
+              console.log(`Ảnh ${i + 1} thành công`);
             }
             queryClient.invalidateQueries({ queryKey: ["foodStatus"], exact: false });
             queryClient.invalidateQueries({ queryKey: ["foodWeekly"], exact: false });
           }
         } catch (err) {
           console.log(`Upload ảnh ${i + 1} thất bại:`, err);
-          console.log("Ảnh ${i + 1} lỗi");
+          console.log(`Ảnh ${i + 1} lỗi`);
         }
 
         if (i < uris.length - 1) {
