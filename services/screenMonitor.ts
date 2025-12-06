@@ -16,6 +16,7 @@ class ScreenMonitorService {
   private savePointCallback: SavePointCallback | null = null;
   private pendingRequests: { type: 'sleep' | 'awake', timestamp: number, retries: number }[] = [];
   private isProcessingQueue = false;
+  private endTimeCheckInterval: any = null;
 
   startTracking(
     startTime: string | number,
@@ -27,7 +28,7 @@ class ScreenMonitorService {
 
     this.isMonitoring = true;
 
-    // Handle both string (HH:mm format) and number (timestamp) inputs
+
     this.sleepStartTime = typeof startTime === 'string'
       ? this.parseTimeToTimestamp(startTime)
       : startTime;
@@ -46,7 +47,7 @@ class ScreenMonitorService {
     console.log(`[Screen Monitor] Timestamps: ${this.sleepStartTime} to ${this.sleepEndTime}`);
     console.log(`[Screen Monitor] Current time: ${Date.now()}, within range: ${this.isWithinSleepTime()}`);
 
-    // Listen to screen events
+
     this.screenOffListener = screenMonitorEmitter.addListener('onScreenOff', () => {
       this.handleScreenEvent('asleep');
     });
@@ -55,8 +56,11 @@ class ScreenMonitorService {
       this.handleScreenEvent('awake');
     });
 
-    // Start native monitoring
+
     ScreenMonitor.startMonitoring();
+
+
+    this.setupAutoStop();
   }
 
   stopTracking() {
@@ -64,20 +68,26 @@ class ScreenMonitorService {
 
     this.isMonitoring = false;
 
-    // Remove listeners
+
+    if (this.endTimeCheckInterval) {
+      clearInterval(this.endTimeCheckInterval);
+      this.endTimeCheckInterval = null;
+    }
+
+
     this.screenOffListener?.remove();
     this.screenOnListener?.remove();
     this.screenOffListener = null;
     this.screenOnListener = null;
 
-    // Stop native monitoring
+
     ScreenMonitor.stopMonitoring();
 
     console.log('[Screen Monitor] Stopped tracking');
     console.log('[Screen Monitor] Sleep logs:', this.sleepLogs);
     console.log('[Screen Monitor] Pending requests:', this.pendingRequests.length);
 
-    // Process any remaining pending requests
+
     if (this.pendingRequests.length > 0) {
       this.processQueue().catch(err => {
         console.error('[Screen Monitor] Failed to process pending requests on stop:', err);
@@ -102,14 +112,14 @@ class ScreenMonitorService {
     const stateText = state === 'asleep' ? 'đã tắt màn hình (ngủ)' : 'đã bật màn hình (thức)';
     console.log(`[Screen Monitor] ${timeStr} - Người dùng ${stateText}`);
 
-    // Save point via callback if available
+
     if (this.savePointCallback && this.recordId) {
       try {
         await this.savePointCallback(type, now);
         console.log(`[Screen Monitor] Successfully saved ${type} point to backend`);
       } catch (error) {
         console.error(`[Screen Monitor] Failed to save ${type} point:`, error);
-        // Add to retry queue
+    
         this.pendingRequests.push({ type, timestamp: now, retries: 0 });
         this.processQueue();
       }
@@ -137,7 +147,7 @@ class ScreenMonitorService {
           console.error(`[Screen Monitor] Max retries reached for ${request.type} point, removing from queue`);
           this.pendingRequests.shift();
         } else {
-          // Wait before next retry
+      
           await new Promise(resolve => setTimeout(resolve, 2000 * request.retries));
           break; // Exit loop to restart queue processing
         }
@@ -152,8 +162,8 @@ class ScreenMonitorService {
 
     if (!this.sleepStartTime || !this.sleepEndTime) return false;
 
-    // Sleep period spans across days (end time is after start time chronologically)
-    // Just check if current time is between start and end timestamps
+
+
     return now >= this.sleepStartTime && now <= this.sleepEndTime;
   }
 
@@ -170,6 +180,28 @@ class ScreenMonitorService {
 
   getPendingRequests() {
     return this.pendingRequests;
+  }
+
+  private setupAutoStop() {
+    if (!this.sleepEndTime) return;
+
+
+    this.endTimeCheckInterval = setInterval(() => {
+      const now = Date.now();
+      if (now >= this.sleepEndTime!) {
+        console.log('[Screen Monitor] End time reached, automatically stopping tracking');
+        console.log('[Screen Monitor] Current time:', new Date(now).toLocaleString('vi-VN'));
+        console.log('[Screen Monitor] End time:', new Date(this.sleepEndTime!).toLocaleString('vi-VN'));
+        this.stopTracking();
+      }
+    }, 60000); // Check every 60 seconds
+
+
+    const now = Date.now();
+    if (now >= this.sleepEndTime) {
+      console.log('[Screen Monitor] End time already passed, not starting tracking');
+      this.stopTracking();
+    }
   }
 }
 
