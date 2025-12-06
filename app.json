@@ -68,7 +68,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Cho phép $(PRODUCT_NAME) được sử dùng dịch vụ vị trí để cung cấp dữ liệu về thời tiết và chạy bộ."
+          "locationAlwaysAndWhenInUsePermission": "Cho phép $(PRODUCT_NAME) được sử dụng dịch vụ vị trí để cung cấp dữ liệu về thời tiết và chạy bộ."
         }
       ]
     ],
