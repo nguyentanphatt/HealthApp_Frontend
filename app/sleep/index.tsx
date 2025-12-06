@@ -1,7 +1,8 @@
 import CalendarSwiper from "@/components/CalendarSwiper";
 import CircularTimePicker from "@/components/CircularTimePicker";
 import { useAppTheme } from "@/context/appThemeContext";
-import { CreateSleepRecord, getSleepStatus, UpdateSleepRecord, saveSleepPoint } from "@/services/sleep";
+import { screenMonitor } from "@/services/screenMonitor";
+import { CreateSleepRecord, getSleepStatus, UpdateSleepRecord } from "@/services/sleep";
 import { formatTimeForDisplay, utcTimeToVnTime, vnDateAndTimeToUtcTimestamp, vnTimeToUtcTimestamp } from "@/utils/convertTime";
 import { scheduleSleepNotification } from "@/utils/notificationsHelper";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -13,7 +14,6 @@ import { useTranslation } from "react-i18next";
 import { ActivityIndicator, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 import { BarChart, LineChart } from "react-native-gifted-charts";
 import Toast from "react-native-toast-message";
-import {screenMonitor} from "@/services/screenMonitor";
 
 const Page = () => {
   const router = useRouter();
@@ -111,6 +111,7 @@ const Page = () => {
 
       // Start screen monitoring with recordId and callback
       screenMonitor.startTracking(startTimeStr, endTimeStr, recordId, handleSaveSleepPoint);
+      screenMonitor.startTracking(startTimeStr, endTimeStr);
 
       return () => {
         const logs = screenMonitor.stopTracking();
@@ -127,6 +128,8 @@ const Page = () => {
             position: "bottom",
           });
         }
+      };
+        console.log('[Screen Monitor] Final logs:', logs);
       };
     }
   }, [hasSleepData, sleepStatus?.history?.[0], t]);
@@ -226,7 +229,6 @@ const Page = () => {
     }
   }, [sleepStatus?.history?.[0]?.qualityScore, moods]);
 
-  // Schedule notification when sleep data exists
   useEffect(() => {
     if (sleepStatus?.history?.[0]) {
       const sleepRecord = sleepStatus.history[0];
@@ -236,7 +238,6 @@ const Page = () => {
       const startTimeStr = `${String(startTime.hour).padStart(2, '0')}:${String(startTime.minute).padStart(2, '0')}`;
       const endTimeStr = `${String(endTime.hour).padStart(2, '0')}:${String(endTime.minute).padStart(2, '0')}`;
 
-      // Only schedule if we're viewing today's data (selectedDate is 0 or today)
       const isToday = selectedDate === 0 ||
         Math.abs(selectedDate - Math.floor(Date.now() / 1000)) < 86400;
 
@@ -274,7 +275,6 @@ const Page = () => {
     try {
       const response = await CreateSleepRecord(startTimeTimestamp.toString(), endTimeTimestamp.toString(), isAllWeek);
       if (response.success) {
-        // Schedule sleep notification
         const notificationScheduled = await scheduleSleepNotification(startTime, endTime);
         if (notificationScheduled) {
           console.log("Sleep notification scheduled successfully");

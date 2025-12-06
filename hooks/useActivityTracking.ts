@@ -217,6 +217,13 @@ export function useActivityTracking(): UseActivityTrackingResult {
                                             distanceInterval: 0,
                                         },
                                         (loc) => {
+                                            // Validate GPS accuracy - skip if accuracy is too poor (> 50 meters)
+                                            const accuracy = loc.coords.accuracy ?? Infinity;
+                                            if (accuracy > 50) {
+                                                console.log('GPS accuracy too poor, skipping:', accuracy);
+                                                return;
+                                            }
+
                                             const coord: TrackedPoint = { latitude: loc.coords.latitude, longitude: loc.coords.longitude, time: loc.timestamp ?? Date.now() };
                                             const now = Date.now();
                                             setPositions((p) => [...p, coord]);
@@ -226,18 +233,51 @@ export function useActivityTracking(): UseActivityTrackingResult {
                                             if (prev && prevTime && !isPauseRef.current) {
                                                 const distance = distanceBetween(prev, coord);
                                                 const timeDiff = (now - prevTime) / 1000;
+                                                
                                                 if (timeDiff > 0 && distance > 0) {
-                                                    const speed = distance / timeDiff;
-                                                    setCurrentSpeed(speed);
-                                                    setMaxSpeed(prev => Math.max(prev, speed));
-                                                    totalDistanceRef.current += distance;
-                                                    const currentActive = calculateActiveTime(
-                                                        startTimeRef.current,
-                                                        pauseStartTimeRef.current,
-                                                        totalPauseTimeRef.current
-                                                    );
-                                                    const avg = calculateAverageSpeed(totalDistanceRef.current, currentActive);
-                                                    setAvgSpeed(avg);
+                                                    const speed = distance / timeDiff; // speed in m/s
+                                                    const speedKmh = speed * 3.6; // convert to km/h
+                                                    
+                                                    // Validate speed: reasonable max for walking/running is ~30 km/h (~8.3 m/s)
+                                                    const MAX_REASONABLE_SPEED_KMH = 30; // ~30 km/h for running
+                                                    const MAX_REASONABLE_SPEED_MS = MAX_REASONABLE_SPEED_KMH / 3.6; // ~8.3 m/s
+                                                    
+                                                    // Also check if distance is unreasonably large (> 100m in 2 seconds = GPS jump)
+                                                    const MAX_REASONABLE_DISTANCE_M = 100; // meters
+                                                    
+                                                    if (speed <= MAX_REASONABLE_SPEED_MS && distance <= MAX_REASONABLE_DISTANCE_M) {
+                                                        // Normal case: use full distance
+                                                        setCurrentSpeed(speed);
+                                                        setMaxSpeed(prev => Math.max(prev, speed));
+                                                        totalDistanceRef.current += distance;
+                                                        const currentActive = calculateActiveTime(
+                                                            startTimeRef.current,
+                                                            pauseStartTimeRef.current,
+                                                            totalPauseTimeRef.current
+                                                        );
+                                                        const avg = calculateAverageSpeed(totalDistanceRef.current, currentActive);
+                                                        setAvgSpeed(avg);
+                                                    } else {
+                                                        // GPS jump detected: cap distance to reasonable maximum
+                                                        console.log('GPS jump detected - capping distance:', { speed: speedKmh, distance, timeDiff });
+                                                        
+                                                        // Cap distance to reasonable max (e.g., 100m) to avoid huge jumps
+                                                        const cappedDistance = Math.min(distance, MAX_REASONABLE_DISTANCE_M);
+                                                        const cappedSpeed = cappedDistance / timeDiff;
+                                                        
+                                                        // Use capped values for calculation
+                                                        setCurrentSpeed(cappedSpeed);
+                                                        setMaxSpeed(prev => Math.max(prev, cappedSpeed));
+                                                        totalDistanceRef.current += cappedDistance;
+                                                        
+                                                        const currentActive = calculateActiveTime(
+                                                            startTimeRef.current,
+                                                            pauseStartTimeRef.current,
+                                                            totalPauseTimeRef.current
+                                                        );
+                                                        const avg = calculateAverageSpeed(totalDistanceRef.current, currentActive);
+                                                        setAvgSpeed(avg);
+                                                    }
                                                 }
                                             }
                                             lastPositionRef.current = coord;
@@ -435,6 +475,13 @@ export function useActivityTracking(): UseActivityTrackingResult {
                     distanceInterval: 0,
                 },
                 (loc) => {
+                    // Validate GPS accuracy - skip if accuracy is too poor (> 50 meters)
+                    const accuracy = loc.coords.accuracy ?? Infinity;
+                    if (accuracy > 50) {
+                        console.log('GPS accuracy too poor, skipping:', accuracy);
+                        return;
+                    }
+
                     const coord: TrackedPoint = { latitude: loc.coords.latitude, longitude: loc.coords.longitude, time: loc.timestamp ?? Date.now() };
                     const now = Date.now();
 
@@ -446,18 +493,55 @@ export function useActivityTracking(): UseActivityTrackingResult {
                     if (prev && prevTime && !isPauseRef.current) {
                         const distance = distanceBetween(prev, coord);
                         const timeDiff = (now - prevTime) / 1000;
+                        
                         if (timeDiff > 0 && distance > 0) {
-                            const speed = distance / timeDiff;
-                            setCurrentSpeed(speed);
-                            setMaxSpeed(prev => Math.max(prev, speed));
-                            totalDistanceRef.current += distance;
-                            const currentActiveTime = calculateActiveTime(
-                                startTimeRef.current,
-                                pauseStartTimeRef.current,
-                                totalPauseTimeRef.current
-                            );
-                            const avgSpeed = calculateAverageSpeed(totalDistanceRef.current, currentActiveTime);
-                            setAvgSpeed(avgSpeed);
+                            const speed = distance / timeDiff; // speed in m/s
+                            const speedKmh = speed * 3.6; // convert to km/h
+                            
+                            // Validate speed: reasonable max for walking/running is ~30 km/h (~8.3 m/s)
+                            // If speed exceeds this threshold, likely GPS jump - skip this point
+                            const MAX_REASONABLE_SPEED_KMH = 30; // ~30 km/h for running
+                            const MAX_REASONABLE_SPEED_MS = MAX_REASONABLE_SPEED_KMH / 3.6; // ~8.3 m/s
+                            
+                            // Also check if distance is unreasonably large (> 100m in 2 seconds = GPS jump)
+                            const MAX_REASONABLE_DISTANCE_M = 100; // meters
+                            
+                            if (speed <= MAX_REASONABLE_SPEED_MS && distance <= MAX_REASONABLE_DISTANCE_M) {
+                                // Normal case: use full distance
+                                setCurrentSpeed(speed);
+                                setMaxSpeed(prev => Math.max(prev, speed));
+                                totalDistanceRef.current += distance;
+                                const currentActiveTime = calculateActiveTime(
+                                    startTimeRef.current,
+                                    pauseStartTimeRef.current,
+                                    totalPauseTimeRef.current
+                                );
+                                const avgSpeed = calculateAverageSpeed(totalDistanceRef.current, currentActiveTime);
+                                setAvgSpeed(avgSpeed);
+                            } else {
+                                // GPS jump detected: cap distance to reasonable maximum
+                                console.log('GPS jump detected - capping distance:', { speed: speedKmh, distance, timeDiff });
+                                
+                                // Cap distance to reasonable max (e.g., 100m) to avoid huge jumps
+                                const cappedDistance = Math.min(distance, MAX_REASONABLE_DISTANCE_M);
+                                const cappedSpeed = cappedDistance / timeDiff;
+                                
+                                // Use capped values for calculation
+                                setCurrentSpeed(cappedSpeed);
+                                setMaxSpeed(prev => Math.max(prev, cappedSpeed));
+                                totalDistanceRef.current += cappedDistance;
+                                
+                                const currentActiveTime = calculateActiveTime(
+                                    startTimeRef.current,
+                                    pauseStartTimeRef.current,
+                                    totalPauseTimeRef.current
+                                );
+                                const avgSpeed = calculateAverageSpeed(totalDistanceRef.current, currentActiveTime);
+                                setAvgSpeed(avgSpeed);
+                                
+                                // Still update lastPositionRef to continue tracking from current point
+                                // This prevents accumulating multiple jumps
+                            }
                         }
                     }
 

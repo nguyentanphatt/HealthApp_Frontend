@@ -113,7 +113,7 @@ const Page = () => {
               throw error;
             }
 
-            AsyncStorage.removeItem('activity_session_id').catch(() => { });
+            await AsyncStorage.removeItem('activity_session_id').catch(() => { });
 
             queryClient.invalidateQueries({ queryKey: ["activityData"] });
           }
@@ -133,8 +133,9 @@ const Page = () => {
   return (
     <View className='flex-1 pt-12 font-lato-regular' style={{ backgroundColor: theme.colors.background }}>
       <View className="flex flex-row items-center justify-between px-4 py-10">
-        <TouchableOpacity onPress={() => {
+        <TouchableOpacity onPress={async () => {
           queryClient.invalidateQueries({ queryKey: ["activityData"] });
+          await AsyncStorage.removeItem('activity_session_id');
           router.push("/(tabs)")
 
         }}>
