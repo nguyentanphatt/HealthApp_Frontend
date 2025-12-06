@@ -1,4 +1,4 @@
-import { NativeModules, NativeEventEmitter, EmitterSubscription } from 'react-native';
+import { EmitterSubscription, NativeEventEmitter, NativeModules } from 'react-native';
 
 const { ScreenMonitor } = NativeModules;
 const screenMonitorEmitter = new NativeEventEmitter(ScreenMonitor);

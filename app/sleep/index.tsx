@@ -2,7 +2,7 @@ import CalendarSwiper from "@/components/CalendarSwiper";
 import CircularTimePicker from "@/components/CircularTimePicker";
 import { useAppTheme } from "@/context/appThemeContext";
 import { screenMonitor } from "@/services/screenMonitor";
-import { CreateSleepRecord, getSleepStatus, UpdateSleepRecord } from "@/services/sleep";
+import { CreateSleepRecord, getSleepSession, getSleepStatus, saveSleepPoint, UpdateSleepRecord } from "@/services/sleep";
 import { formatTimeForDisplay, utcTimeToVnTime, vnDateAndTimeToUtcTimestamp, vnTimeToUtcTimestamp } from "@/utils/convertTime";
 import { scheduleSleepNotification } from "@/utils/notificationsHelper";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -12,7 +12,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
-import { BarChart, LineChart } from "react-native-gifted-charts";
+import { LineChart } from "react-native-gifted-charts";
 import Toast from "react-native-toast-message";
 
 const Page = () => {
@@ -42,6 +42,15 @@ const Page = () => {
           ? { date: (selectedDate * 1000).toString() }
           : undefined
       ),
+    staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
+    select: (res) => res.data,
+  });
+
+  const { data: sleepSession, isLoading: loadingSleepSession } = useQuery({
+    queryKey: ["sleepSession", {recordId: sleepStatus?.history?.[0]?.recordId}],
+    queryFn: () =>
+      getSleepSession(sleepStatus?.history?.[0]?.recordId || ""),
     staleTime: 1000 * 60 * 5,
     placeholderData: keepPreviousData,
     select: (res) => res.data,
@@ -111,7 +120,6 @@ const Page = () => {
 
       // Start screen monitoring with recordId and callback
       screenMonitor.startTracking(startTimeStr, endTimeStr, recordId, handleSaveSleepPoint);
-      screenMonitor.startTracking(startTimeStr, endTimeStr);
 
       return () => {
         const logs = screenMonitor.stopTracking();
@@ -129,81 +137,52 @@ const Page = () => {
           });
         }
       };
-        console.log('[Screen Monitor] Final logs:', logs);
-      };
     }
   }, [hasSleepData, sleepStatus?.history?.[0], t]);
 
-  const stackData = [
-    {
-      stacks: [
-        { value: 4, color: '#3634A3' },
-        { value: 2, color: '#003FDD' },
-        { value: 3, color: '#5EC8FE' },
-      ],
-      label: 'T2',
-    },
-    {
-      stacks: [
-        { value: 3, color: '#3634A3' },
-        { value: 1, color: '#003FDD' },
-        { value: 3, color: '#5EC8FE' },
-      ],
-      label: 'T3',
-    },
-    {
-      stacks: [
-        { value: 2, color: '#3634A3' },
-        { value: 2, color: '#003FDD' },
-        { value: 4, color: '#5EC8FE' },
-      ],
-      label: 'T4',
-    },
-    {
-      stacks: [
-        { value: 4, color: '#3634A3' },
-        { value: 3, color: '#003FDD' },
-        { value: 1, color: '#5EC8FE' },
-      ],
-      label: 'T5',
-    },
-    {
-      stacks: [
-        { value: 5, color: '#3634A3' },
-        { value: 1, color: '#003FDD' },
-        { value: 3, color: '#5EC8FE' },
-      ],
-      label: 'T6',
-    },
-    {
-      stacks: [
-        { value: 3, color: '#3634A3' },
-        { value: 1, color: '#003FDD' },
-        { value: 1, color: '#5EC8FE' },
-      ],
-      label: 'T7',
-    },
-    {
-      stacks: [
-        { value: 2, color: '#3634A3' },
-        { value: 3, color: '#003FDD' },
-        { value: 3, color: '#5EC8FE' },
-      ],
-      label: 'CN',
-    },
-  ];
+  // Transform sleepSession data to chart format
+  const getSleepChartData = () => {
+    if (!sleepSession || (!sleepSession.sleep && !sleepSession.awake)) {
+      return [];
+    }
 
-  const data = [
-    { value: 2, label: "11:00" },
-    { value: 0, label: "0:00" },
-    { value: 2, label: "1:00" },
-    { value: 1, label: "2:00" },
-    { value: 0, label: "3:00" },
-    { value: 0, label: "4:00" },
-    { value: 2, label: "5:00" },
-    { value: 1, label: "6:00" },
-    { value: 2, label: "7:00" },
-  ];
+    const chartPoints: Array<{ value: number; label: string; time: string }> = [];
+
+    // Add sleep points (value = 1)
+    if (sleepSession.sleep && Array.isArray(sleepSession.sleep)) {
+      sleepSession.sleep.forEach((point: { pointId: string; time: string }) => {
+        chartPoints.push({
+          value: 1,
+          label: "",
+          time: point.time,
+        });
+      });
+    }
+
+    // Add awake points (value = 0)
+    if (sleepSession.awake && Array.isArray(sleepSession.awake)) {
+      sleepSession.awake.forEach((point: { pointId: string; time: string }) => {
+        chartPoints.push({
+          value: 0,
+          label: "",
+          time: point.time,
+        });
+      });
+    }
+
+    // Sort by time
+    chartPoints.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+    // Format labels with time in HH:mm format (Vietnam time)
+    chartPoints.forEach((point) => {
+      const vnTime = utcTimeToVnTime(new Date(point.time).getTime());
+      point.label = `${String(vnTime.hour).padStart(2, '0')}:${String(vnTime.minute).padStart(2, '0')}`;
+    });
+
+    return chartPoints;
+  };
+
+  const data = getSleepChartData();
 
   const moods = [
     { label: t("Tuyệt vời"), emoji: "😄", color: "#007F3D", value: 100 },
@@ -318,8 +297,6 @@ const Page = () => {
       </View>
     );
   }
-
-  console.log("sleepStatus", sleepStatus?.history[0]);
   
 
   return (
@@ -401,43 +378,6 @@ const Page = () => {
             </Text>
           </View>
 
-          <View className="flex gap-2.5 p-4 rounded-md shadow-md mb-4 mt-4" style={{ backgroundColor: theme.colors.card }}>
-            <View>
-              <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Ngủ đầy đặn")}</Text>
-              <Text className="" style={{ color: theme.colors.textSecondary }}>{t("Hãy giữ phong độ nào !")}</Text>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 8 }}
-            >
-              <BarChart
-                stackData={stackData}
-                barWidth={24}
-                frontColor="#00BFFF"
-                noOfSections={4}
-                yAxisLabelTexts={["0", "5", "10", "15"]}
-                xAxisLabelTextStyle={{ color: theme.colors.textPrimary }}
-                yAxisTextStyle={{ color: theme.colors.textPrimary }}
-              />
-            </ScrollView>
-
-            <View className="flex-row items-center justify-center gap-5 mt-2.5">
-              <View className="flex-row items-center gap-2">
-                <View className="size-4 rounded-full bg-[#3634A3]" />
-                <Text className="text-lg" style={{ color: theme.colors.textPrimary }}>{t("Ngủ")}</Text>
-              </View>
-              <View className="flex-row items-center gap-2">
-                <View className="size-4 rounded-full bg-[#5EC8FE]" />
-                <Text className="text-lg" style={{ color: theme.colors.textPrimary }}>{t("Ngáy/Ho")}</Text>
-              </View>
-              <View className="flex-row items-center gap-2">
-                <View className="size-4 rounded-full bg-[#003FDD]" />
-                <Text className="text-lg" style={{ color: theme.colors.textPrimary }}>{t("Thức")}</Text>
-              </View>
-            </View>
-          </View>
-
           <View className="flex gap-2.5 p-4 rounded-md shadow-md" style={{ backgroundColor: theme.colors.card }}>
             <View>
               <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Tiến trình ngủ")}</Text>
@@ -456,9 +396,9 @@ const Page = () => {
                 initialSpacing={20}
                 color={theme.colors.textPrimary}
                 thickness={2}
-                maxValue={3}
-                noOfSections={2}
-                yAxisLabelTexts={['Ngủ', 'Ngáy/Ho', 'Thức']}
+                maxValue={1}
+                noOfSections={1}
+                yAxisLabelTexts={['Thức', 'Ngủ']}
                 yAxisLabelWidth={50}
                 yAxisTextStyle={{ color: theme.colors.textPrimary }}
                 yAxisColor={theme.colors.border}
