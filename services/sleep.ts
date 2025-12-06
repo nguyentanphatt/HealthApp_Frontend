@@ -1,6 +1,8 @@
 import {
   CreateSleepRecordResponse,
   SleepStatusResponse,
+  SleepPointResponse,
+  SleepSessionResponse,
 } from "@/constants/type";
 import { privateClient } from "./client";
 
@@ -47,6 +49,34 @@ export const UpdateSleepRecord = async (
 ): Promise<CreateSleepRecordResponse> => {
   try {
     const response = await privateClient.put(`/api/sleep/update/${recordId}`, options || {});
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const saveSleepPoint = async (
+  type: 'sleep' | 'awake',
+  time: string,
+  recordId: string
+): Promise<SleepPointResponse> => {
+  try {
+    const response = await privateClient.post("/api/sleep/point", {
+      type,
+      time,
+      recordId,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getSleepSession = async (
+  recordId: string
+): Promise<SleepSessionResponse> => {
+  try {
+    const response = await privateClient.get(`/api/sleep/session/${recordId}`);
     return response.data;
   } catch (error) {
     throw error;

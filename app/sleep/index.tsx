@@ -1,7 +1,7 @@
 import CalendarSwiper from "@/components/CalendarSwiper";
 import CircularTimePicker from "@/components/CircularTimePicker";
 import { useAppTheme } from "@/context/appThemeContext";
-import { CreateSleepRecord, getSleepStatus, UpdateSleepRecord } from "@/services/sleep";
+import { CreateSleepRecord, getSleepStatus, UpdateSleepRecord, saveSleepPoint } from "@/services/sleep";
 import { formatTimeForDisplay, utcTimeToVnTime, vnDateAndTimeToUtcTimestamp, vnTimeToUtcTimestamp } from "@/utils/convertTime";
 import { scheduleSleepNotification } from "@/utils/notificationsHelper";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -75,22 +75,61 @@ const Page = () => {
   useEffect(() => {
     if (hasSleepData && sleepStatus?.history?.[0]) {
       const sleepRecord = sleepStatus.history[0];
+      const recordId = sleepRecord.recordId;
       const startTime = utcTimeToVnTime(new Date(sleepRecord.startAt).getTime());
       const endTime = utcTimeToVnTime(new Date(sleepRecord.endedAt).getTime());
 
       const startTimeStr = `${String(startTime.hour).padStart(2, '0')}:${String(startTime.minute).padStart(2, '0')}`;
       const endTimeStr = `${String(endTime.hour).padStart(2, '0')}:${String(endTime.minute).padStart(2, '0')}`;
 
-      // Start screen monitoring
-      screenMonitor.startTracking(startTimeStr, endTimeStr);
+      // Callback function to save sleep points
+      const handleSaveSleepPoint = async (type: 'sleep' | 'awake', timestamp: number) => {
+        try {
+          const response = await saveSleepPoint(type, timestamp.toString(), recordId);
+          if (response.success) {
+            console.log(`[Sleep Screen] Sleep point saved: ${type} at ${new Date(timestamp).toLocaleString('vi-VN')}`);
+            // Optionally show a subtle toast notification
+            // Toast.show({
+            //   type: "info",
+            //   text1: t(`Đã ghi nhận ${type === 'sleep' ? 'ngủ' : 'thức'}`),
+            //   position: "bottom",
+            //   visibilityTime: 2000,
+            // });
+          }
+        } catch (error) {
+          console.error(`[Sleep Screen] Failed to save sleep point:`, error);
+          Toast.show({
+            type: "error",
+            text1: t("Không thể lưu dữ liệu giấc ngủ"),
+            text2: t("Vui lòng kiểm tra kết nối"),
+            position: "bottom",
+            visibilityTime: 3000,
+          });
+          throw error; // Re-throw to trigger retry logic in screenMonitor
+        }
+      };
+
+      // Start screen monitoring with recordId and callback
+      screenMonitor.startTracking(startTimeStr, endTimeStr, recordId, handleSaveSleepPoint);
 
       return () => {
         const logs = screenMonitor.stopTracking();
-        console.log('[Screen Monitor] Final logs:', logs);
-        // Save logs to backend here if needed
+        console.log('[Sleep Screen] Final logs:', logs);
+
+        // Check if there are pending requests
+        const pendingRequests = screenMonitor.getPendingRequests();
+        if (pendingRequests.length > 0) {
+          console.log('[Sleep Screen] Still have pending requests:', pendingRequests.length);
+          Toast.show({
+            type: "warning",
+            text1: t("Đang lưu dữ liệu"),
+            text2: t("Vui lòng đợi..."),
+            position: "bottom",
+          });
+        }
       };
     }
-  }, [hasSleepData, sleepStatus?.history?.[0]]);
+  }, [hasSleepData, sleepStatus?.history?.[0], t]);
 
   const stackData = [
     {

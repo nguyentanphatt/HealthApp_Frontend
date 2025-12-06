@@ -228,6 +228,41 @@ export interface UpdateSleepRecordResponse {
   data: UpdateSleepRecord
 }
 
+export interface SleepPoint {
+  pointId: string,
+  type: 'sleep' | 'awake',
+  time: string
+}
+
+export interface SleepPointRequest {
+  type: 'sleep' | 'awake',
+  time: string,
+  recordId: string
+}
+
+export interface SleepPointResponse {
+  success: boolean,
+  message: string,
+  data: SleepPoint
+}
+
+export interface SleepSession {
+  recordId: string,
+  userId: string,
+  startAt: string,
+  endedAt: string,
+  qualityScore?: string,
+  attribute?: string,
+  duration: number,
+  sleep: SleepPoint[],
+  awake: SleepPoint[]
+}
+
+export interface SleepSessionResponse {
+  success: boolean,
+  data: SleepSession
+}
+
 export interface UserSetting {
   email?: string,
   userId: string,

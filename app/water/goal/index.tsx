@@ -38,7 +38,7 @@ const Page = () => {
         return { label: `${amount}`, value: amount };
       });
 
-  // Find the initial index based on initialValue
+
   const initialIndex = useMemo(() => {
     const index = items.findIndex((item: { label: string; value: number }) => item.value === initialValue);
     return index >= 0 ? index : 0;
