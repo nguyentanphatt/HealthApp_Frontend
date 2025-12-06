@@ -15,13 +15,25 @@ export async function registerCategories() {
 }
 
 export async function registerForPushNotificationsAsync() {
+  // Set notification handler for all platforms - MUST be called before scheduling
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowAlert: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
       name: "default",
       importance: Notifications.AndroidImportance.HIGH,
+      sound: "default",
     });
 
-    // Create sleep reminder channel
+    // Create sleep reminder channel with HIGH importance
     await Notifications.setNotificationChannelAsync("sleep-reminder", {
       name: "Sleep Reminders",
       importance: Notifications.AndroidImportance.HIGH,
@@ -29,19 +41,11 @@ export async function registerForPushNotificationsAsync() {
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#19B1FF",
     });
-
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-        shouldShowList: true,
-        shouldShowBanner: true
-      }),
-    });
   }
 
   if (Device.isDevice) {
     const { status } = await Notifications.requestPermissionsAsync();
+    console.log(`[Notifications] Permission status: ${status}`);
     return status === "granted";
   }
   return false;
@@ -100,50 +104,43 @@ export async function scheduleSleepNotification(sleepStartTime: string, wakeUpTi
       }
     }
 
-    // Parse times for validation
+    // Parse times
     const [sleepHour, sleepMinute] = sleepStartTime.split(":").map(Number);
     const [wakeHour, wakeMinute] = wakeUpTime.split(":").map(Number);
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTimeInMinutes = currentHour * 60 + currentMinute;
-    const sleepTimeInMinutes = sleepHour * 60 + sleepMinute;
-    const wakeTimeInMinutes = wakeHour * 60 + wakeMinute;
 
-    // Determine if this is a cross-day sleep schedule (e.g., sleep 22:00, wake 06:00)
-    const isCrossDaySleep = sleepTimeInMinutes > wakeTimeInMinutes;
+    console.log(`[Sleep Notification] Current time: ${now.toLocaleString('vi-VN')}`);
+    console.log(`[Sleep Notification] Sleep time: ${sleepStartTime}, Wake time: ${wakeUpTime}`);
 
-    // Check if current time has passed the wake time
-    let shouldSkip = false;
+    // Calculate scheduled time for today
+    const scheduledTime = new Date();
+    scheduledTime.setHours(sleepHour, sleepMinute, 0, 0);
 
-    if (isCrossDaySleep) {
-      // For cross-day schedules: skip if current time is between wake time and sleep time
-      // Example: sleep 22:00, wake 06:00 -> skip if current time is 07:00 to 21:59
-      shouldSkip = currentTimeInMinutes > wakeTimeInMinutes && currentTimeInMinutes < sleepTimeInMinutes;
-    } else {
-      // For same-day schedules: skip if current time is after wake time
-      // Example: sleep 08:00, wake 16:00 -> skip if current time is after 16:00
-      shouldSkip = currentTimeInMinutes > wakeTimeInMinutes;
+    console.log(`[Sleep Notification] Scheduled time (today): ${scheduledTime.toLocaleString('vi-VN')}`);
+
+    // Check if the sleep start time has already passed today
+    if (scheduledTime.getTime() < now.getTime()) {
+      console.log(`[Sleep Notification] Sleep start time (${sleepStartTime}) has already passed today. Skipping notification.`);
+      return true; // Skip notification, no need to schedule
     }
 
-    if (shouldSkip) {
-      console.log(`Current time (${currentHour}:${String(currentMinute).padStart(2, '0')}) has passed wake time (${wakeUpTime}). Sleep period ended. Skipping notification for today.`);
-      return true; // Return true as this is not an error, just a skip condition
+    const delaySeconds = Math.floor((scheduledTime.getTime() - now.getTime()) / 1000);
+
+    // Don't schedule if delay is too short (less than 10 seconds)
+    if (delaySeconds < 10) {
+      console.log(`[Sleep Notification] Delay too short (${delaySeconds}s). Skipping notification.`);
+      return true;
     }
 
-    // Parse sleep start time for scheduling
-    const [hour, minute] = sleepStartTime.split(":").map(Number);
+    console.log(`[Sleep Notification] Scheduling notification in ${delaySeconds} seconds (${Math.floor(delaySeconds / 3600)}h ${Math.floor((delaySeconds % 3600) / 60)}m)`);
 
-    console.log(`Scheduling sleep notification at ${hour}:${minute}, wake time: ${wakeUpTime}`);
-
-    // Schedule daily repeating notification
-    await Notifications.scheduleNotificationAsync({
+    // Schedule one-time notification at the specific time
+    const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: "Đã đến giờ ngủ! 😴",
         body: `Hãy đi ngủ ngay để thức dậy lúc ${wakeUpTime}`,
         categoryIdentifier: "sleep-reminder",
-        sound: true,
-        priority: Notifications.AndroidNotificationPriority.HIGH,
+        sound: "default",
         data: {
           type: "sleep-reminder",
           sleepTime: sleepStartTime,
@@ -151,14 +148,25 @@ export async function scheduleSleepNotification(sleepStartTime: string, wakeUpTi
         },
       },
       trigger: {
-        hour: hour,
-        minute: minute,
-        repeats: true,
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: delaySeconds,
+        repeats: false,
         channelId: "sleep-reminder",
       },
     });
 
-    console.log("Sleep notification scheduled successfully");
+    console.log(`[Sleep Notification] ✅ Notification scheduled successfully with ID: ${notificationId}`);
+
+    // Verify the notification was scheduled
+    const allScheduled = await Notifications.getAllScheduledNotificationsAsync();
+    const sleepNotifications = allScheduled.filter(n => n.content.categoryIdentifier === "sleep-reminder");
+    console.log(`[Sleep Notification] Total scheduled sleep notifications: ${sleepNotifications.length}`);
+    if (sleepNotifications.length > 0) {
+      sleepNotifications.forEach(n => {
+        console.log(`[Sleep Notification] - ID: ${n.identifier}, Trigger:`, n.trigger);
+      });
+    }
+
     return true;
   } catch (error) {
     console.error("Error scheduling sleep notification:", error);

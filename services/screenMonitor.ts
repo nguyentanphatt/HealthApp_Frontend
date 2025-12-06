@@ -18,22 +18,33 @@ class ScreenMonitorService {
   private isProcessingQueue = false;
 
   startTracking(
-    startTime: string,
-    endTime: string,
+    startTime: string | number,
+    endTime: string | number,
     recordId?: string,
     onSavePoint?: SavePointCallback
   ) {
     if (this.isMonitoring) return;
 
     this.isMonitoring = true;
-    this.sleepStartTime = this.parseTimeToTimestamp(startTime);
-    this.sleepEndTime = this.parseTimeToTimestamp(endTime);
+
+    // Handle both string (HH:mm format) and number (timestamp) inputs
+    this.sleepStartTime = typeof startTime === 'string'
+      ? this.parseTimeToTimestamp(startTime)
+      : startTime;
+    this.sleepEndTime = typeof endTime === 'string'
+      ? this.parseTimeToTimestamp(endTime)
+      : endTime;
+
     this.sleepLogs = [];
     this.recordId = recordId || null;
     this.savePointCallback = onSavePoint || null;
     this.pendingRequests = [];
 
-    console.log(`[Screen Monitor] Started tracking from ${startTime} to ${endTime}`, recordId ? `with recordId: ${recordId}` : '');
+    const startStr = typeof startTime === 'string' ? startTime : new Date(startTime).toLocaleString('vi-VN');
+    const endStr = typeof endTime === 'string' ? endTime : new Date(endTime).toLocaleString('vi-VN');
+    console.log(`[Screen Monitor] Started tracking from ${startStr} to ${endStr}`, recordId ? `with recordId: ${recordId}` : '');
+    console.log(`[Screen Monitor] Timestamps: ${this.sleepStartTime} to ${this.sleepEndTime}`);
+    console.log(`[Screen Monitor] Current time: ${Date.now()}, within range: ${this.isWithinSleepTime()}`);
 
     // Listen to screen events
     this.screenOffListener = screenMonitorEmitter.addListener('onScreenOff', () => {
@@ -141,11 +152,8 @@ class ScreenMonitorService {
 
     if (!this.sleepStartTime || !this.sleepEndTime) return false;
 
-    // Handle case where sleep time crosses midnight
-    if (this.sleepEndTime < this.sleepStartTime) {
-      return now >= this.sleepStartTime || now <= this.sleepEndTime;
-    }
-
+    // Sleep period spans across days (end time is after start time chronologically)
+    // Just check if current time is between start and end timestamps
     return now >= this.sleepStartTime && now <= this.sleepEndTime;
   }
 
