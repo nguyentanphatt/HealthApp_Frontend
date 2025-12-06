@@ -89,28 +89,28 @@ const Page = () => {
     queryKey: ["weatherReport"],
     queryFn: async () => {
       try {
-        // Request location permissions
+    
         const { status } = await Location.requestForegroundPermissionsAsync();
 
         if (status !== 'granted') {
           console.log('Location permission denied');
-          // Fallback to IP-based location
+      
           const ip = await getIp();
           return WeatherSuggest(ip);
         }
 
-        // Get current position
+    
         const location = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
 
         const { latitude, longitude } = location.coords;
         console.log('User location:', latitude, longitude);
-        // Pass coordinates to your weather service
+    
         return WeatherSuggest(`${latitude},${longitude}`);
       } catch (error) {
         console.error('Location error:', error);
-        // Fallback to IP-based location
+    
         const ip = await getIp();
         return WeatherSuggest(ip);
       }

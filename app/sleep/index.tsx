@@ -127,26 +127,10 @@ const Page = () => {
       };
 
       // Start screen monitoring with actual timestamps
+      // The service will automatically stop when endTime is reached
       screenMonitor.startTracking(startTimestamp, endTimestamp, recordId, handleSaveSleepPoint);
-
-      return () => {
-        const logs = screenMonitor.stopTracking();
-        console.log('[Sleep Screen] Final logs:', logs);
-
-        // Check if there are pending requests
-        const pendingRequests = screenMonitor.getPendingRequests();
-        if (pendingRequests.length > 0) {
-          console.log('[Sleep Screen] Still have pending requests:', pendingRequests.length);
-          Toast.show({
-            type: "warning",
-            text1: t("Đang lưu dữ liệu"),
-            text2: t("Vui lòng đợi..."),
-            position: "bottom",
-          });
-        }
-      };
     }
-  }, [hasSleepData, sleepStatus?.history?.[0], t]);
+  }, [hasSleepData, sleepStatus?.history?.[0]?.recordId, t]);
 
   // Transform sleepSession data to chart format
   const getSleepChartData = () => {
