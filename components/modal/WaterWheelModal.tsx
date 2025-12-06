@@ -69,13 +69,10 @@ const WaterWheelModal = ({ title, items, initialValue, currentDate, handleConfir
                 data={data}
                 keyExtractor={(_, index) => `w-${index}`}
                 getItemLayout={getItemLayout}
-                initialScrollIndex={initialIndex}
-                onScrollToIndexFailed={(info) => {
-                  const wait = new Promise(resolve => setTimeout(resolve, 500));
-                  wait.then(() => {
-                    listRef.current?.scrollToIndex({ index: info.index, animated: false });
-                  });
-                }}
+                contentOffset={{ x: 0, y: initialIndex * ITEM_HEIGHT }}
+                initialNumToRender={data.length}
+                maxToRenderPerBatch={data.length}
+                removeClippedSubviews={false}
                 showsVerticalScrollIndicator={false}
                 snapToInterval={ITEM_HEIGHT}
                 decelerationRate="fast"

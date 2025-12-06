@@ -91,13 +91,10 @@ const TimeWheelPicker = ({
           ref={hoursRef}
           data={hours}
           keyExtractor={(_, index) => `h-${index}`}
-          initialScrollIndex={initialHour}
-          onScrollToIndexFailed={(info) => {
-            const wait = new Promise(resolve => setTimeout(resolve, 500));
-            wait.then(() => {
-              hoursRef.current?.scrollToIndex({ index: info.index, animated: false });
-            });
-          }}
+          contentOffset={{ x: 0, y: initialHour * ITEM_HEIGHT }}
+          initialNumToRender={hours.length}
+          maxToRenderPerBatch={hours.length}
+          removeClippedSubviews={false}
           renderItem={({ item, index }) => (
             <View style={{ height: ITEM_HEIGHT, justifyContent: "center", alignItems: "center" }}>
               <Text
@@ -154,13 +151,10 @@ const TimeWheelPicker = ({
           ref={minutesRef}
           data={minutes}
           keyExtractor={(_, index) => `m-${index}`}
-          initialScrollIndex={initialMinute}
-          onScrollToIndexFailed={(info) => {
-            const wait = new Promise(resolve => setTimeout(resolve, 500));
-            wait.then(() => {
-              minutesRef.current?.scrollToIndex({ index: info.index, animated: false });
-            });
-          }}
+          contentOffset={{ x: 0, y: initialMinute * ITEM_HEIGHT }}
+          initialNumToRender={minutes.length}
+          maxToRenderPerBatch={minutes.length}
+          removeClippedSubviews={false}
           renderItem={({ item, index }) => (
             <View style={{ height: ITEM_HEIGHT, justifyContent: "center", alignItems: "center" }}>
               <Text

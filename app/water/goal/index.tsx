@@ -107,18 +107,15 @@ const Page = () => {
             data={items}
             keyExtractor={(_, index) => `w-${index}`}
             getItemLayout={getItemLayout}
-            initialScrollIndex={initialIndex}
-            onScrollToIndexFailed={(info) => {
-              const wait = new Promise(resolve => setTimeout(resolve, 500));
-              wait.then(() => {
-                listRef.current?.scrollToIndex({ index: info.index, animated: false });
-              });
-            }}
+            contentOffset={{ x: 0, y: initialIndex * ITEM_HEIGHT }}
+            initialNumToRender={items.length}
+            maxToRenderPerBatch={items.length}
+            removeClippedSubviews={false}
             showsVerticalScrollIndicator={false}
             snapToInterval={ITEM_HEIGHT}
             decelerationRate="fast"
             contentContainerStyle={{ paddingTop: verticalPadding, paddingBottom: verticalPadding }}
-            renderItem={({ item, index }) => (
+            renderItem={({ item }) => (
               <View style={{ height: ITEM_HEIGHT, justifyContent: 'center', alignItems: 'center' }}>
                 <Text
                   style={{
