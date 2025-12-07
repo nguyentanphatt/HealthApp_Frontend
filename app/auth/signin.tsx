@@ -74,7 +74,7 @@ const Signin = () => {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
       if (isSuccessResponse(response)) {
-        const { idToken, user } = response.data;
+        const { user } = response.data;
         const { name, email, photo } = user;
         console.log("name", name);
         console.log("email", email);

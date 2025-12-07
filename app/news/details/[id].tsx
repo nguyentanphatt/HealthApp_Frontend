@@ -12,7 +12,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
-const NewsDetails = () => {
+const Page = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { t } = useTranslation();
@@ -208,4 +208,4 @@ const NewsDetails = () => {
   )
 }
 
-export default NewsDetails
+export default Page

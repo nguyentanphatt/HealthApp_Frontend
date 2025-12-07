@@ -31,7 +31,6 @@ const Page = () => {
   const {
     data: foodStatus,
     isLoading: loadingFoodStatus,
-    refetch: refetchFoodStatus,
   } = useQuery({
     queryKey: ["foodStatus", { date: selectedDate }],
     queryFn: () =>
@@ -48,7 +47,6 @@ const Page = () => {
   const {
     data: foodWeeklyData,
     isLoading: loadingWeekly,
-    refetch: refetchWeekly,
   } = useQuery({
     queryKey: ["foodWeekly", { date: selectedDate }],
     queryFn: () =>
@@ -115,7 +113,6 @@ const Page = () => {
   );
 
   const filteredHistory = foodStatus?.history.filter((item) => item.name !== "Invalid") ?? [];
-
   const loading = loadingFoodStatus || loadingWeekly || loadingFoodStatus || loadingWeekly;
 
   if (loading) {

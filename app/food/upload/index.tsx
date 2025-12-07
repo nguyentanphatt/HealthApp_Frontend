@@ -194,7 +194,7 @@ const Page = () => {
             }}
             className="self-center flex-row items-center justify-center w-[45%] bg-cyan-blue py-3 rounded-md shadow-md"
           >
-            <Text className="text-xl font-bold " style={{ color: theme.colors.textPrimary }}>{t("Tải ảnh lên")}</Text>
+            <Text className="text-xl font-bold text-white">{t("Tải ảnh lên")}</Text>
           </TouchableOpacity>
         </View>
       )}

@@ -22,7 +22,6 @@ type ThemePalette = {
   border: string;
   tint: string;
   tabBarBackground: string;
-
 };
 
 type AppTheme = {
@@ -85,27 +84,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        // Only try to load from API if user is authenticated
         const accessToken = useAuthStore.getState().accessToken;
         if (accessToken) {
           try {
             const userSettings = await getUserSetting();
             if (userSettings?.theme && (userSettings.theme === "light" || userSettings.theme === "dark")) {
               setModeState(userSettings.theme as ThemeMode);
-              // Save to AsyncStorage for offline support
               await AsyncStorage.setItem(STORAGE_KEY, userSettings.theme);
               return;
             }
           } catch (error) {
-            // If API fails, fallback to AsyncStorage
             console.error('Error loading theme from API:', error);
           }
         }
-        // Fallback to AsyncStorage if not authenticated or API fails
         const saved = await AsyncStorage.getItem(STORAGE_KEY);
         if (saved === "light" || saved === "dark") setModeState(saved);
       } catch (error) {
-        // Final fallback to AsyncStorage
+
         try {
           const saved = await AsyncStorage.getItem(STORAGE_KEY);
           if (saved === "light" || saved === "dark") setModeState(saved);
