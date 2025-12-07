@@ -85,11 +85,19 @@ const Page = () => {
     if (hasSleepData && sleepStatus?.history?.[0]) {
       const sleepRecord = sleepStatus.history[0];
       const recordId = sleepRecord.recordId;
-      const startTime = utcTimeToVnTime(new Date(sleepRecord.startAt).getTime());
-      const endTime = utcTimeToVnTime(new Date(sleepRecord.endedAt).getTime());
 
-      const startTimeStr = `${String(startTime.hour).padStart(2, '0')}:${String(startTime.minute).padStart(2, '0')}`;
-      const endTimeStr = `${String(endTime.hour).padStart(2, '0')}:${String(endTime.minute).padStart(2, '0')}`;
+      // Use the actual timestamps from the record
+      const startTimestamp = new Date(sleepRecord.startAt).getTime();
+      const endTimestamp = new Date(sleepRecord.endedAt).getTime();
+
+      console.log('[Sleep Screen] Setting up monitoring for:', {
+        recordId,
+        startAt: sleepRecord.startAt,
+        endedAt: sleepRecord.endedAt,
+        startTimestamp,
+        endTimestamp,
+        currentTime: Date.now()
+      });
 
       // Callback function to save sleep points
       const handleSaveSleepPoint = async (type: 'sleep' | 'awake', timestamp: number) => {
@@ -118,27 +126,11 @@ const Page = () => {
         }
       };
 
-      // Start screen monitoring with recordId and callback
-      screenMonitor.startTracking(startTimeStr, endTimeStr, recordId, handleSaveSleepPoint);
-
-      return () => {
-        const logs = screenMonitor.stopTracking();
-        console.log('[Sleep Screen] Final logs:', logs);
-
-        // Check if there are pending requests
-        const pendingRequests = screenMonitor.getPendingRequests();
-        if (pendingRequests.length > 0) {
-          console.log('[Sleep Screen] Still have pending requests:', pendingRequests.length);
-          Toast.show({
-            type: "warning",
-            text1: t("Đang lưu dữ liệu"),
-            text2: t("Vui lòng đợi..."),
-            position: "bottom",
-          });
-        }
-      };
+      // Start screen monitoring with actual timestamps
+      // The service will automatically stop when endTime is reached
+      screenMonitor.startTracking(startTimestamp, endTimestamp, recordId, handleSaveSleepPoint);
     }
-  }, [hasSleepData, sleepStatus?.history?.[0], t]);
+  }, [hasSleepData, sleepStatus?.history?.[0]?.recordId, t]);
 
   // Transform sleepSession data to chart format
   const getSleepChartData = () => {
