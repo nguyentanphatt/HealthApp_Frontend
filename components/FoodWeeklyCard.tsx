@@ -43,101 +43,188 @@ const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
     );
 
     return (
-        <View className="p-4 rounded-2xl shadow-md w-full" style={{ backgroundColor: theme.colors.card }}>
-            {data.currentWeekCalories === 0 ? (
-                <View className='flex-1 gap-5'>
-                    <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>
-                        {t("Báo cáo dinh dưỡng")}
-                    </Text>
-                    <Text className='text-sm text-center' style={{ color: theme.colors.textSecondary }}>
-                        {t("Không có dữ liệu hãy thêm dữ liệu thức ăn")}
-                    </Text>
+      <View
+        className="p-4 rounded-2xl shadow-md w-full"
+        style={{ backgroundColor: theme.colors.card }}
+      >
+        {data.currentWeekCalories === 0 ? (
+          <View className="gap-5 py-1">
+            <Text
+              className="font-bold text-xl"
+              style={{ color: theme.colors.textPrimary }}
+            >
+              {t("Báo cáo dinh dưỡng")}
+            </Text>
+
+            <Text
+              className="text-sm text-center"
+              style={{ color: theme.colors.textSecondary }}
+            >
+              {t("Không có dữ liệu hãy thêm dữ liệu thức ăn")}
+            </Text>
+          </View>
+        ) : (
+          <>
+            <View className="flex-row justify-between items-center mb-4">
+              <View>
+                <Text
+                  className="font-bold text-xl"
+                  style={{ color: theme.colors.textPrimary }}
+                >
+                  {t("Báo cáo dinh dưỡng")}
+                </Text>
+              </View>
+
+              {isEqual ? (
+                <Text
+                  className="font-semibold text-lg"
+                  style={{ color: theme.colors.textPrimary }}
+                >
+                  =
+                </Text>
+              ) : (
+                <View className="flex-row items-center">
+                  <FontAwesome6
+                    name={isIncrease ? "arrow-up" : "arrow-down"}
+                    size={16}
+                    color={isIncrease ? "green" : "red"}
+                  />
+                  <Text
+                    className={`ml-1 font-semibold text-lg ${
+                      isIncrease ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    {isIncrease ? "+" : ""}
+                    {diff}%
+                  </Text>
                 </View>
-            ) : (
-                <>
-                    <View className="flex-row justify-between items-center mb-4">
-                        <View>
-                            <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>
-                                {t("Báo cáo dinh dưỡng")}
-                            </Text>
-                        </View>
+              )}
+            </View>
+            <View
+              className="flex-col items-center justify-between rounded-xl p-3"
+              style={{ backgroundColor: theme.colors.secondaryCard }}
+            >
+              <Text
+                className="text-sm"
+                style={{ color: theme.colors.textSecondary }}
+              >
+                {t("Tổng lượng calo")}
+              </Text>
+              <Text
+                className="text-2xl font-bold"
+                style={{ color: theme.colors.textPrimary }}
+              >
+                {data.currentWeekCalories} kcal
+              </Text>
+            </View>
+            <View className="pt-2">
+              <Text
+                className="font-semibold mb-2"
+                style={{ color: theme.colors.textPrimary }}
+              >
+                {t("Thành phần dinh dưỡng theo ngày")}
+              </Text>
+              <View
+                className="items-center mb-5 rounded-xl p-3"
+                style={{ backgroundColor: theme.colors.card }}
+              >
+                <BarChart
+                  data={barData}
+                  barWidth={25}
+                  spacing={12}
+                  hideRules
+                  yAxisThickness={0}
+                  xAxisThickness={0}
+                  noOfSections={3}
+                  barBorderRadius={6}
+                  isAnimated
+                  xAxisLabelTextStyle={{
+                    color: theme.colors.textSecondary,
+                  }}
+                  yAxisTextStyle={{
+                    color: theme.colors.textSecondary,
+                  }}
+                />
 
-                        {isEqual ? (
-                            <Text className="font-semibold text-lg" style={{ color: theme.colors.textPrimary }}>=</Text>
-                        ) : (
-                            <View className="flex-row items-center">
-                                <FontAwesome6
-                                    name={isIncrease ? "arrow-up" : "arrow-down"}
-                                    size={16}
-                                    color={isIncrease ? "green" : "red"}
-                                />
-                                <Text
-                                    className={`ml-1 font-semibold text-lg ${isIncrease ? "text-green-600" : "text-red-600"
-                                        }`}
-                                >
-                                    {isIncrease ? "+" : ""}
-                                    {diff}%
-                                </Text>
-                            </View>
-                        )}
-                    </View>
-                    <View className='flex-col items-center justify-between rounded-xl p-3' style={{ backgroundColor: theme.colors.secondaryCard }}>
-                        <Text className='text-sm' style={{ color: theme.colors.textSecondary }}>
-                            {t("Tổng lượng calo")}
-                        </Text>
-                        <Text className="text-2xl font-bold" style={{ color: theme.colors.textPrimary }}>
-                            {data.currentWeekCalories} kcal
-                        </Text>
-                    </View>
-                    <View className='pt-2'>
-                        <Text className="font-semibold mb-2" style={{ color: theme.colors.textPrimary }}>{t("Thành phần dinh dưỡng theo ngày")}</Text>
-                        <View className="items-center mb-5 rounded-xl p-3" style={{ backgroundColor: theme.colors.card }}>
-                            <BarChart
-                                data={barData}
-                                barWidth={25}
-                                spacing={12}
-                                hideRules
-                                yAxisThickness={0}
-                                xAxisThickness={0}
-                                noOfSections={3}
-                                barBorderRadius={6}
-                                isAnimated
-                                xAxisLabelTextStyle={{
-                                    color: theme.colors.textSecondary,
-                                  }}
-                                  yAxisTextStyle={{
-                                    color: theme.colors.textSecondary,
-                                  }}
-                            />
-
-                            {tooltip && (
-                                <View
-                                    className="absolute rounded-lg shadow-lg p-2" style={{ backgroundColor: theme.colors.secondaryCard, left: tooltip.x + 20, top: tooltip.y - 60 }}
-                                >
-                                    <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>Protein: {tooltip.item.protein}</Text>
-                                    <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>Chất xơ: {tooltip.item.fiber}</Text>
-                                    <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>Chất béo: {tooltip.item.fat}</Text>
-                                    <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>Tinh bột: {tooltip.item.starch}</Text>
-                                    <Text
-                                        className={`text-xs font-semibold mt-1`} style={{ color: tooltip.item.isBalanced ? theme.colors.tint : theme.colors.textSecondary }}
-                                    >
-                                        {tooltip.item.isBalanced ? "Cân bằng ✅" : "Chưa cân bằng ❌"}
-                                    </Text>
-                                </View>
-                            )}
-                        </View>
-                    </View>
-
-                    <Text className="font-bold text-base mb-2" style={{ color: theme.colors.textPrimary }}>
-                        {t("Thành phần dinh dưỡng trung bình (%)")}
+                {tooltip && (
+                  <View
+                    className="absolute rounded-lg shadow-lg p-2"
+                    style={{
+                      backgroundColor: theme.colors.secondaryCard,
+                      left: tooltip.x + 20,
+                      top: tooltip.y - 60,
+                    }}
+                  >
+                    <Text
+                      className="text-xs"
+                      style={{ color: theme.colors.textPrimary }}
+                    >
+                      {t("Chất đạm")}: {tooltip.item.protein}
                     </Text>
-                    {renderNutrition("Protein", data.averageNutrition.protein, "#60a5fa")}
-                    {renderNutrition("Chất xơ", data.averageNutrition.fiber, "#34d399")}
-                    {renderNutrition("Chất béo", data.averageNutrition.fat, "#fbbf24")}
-                    {renderNutrition("Tinh bột", data.averageNutrition.starch, "#f87171")}
-                </>
+                    <Text
+                      className="text-xs"
+                      style={{ color: theme.colors.textPrimary }}
+                    >
+                      {t("Chất xơ")}: {tooltip.item.fiber}
+                    </Text>
+                    <Text
+                      className="text-xs"
+                      style={{ color: theme.colors.textPrimary }}
+                    >
+                      {t("Chất béo")}: {tooltip.item.fat}
+                    </Text>
+                    <Text
+                      className="text-xs"
+                      style={{ color: theme.colors.textPrimary }}
+                    >
+                      {t("Tinh bột")}: {tooltip.item.starch}
+                    </Text>
+                    <Text
+                      className={`text-xs font-semibold mt-1`}
+                      style={{
+                        color: tooltip.item.isBalanced
+                          ? theme.colors.tint
+                          : theme.colors.textSecondary,
+                      }}
+                    >
+                      {tooltip.item.isBalanced
+                        ? t("Cân bằng ")
+                        : t("Chưa cân bằng")}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <Text
+              className="font-bold text-base mb-2"
+              style={{ color: theme.colors.textPrimary }}
+            >
+              {t("Thành phần dinh dưỡng trung bình (%)")}
+            </Text>
+            {renderNutrition(
+              "Protein",
+              data.averageNutrition.protein,
+              "#60a5fa"
             )}
-        </View>
+            {renderNutrition(
+              t("Chất xơ"),
+              data.averageNutrition.fiber,
+              "#34d399"
+            )}
+            {renderNutrition(
+              t("Chất béo"),
+              data.averageNutrition.fat,
+              "#fbbf24"
+            )}
+            {renderNutrition(
+              t("Tinh bột"),
+              data.averageNutrition.starch,
+              "#f87171"
+            )}
+          </>
+        )}
+      </View>
     );
 }
 

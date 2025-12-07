@@ -30,6 +30,8 @@ const Page = () => {
         queryFn: () => getBlogById(id as string),
         select: (res) => res.blogs[0],
     });
+    console.log("id", id);
+    
 
     useEffect(() => {
         if (blog) {
@@ -39,7 +41,8 @@ const Page = () => {
             setSelectedTag({ label: blog.category, value: blog.category });
             shouldAutoScrollRef.current = false;
         }
-    }, [id]);
+        console.log(blog)
+    }, [blog]);
 
     const pickImage = async () => {
         contentInputRef.current?.blur();
@@ -197,6 +200,7 @@ const Page = () => {
                                 const isSelectedTag = selectedTag.value === item.value;
                                 return (
                                     <TouchableOpacity
+                                        activeOpacity={1}
                                         onPress={() => setSelectedTag(item)}
                                         className={`px-4 py-2 rounded-full`}
                                         style={{

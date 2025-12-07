@@ -98,7 +98,7 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
                             <Text className="font-semibold text-xl" style={{ color: theme.colors.textPrimary }}>{actual.longestSleep?.date || '-'}</Text>
                             <Text className="text-blue-600 font-semibold text-xl">{(actual.longestSleep?.hours ?? 0).toFixed(1)}h</Text>
                         </View>
-                        <Text className="text-sm mt-0.5" style={{ color: theme.colors.textSecondary }}>Từ {actual.longestSleep?.startTime || '--:--'} đến {actual.longestSleep?.endTime || '--:--'}</Text>
+                        <Text className="text-sm mt-0.5" style={{ color: theme.colors.textSecondary }}>{t("Từ")} {actual.longestSleep?.startTime || '--:--'} {t("đến")} {actual.longestSleep?.endTime || '--:--'}</Text>
                     </View>
                 </>
             )}
