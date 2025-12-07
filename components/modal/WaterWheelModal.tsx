@@ -10,8 +10,15 @@ const WaterWheelModal = ({ title, items, initialValue, currentDate, handleConfir
     [items]
   );
 
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  // Find the initial index based on initialValue
+  const initialIndex = useMemo(() => {
+    const index = data.findIndex((item: { label: string; value: number }) => item.value === initialValue);
+    return index >= 0 ? index : 0;
+  }, [data, initialValue]);
+
+  const [selectedIndex, setSelectedIndex] = useState(initialIndex);
   const listRef = useRef<FlatList<{ label: string; value: number }>>(null);
+
 
   const CONTAINER_HEIGHT = 240;
   const ITEM_HEIGHT = 48;
@@ -62,6 +69,10 @@ const WaterWheelModal = ({ title, items, initialValue, currentDate, handleConfir
                 data={data}
                 keyExtractor={(_, index) => `w-${index}`}
                 getItemLayout={getItemLayout}
+                contentOffset={{ x: 0, y: initialIndex * ITEM_HEIGHT }}
+                initialNumToRender={data.length}
+                maxToRenderPerBatch={data.length}
+                removeClippedSubviews={false}
                 showsVerticalScrollIndicator={false}
                 snapToInterval={ITEM_HEIGHT}
                 decelerationRate="fast"

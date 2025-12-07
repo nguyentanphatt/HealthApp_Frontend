@@ -7,6 +7,7 @@ import { useToastStore } from "@/stores/useToast";
 import { validateConfirmPassword, validateEmail, validatePassword } from "@/utils/validate";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from "@react-native-google-signin/google-signin";
+import { AxiosError } from "axios";
 import { Link, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -39,7 +40,7 @@ const Signup = () => {
     loadLanguage();
   }, []);
 
-  const handleSignup = async() => {
+  const handleSignup = async () => {
     if (
       errorMessage.email ||
       errorMessage.password ||
@@ -47,12 +48,12 @@ const Signup = () => {
     ) {
       return;
     }
-    if(email === "" || password === "" || confirmPassword === "") {
+    if (email === "" || password === "" || confirmPassword === "") {
       addToast(t("Vui lòng điền đầy đủ thông tin"), "error");
       return;
     }
     const response = await signup(email, password);
-    if(response.success){
+    if (response.success) {
       await AsyncStorage.multiSet([
         ["email", email],
         ["type", "signup"]
@@ -69,24 +70,25 @@ const Signup = () => {
   //Comment this when testing on local expo go
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      webClientId: "Your Web Client ID",
     });
-  },[])
+  }, [])
 
   const googleSignin = async () => {
     try {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
       if (isSuccessResponse(response)) {
-        const {idToken, user} = response.data
-        const {name, email, photo} = user
+        const { idToken, user } = response.data;
+        const { name, email, photo } = user;
         console.log("name", name);
         console.log("email", email);
         console.log("photo", photo);
+
         const res = await googleSigninAPI(name || "", email || "", photo || "");
         if (res.success) {
           addToast(res.message, "success");
-          setTokens(res.data.accessToken, res.data.refreshToken)
+          setTokens(res.data.accessToken, res.data.refreshToken);
           router.push("/(tabs)");
         } else {
           addToast(res.message, "error");
@@ -94,7 +96,28 @@ const Signup = () => {
       } else {
         addToast(t("Đăng nhập thất bại"), "error");
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.isAxiosError) {
+        const axiosErr = error as AxiosError<any>;
+        const status = axiosErr.response?.status;
+
+        if (status === 409) {
+          addToast(t("Tài khoản đã được đăng ký rồi, hãy thử lại"), "error");
+          try {
+            await GoogleSignin.signOut();
+          } catch (e) {
+            console.log("Google signOut error", e);
+          }
+        } else {
+          const msg =
+            (axiosErr.response?.data as any)?.message ||
+            t("Đăng nhập thất bại");
+          addToast(msg, "error");
+        }
+        console.log("googleSignin axios error", axiosErr);
+        return;
+      }
+
       if (isErrorWithCode(error)) {
         switch (error.code) {
           case statusCodes.IN_PROGRESS:
@@ -105,9 +128,11 @@ const Signup = () => {
             break;
           default:
             addToast(t("Đã xảy ra lỗi"), "error");
+            console.log("googleSignin error", error);
         }
       } else {
         addToast(t("Đã xảy ra lỗi"), "error");
+        console.log("googleSignin unknown error", error);
       }
     }
   };

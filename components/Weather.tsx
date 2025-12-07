@@ -75,7 +75,7 @@ const Weather = ({
             }
             className="self-center flex-row items-center justify-center bg-cyan-blue px-4 py-3 rounded-full"
           >
-            <Text className="text-white" style={{ color: theme.colors.textPrimary }}>{t("Thêm ngay")}</Text>
+            <Text className="text-white">{t("Thêm ngay")}</Text>
           </TouchableOpacity>
         )}
       </View>

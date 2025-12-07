@@ -220,6 +220,10 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
+    userProfileMutation.mutate()
+  }, []);
+
+  useEffect(() => {
     if (selectedDate === 0) {
       const currentTimestamp = Math.floor(Date.now() / 1000);
       setSelectedDate(currentTimestamp);
@@ -364,7 +368,7 @@ export default function HomeScreen() {
             }
           </Card>
 
-          {sessionId && (
+          {sessionId && (selectedDate === 0 || dayjs.unix(selectedDate).isSame(dayjs(), 'day')) && (
             <TouchableOpacity onPress={() => router.push('/activity' as Href)} className="flex p-4 items-center justify-between shadow-md rounded-md" style={{ backgroundColor: theme.colors.card }}>
               <Text className="text-xl" style={{ color: theme.colors.textSecondary }}>{t("Bạn đang có buổi tập tạm dừng")}</Text>
               <Text className="text-2xl font-bold" style={{ color: theme.colors.textPrimary }}>{t("Tiếp tục tập")}</Text>

@@ -1,5 +1,5 @@
 import { useAppTheme } from "@/context/appThemeContext";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { FlatList, NativeScrollEvent, NativeSyntheticEvent, Text, View } from "react-native";
 type TimePickerProps = {
   initialHour?: number;
@@ -35,7 +35,7 @@ const TimeWheelPicker = ({
   const [minute, setMinute] = useState(initialMinute);
   const [selectedHourIndex, setSelectedHourIndex] = useState(initialHour);
   const [selectedMinuteIndex, setSelectedMinuteIndex] = useState(initialMinute);
-  console.log(selectedHourIndex, selectedMinuteIndex);
+  //console.log(selectedHourIndex, selectedMinuteIndex);
   
   const hoursRef = useRef<FlatList<{ label: string; value: number }>>(null);
   const minutesRef = useRef<FlatList<{ label: string; value: number }>>(null);
@@ -51,23 +51,6 @@ const TimeWheelPicker = ({
     index,
   });
 
-  const scrollToInitial = () => {
-    hoursRef.current?.scrollToIndex({
-      index: initialHour,
-      animated: false,
-    });
-    minutesRef.current?.scrollToIndex({
-      index: initialMinute,
-      animated: false,
-    });
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      scrollToInitial();
-    }, 50);
-    return () => clearTimeout(timer);
-  }, []);
 
   const onEndDragHour = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = e.nativeEvent.contentOffset.y;
@@ -108,6 +91,10 @@ const TimeWheelPicker = ({
           ref={hoursRef}
           data={hours}
           keyExtractor={(_, index) => `h-${index}`}
+          contentOffset={{ x: 0, y: initialHour * ITEM_HEIGHT }}
+          initialNumToRender={hours.length}
+          maxToRenderPerBatch={hours.length}
+          removeClippedSubviews={false}
           renderItem={({ item, index }) => (
             <View style={{ height: ITEM_HEIGHT, justifyContent: "center", alignItems: "center" }}>
               <Text
@@ -164,6 +151,10 @@ const TimeWheelPicker = ({
           ref={minutesRef}
           data={minutes}
           keyExtractor={(_, index) => `m-${index}`}
+          contentOffset={{ x: 0, y: initialMinute * ITEM_HEIGHT }}
+          initialNumToRender={minutes.length}
+          maxToRenderPerBatch={minutes.length}
+          removeClippedSubviews={false}
           renderItem={({ item, index }) => (
             <View style={{ height: ITEM_HEIGHT, justifyContent: "center", alignItems: "center" }}>
               <Text

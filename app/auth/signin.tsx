@@ -65,7 +65,7 @@ const Signin = () => {
   //Comment this when testing on local expo go
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      webClientId: "Your Web Client ID",
     });
   },[])
 
@@ -74,15 +74,16 @@ const Signin = () => {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
       if (isSuccessResponse(response)) {
-        const {idToken, user} = response.data
-        const {name, email, photo} = user
+        const { idToken, user } = response.data;
+        const { name, email, photo } = user;
         console.log("name", name);
         console.log("email", email);
         console.log("photo", photo);
+
         const res = await googleSigninAPI(name || "", email || "", photo || "");
         if (res.success) {
           addToast(res.message, "success");
-          setTokens(res.data.accessToken, res.data.refreshToken)
+          setTokens(res.data.accessToken, res.data.refreshToken);
           router.push("/(tabs)");
         } else {
           addToast(res.message, "error");
@@ -90,7 +91,28 @@ const Signin = () => {
       } else {
         addToast(t("Đăng nhập thất bại"), "error");
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.isAxiosError) {
+        const axiosErr = error as AxiosError<any>;
+        const status = axiosErr.response?.status;
+
+        if (status === 409) {
+          addToast(t("Tài khoản đã được đăng ký rồi, hãy thử lại"), "error");
+          try {
+            await GoogleSignin.signOut();
+          } catch (e) {
+            console.log("Google signOut error", e);
+          }
+        } else {
+          const msg =
+            (axiosErr.response?.data as any)?.message ||
+            t("Đăng nhập thất bại");
+          addToast(msg, "error");
+        }
+        console.log("googleSignin axios error", axiosErr);
+        return;
+      }
+
       if (isErrorWithCode(error)) {
         switch (error.code) {
           case statusCodes.IN_PROGRESS:
@@ -101,9 +123,11 @@ const Signin = () => {
             break;
           default:
             addToast(t("Đã xảy ra lỗi"), "error");
+            console.log("googleSignin error", error);
         }
       } else {
         addToast(t("Đã xảy ra lỗi"), "error");
+        console.log("googleSignin unknown error", error);
       }
     }
   };

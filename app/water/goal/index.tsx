@@ -6,7 +6,7 @@ import { convertISOToTimestamp } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
 
@@ -25,7 +25,6 @@ const Page = () => {
     units.water === "ml" ? initAmount : Number(convertWater(initAmount, units.water).toFixed(2));
 
   const queryClient = useQueryClient()
-  const [selectedAmount, setSelectedAmount] = useState<number>(initialValue);
   const timestamp = convertISOToTimestamp(time);
 
   const items =
@@ -38,6 +37,14 @@ const Page = () => {
         const amount = 2 + i * 2;
         return { label: `${amount}`, value: amount };
       });
+
+
+  const initialIndex = useMemo(() => {
+    const index = items.findIndex((item: { label: string; value: number }) => item.value === initialValue);
+    return index >= 0 ? index : 0;
+  }, [items, initialValue]);
+
+  const [selectedAmount, setSelectedAmount] = useState<number>(initialValue);
 
   const handleGoBack = async (amount: number, time: string) => {
     const valueInMl = inputToBaseWater(amount);
@@ -100,11 +107,15 @@ const Page = () => {
             data={items}
             keyExtractor={(_, index) => `w-${index}`}
             getItemLayout={getItemLayout}
+            contentOffset={{ x: 0, y: initialIndex * ITEM_HEIGHT }}
+            initialNumToRender={items.length}
+            maxToRenderPerBatch={items.length}
+            removeClippedSubviews={false}
             showsVerticalScrollIndicator={false}
             snapToInterval={ITEM_HEIGHT}
             decelerationRate="fast"
             contentContainerStyle={{ paddingTop: verticalPadding, paddingBottom: verticalPadding }}
-            renderItem={({ item, index }) => (
+            renderItem={({ item }) => (
               <View style={{ height: ITEM_HEIGHT, justifyContent: 'center', alignItems: 'center' }}>
                 <Text
                   style={{

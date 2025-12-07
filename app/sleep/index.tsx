@@ -1,8 +1,10 @@
 import CalendarSwiper from "@/components/CalendarSwiper";
 import CircularTimePicker from "@/components/CircularTimePicker";
 import { useAppTheme } from "@/context/appThemeContext";
-import { CreateSleepRecord, getSleepStatus, UpdateSleepRecord } from "@/services/sleep";
+import { screenMonitor } from "@/services/screenMonitor";
+import { CreateSleepRecord, getSleepSession, getSleepStatus, saveSleepPoint, UpdateSleepRecord } from "@/services/sleep";
 import { formatTimeForDisplay, utcTimeToVnTime, vnDateAndTimeToUtcTimestamp, vnTimeToUtcTimestamp } from "@/utils/convertTime";
+import { scheduleSleepNotification } from "@/utils/notificationsHelper";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -10,7 +12,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
-import { BarChart, LineChart } from "react-native-gifted-charts";
+import { LineChart } from "react-native-gifted-charts";
 import Toast from "react-native-toast-message";
 
 const Page = () => {
@@ -45,6 +47,15 @@ const Page = () => {
     select: (res) => res.data,
   });
 
+  const { data: sleepSession, isLoading: loadingSleepSession } = useQuery({
+    queryKey: ["sleepSession", {recordId: sleepStatus?.history?.[0]?.recordId}],
+    queryFn: () =>
+      getSleepSession(sleepStatus?.history?.[0]?.recordId || ""),
+    staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
+    select: (res) => res.data,
+  });
+
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
 
   useEffect(() => {
@@ -67,78 +78,103 @@ const Page = () => {
 
   }, [selectedDate, queryClient]);
 
+
   const hasSleepData = sleepStatus?.history && (sleepStatus.history as any[]).length > 0;
 
-  const stackData = [
-    {
-      stacks: [
-        { value: 4, color: '#3634A3' },
-        { value: 2, color: '#003FDD' },
-        { value: 3, color: '#5EC8FE' },
-      ],
-      label: 'T2',
-    },
-    {
-      stacks: [
-        { value: 3, color: '#3634A3' },
-        { value: 1, color: '#003FDD' },
-        { value: 3, color: '#5EC8FE' },
-      ],
-      label: 'T3',
-    },
-    {
-      stacks: [
-        { value: 2, color: '#3634A3' },
-        { value: 2, color: '#003FDD' },
-        { value: 4, color: '#5EC8FE' },
-      ],
-      label: 'T4',
-    },
-    {
-      stacks: [
-        { value: 4, color: '#3634A3' },
-        { value: 3, color: '#003FDD' },
-        { value: 1, color: '#5EC8FE' },
-      ],
-      label: 'T5',
-    },
-    {
-      stacks: [
-        { value: 5, color: '#3634A3' },
-        { value: 1, color: '#003FDD' },
-        { value: 3, color: '#5EC8FE' },
-      ],
-      label: 'T6',
-    },
-    {
-      stacks: [
-        { value: 3, color: '#3634A3' },
-        { value: 1, color: '#003FDD' },
-        { value: 1, color: '#5EC8FE' },
-      ],
-      label: 'T7',
-    },
-    {
-      stacks: [
-        { value: 2, color: '#3634A3' },
-        { value: 3, color: '#003FDD' },
-        { value: 3, color: '#5EC8FE' },
-      ],
-      label: 'CN',
-    },
-  ];
+  useEffect(() => {
+    if (hasSleepData && sleepStatus?.history?.[0]) {
+      const sleepRecord = sleepStatus.history[0];
+      const recordId = sleepRecord.recordId;
 
-  const data = [
-    { value: 2, label: "11:00" },
-    { value: 0, label: "0:00" },
-    { value: 2, label: "1:00" },
-    { value: 1, label: "2:00" },
-    { value: 0, label: "3:00" },
-    { value: 0, label: "4:00" },
-    { value: 2, label: "5:00" },
-    { value: 1, label: "6:00" },
-    { value: 2, label: "7:00" },
-  ];
+      // Use the actual timestamps from the record
+      const startTimestamp = new Date(sleepRecord.startAt).getTime();
+      const endTimestamp = new Date(sleepRecord.endedAt).getTime();
+
+      console.log('[Sleep Screen] Setting up monitoring for:', {
+        recordId,
+        startAt: sleepRecord.startAt,
+        endedAt: sleepRecord.endedAt,
+        startTimestamp,
+        endTimestamp,
+        currentTime: Date.now()
+      });
+
+      // Callback function to save sleep points
+      const handleSaveSleepPoint = async (type: 'sleep' | 'awake', timestamp: number) => {
+        try {
+          const response = await saveSleepPoint(type, timestamp.toString(), recordId);
+          if (response.success) {
+            console.log(`[Sleep Screen] Sleep point saved: ${type} at ${new Date(timestamp).toLocaleString('vi-VN')}`);
+            // Optionally show a subtle toast notification
+            // Toast.show({
+            //   type: "info",
+            //   text1: t(`Đã ghi nhận ${type === 'sleep' ? 'ngủ' : 'thức'}`),
+            //   position: "bottom",
+            //   visibilityTime: 2000,
+            // });
+          }
+        } catch (error) {
+          console.error(`[Sleep Screen] Failed to save sleep point:`, error);
+          Toast.show({
+            type: "error",
+            text1: t("Không thể lưu dữ liệu giấc ngủ"),
+            text2: t("Vui lòng kiểm tra kết nối"),
+            position: "bottom",
+            visibilityTime: 3000,
+          });
+          throw error; // Re-throw to trigger retry logic in screenMonitor
+        }
+      };
+
+      // Start screen monitoring with actual timestamps
+      // The service will automatically stop when endTime is reached
+      screenMonitor.startTracking(startTimestamp, endTimestamp, recordId, handleSaveSleepPoint);
+    }
+  }, [hasSleepData, sleepStatus?.history?.[0]?.recordId, t]);
+
+  // Transform sleepSession data to chart format
+  const getSleepChartData = () => {
+    if (!sleepSession || (!sleepSession.sleep && !sleepSession.awake)) {
+      return [];
+    }
+
+    const chartPoints: Array<{ value: number; label: string; time: string }> = [];
+
+    // Add sleep points (value = 1)
+    if (sleepSession.sleep && Array.isArray(sleepSession.sleep)) {
+      sleepSession.sleep.forEach((point: { pointId: string; time: string }) => {
+        chartPoints.push({
+          value: 1,
+          label: "",
+          time: point.time,
+        });
+      });
+    }
+
+    // Add awake points (value = 0)
+    if (sleepSession.awake && Array.isArray(sleepSession.awake)) {
+      sleepSession.awake.forEach((point: { pointId: string; time: string }) => {
+        chartPoints.push({
+          value: 0,
+          label: "",
+          time: point.time,
+        });
+      });
+    }
+
+    // Sort by time
+    chartPoints.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+    // Format labels with time in HH:mm format (Vietnam time)
+    chartPoints.forEach((point) => {
+      const vnTime = utcTimeToVnTime(new Date(point.time).getTime());
+      point.label = `${String(vnTime.hour).padStart(2, '0')}:${String(vnTime.minute).padStart(2, '0')}`;
+    });
+
+    return chartPoints;
+  };
+
+  const data = getSleepChartData();
 
   const moods = [
     { label: t("Tuyệt vời"), emoji: "😄", color: "#007F3D", value: 100 },
@@ -164,6 +200,28 @@ const Page = () => {
     }
   }, [sleepStatus?.history?.[0]?.qualityScore, moods]);
 
+  useEffect(() => {
+    if (sleepStatus?.history?.[0]) {
+      const sleepRecord = sleepStatus.history[0];
+      const startTime = utcTimeToVnTime(new Date(sleepRecord.startAt).getTime());
+      const endTime = utcTimeToVnTime(new Date(sleepRecord.endedAt).getTime());
+
+      const startTimeStr = `${String(startTime.hour).padStart(2, '0')}:${String(startTime.minute).padStart(2, '0')}`;
+      const endTimeStr = `${String(endTime.hour).padStart(2, '0')}:${String(endTime.minute).padStart(2, '0')}`;
+
+      const isToday = selectedDate === 0 ||
+        Math.abs(selectedDate - Math.floor(Date.now() / 1000)) < 86400;
+
+      if (isToday) {
+        scheduleSleepNotification(startTimeStr, endTimeStr).then(success => {
+          if (success) {
+            console.log("Sleep notification re-scheduled on load");
+          }
+        });
+      }
+    }
+  }, [sleepStatus?.history?.[0], selectedDate]);
+
   const handleSetSleepTime = async (startTime: string, endTime: string, isAllWeek: boolean) => {
     const startTimeHour = Number(startTime.split(":")[0]);
     const startTimeMinute = Number(startTime.split(":")[1]);
@@ -188,6 +246,11 @@ const Page = () => {
     try {
       const response = await CreateSleepRecord(startTimeTimestamp.toString(), endTimeTimestamp.toString(), isAllWeek);
       if (response.success) {
+        const notificationScheduled = await scheduleSleepNotification(startTime, endTime);
+        if (notificationScheduled) {
+          console.log("Sleep notification scheduled successfully");
+        }
+
         Toast.show({
           type: "success",
           text1: t("Thêm giờ ngủ thành công"),
@@ -226,8 +289,6 @@ const Page = () => {
       </View>
     );
   }
-
-  console.log("sleepStatus", sleepStatus?.history[0]);
   
 
   return (
@@ -304,46 +365,9 @@ const Page = () => {
               {t("Từ")} {(() => {
                 const startTime = utcTimeToVnTime(new Date(sleepStatus?.history[0].startAt).getTime());
                 const endTime = utcTimeToVnTime(new Date(sleepStatus?.history[0].endedAt).getTime());
-                return `${formatTimeForDisplay(startTime.hour, startTime.minute)} ${t("giờ")} ${t("tới")} ${formatTimeForDisplay(endTime.hour, endTime.minute)} ${t("giờ")}`;
+                return `${formatTimeForDisplay(startTime.hour, startTime.minute)} ${t("tới")} ${formatTimeForDisplay(endTime.hour, endTime.minute)}`;
               })()}
             </Text>
-          </View>
-
-          <View className="flex gap-2.5 p-4 rounded-md shadow-md mb-4 mt-4" style={{ backgroundColor: theme.colors.card }}>
-            <View>
-              <Text className="font-bold text-xl" style={{ color: theme.colors.textPrimary }}>{t("Ngủ đầy đặn")}</Text>
-              <Text className="" style={{ color: theme.colors.textSecondary }}>{t("Hãy giữ phong độ nào !")}</Text>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 8 }}
-            >
-              <BarChart
-                stackData={stackData}
-                barWidth={24}
-                frontColor="#00BFFF"
-                noOfSections={4}
-                yAxisLabelTexts={["0", "5", "10", "15"]}
-                xAxisLabelTextStyle={{ color: theme.colors.textPrimary }}
-                yAxisTextStyle={{ color: theme.colors.textPrimary }}
-              />
-            </ScrollView>
-
-            <View className="flex-row items-center justify-center gap-5 mt-2.5">
-              <View className="flex-row items-center gap-2">
-                <View className="size-4 rounded-full bg-[#3634A3]" />
-                <Text className="text-lg" style={{ color: theme.colors.textPrimary }}>{t("Ngủ")}</Text>
-              </View>
-              <View className="flex-row items-center gap-2">
-                <View className="size-4 rounded-full bg-[#5EC8FE]" />
-                <Text className="text-lg" style={{ color: theme.colors.textPrimary }}>{t("Ngáy/Ho")}</Text>
-              </View>
-              <View className="flex-row items-center gap-2">
-                <View className="size-4 rounded-full bg-[#003FDD]" />
-                <Text className="text-lg" style={{ color: theme.colors.textPrimary }}>{t("Thức")}</Text>
-              </View>
-            </View>
           </View>
 
           <View className="flex gap-2.5 p-4 rounded-md shadow-md" style={{ backgroundColor: theme.colors.card }}>
@@ -364,9 +388,9 @@ const Page = () => {
                 initialSpacing={20}
                 color={theme.colors.textPrimary}
                 thickness={2}
-                maxValue={3}
-                noOfSections={2}
-                yAxisLabelTexts={['Ngủ', 'Ngáy/Ho', 'Thức']}
+                maxValue={1}
+                noOfSections={1}
+                yAxisLabelTexts={['Thức', 'Ngủ']}
                 yAxisLabelWidth={50}
                 yAxisTextStyle={{ color: theme.colors.textPrimary }}
                 yAxisColor={theme.colors.border}

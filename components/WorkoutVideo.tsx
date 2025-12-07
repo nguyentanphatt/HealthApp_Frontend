@@ -9,7 +9,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
 
-const LIMIT = 6;
+const LIMIT = 10;
 
 const WorkoutVideo = () => {
   const [openMenu, setOpenMenu] = useState(false);

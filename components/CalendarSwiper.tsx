@@ -4,7 +4,7 @@ import { convertDayToVN } from "@/utils/convertTime";
 import { FontAwesome6 } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import React, { useEffect, useRef, useState } from "react";
-import { LayoutChangeEvent, Modal, PanResponder, Text, TouchableOpacity, View } from "react-native";
+import { Animated, LayoutChangeEvent, Modal, PanResponder, Text, TouchableOpacity, View } from "react-native";
 import DateTimePicker from "react-native-ui-datepicker";
 
 type DayItem = {
@@ -31,6 +31,7 @@ export default function CalendarSwiper({
   const [containerWidth, setContainerWidth] = useState<number>(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerDate, setPickerDate] = useState<Date>(new Date());
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   const TODAY_STR = dayjs().format("YYYY-MM-DD");
 
@@ -42,8 +43,23 @@ export default function CalendarSwiper({
   useEffect(() => {
     const start = endDate.subtract(4, "day");
     const generated = generateDays(start, 5);
+
+    // Animate the transition
+    Animated.sequence([
+      Animated.timing(slideAnim, {
+        toValue: 0.5,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
     setDays(generated);
-  }, [endDate]);
+  }, [endDate, slideAnim]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -168,9 +184,19 @@ export default function CalendarSwiper({
       </View>
 
       <View {...panResponder.panHandlers} style={{ alignItems: "center" }}>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+        <Animated.View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: slideAnim.interpolate({
+              inputRange: [0, 0.5],
+              outputRange: [1, 0.3],
+            }),
+          }}
+        >
           {days.map(renderItem)}
-        </View>
+        </Animated.View>
       </View>
 
       <Modal visible={pickerOpen} transparent animationType="fade" onRequestClose={() => setPickerOpen(false)}>
