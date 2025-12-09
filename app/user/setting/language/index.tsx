@@ -30,6 +30,7 @@ const Page = () => {
 
   const onSelect = async (lang: "vi" | "en") => {
     setUnit("language", lang);
+    console.log(lang)
     await i18n.changeLanguage(lang);
   };
 
@@ -54,6 +55,7 @@ const Page = () => {
         <View className="flex w-full gap-4 rounded-md shadow-md p-4" style={{ backgroundColor: theme.colors.secondaryCard }}>
           {options.map((item, idx) => (
             <TouchableOpacity
+              activeOpacity={1}
               key={item.value}
               onPress={() => onSelect(item.value as "vi" | "en")}
               className="flex gap-4"

@@ -18,7 +18,6 @@ const Page = () => {
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [microphoneEnabled, setMicrophoneEnabled] = useState(false);
 
-  // Check permissions on mount
   useEffect(() => {
     checkAllPermissions();
   }, []);
@@ -68,8 +67,6 @@ const Page = () => {
         );
         setMicrophoneEnabled(granted);
       } else {
-        // iOS - expo-av hoặc có thể check khác
-        // Tạm thời set false nếu không có package
         setMicrophoneEnabled(false);
       }
     } catch (error) {

@@ -1,16 +1,17 @@
 import { useAppTheme } from '@/context/appThemeContext';
 import React, { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FlatList, Modal, Text, TouchableOpacity, View } from 'react-native';
 
 const WaterWheelModal = ({ title, items, initialValue, currentDate, handleConfirm, closeModal }: any) => {
   const { theme } = useAppTheme();
   const [amount, setAmount] = useState(initialValue);
+  const { t } = useTranslation();
   const data = useMemo(
     () => items.map((it: any) => ({ label: it.label, value: it.amount })),
     [items]
   );
 
-  // Find the initial index based on initialValue
   const initialIndex = useMemo(() => {
     const index = data.findIndex((item: { label: string; value: number }) => item.value === initialValue);
     return index >= 0 ? index : 0;
@@ -108,7 +109,7 @@ const WaterWheelModal = ({ title, items, initialValue, currentDate, handleConfir
               }}
               className="self-center flex-row items-center justify-center w-[70%] py-3 rounded-full bg-cyan-blue"
             >
-              <Text className="text-xl text-white font-bold">Thêm</Text>
+              <Text className="text-xl text-white font-bold">{t("Thêm")}</Text>
             </TouchableOpacity>
           </View>
         </View>

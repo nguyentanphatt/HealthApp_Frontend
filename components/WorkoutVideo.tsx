@@ -83,7 +83,7 @@ const WorkoutVideo = () => {
               }}
               className="py-2"
             >
-              <Text className='text-lg' style={{ color: theme.colors.textPrimary }}>Đặt lại mục tiêu</Text>
+              <Text className='text-lg' style={{ color: theme.colors.textPrimary }}>{t("Đặt lại mục tiêu")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -111,13 +111,13 @@ const WorkoutVideo = () => {
           isFetchingMore ? (
             <View className='py-4 items-center'>
               <ActivityIndicator size="small" color="#19B1FF" />
-              <Text className='mt-2' style={{ color: theme.colors.textSecondary }}>Đang tải thêm...</Text>
+              <Text className='mt-2' style={{ color: theme.colors.textSecondary }}>{t("Đang tải thêm...")}</Text>
             </View>
           ) : null
         }
         ListEmptyComponent={() => (
           <View className='flex-1 items-center justify-center mt-10'>
-            <Text style={{ color: theme.colors.textSecondary }}>Không có video phù hợp</Text>
+            <Text style={{ color: theme.colors.textSecondary }}>{t("Không có video phù hợp")}</Text>
           </View>
         )}
         contentContainerStyle={{ paddingBottom: 24 }}

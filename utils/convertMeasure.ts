@@ -18,7 +18,6 @@ export function convertTemperature(valueC: number, unit: "C" | "F") {
   return (valueC * 9) / 5 + 32;
 }
 
-//convert to base measure to save data
 export function toBaseHeight(value: number, unit: "cm" | "ft") {
   return unit === "cm" ? value : value * 30.48;
 }

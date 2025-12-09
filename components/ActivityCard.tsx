@@ -47,7 +47,7 @@ const ActivityCard = ({ activity, index }: { activity: Activity, index: number }
                     <FontAwesome6 name="person-running" size={20} color="#19B1FF" />
                 </View>
             </View>
-
+ 
             <View className="mb-4">
                 <Text className="text-3xl font-bold" style={{ color: theme.colors.textPrimary }}>{formatDistance(activity.distanceKm)}</Text>
                 <Text className="text-sm mt-1" style={{ color: theme.colors.textSecondary }}>{t("Tổng quãng đường")}</Text>

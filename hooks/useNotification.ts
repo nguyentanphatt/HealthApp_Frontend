@@ -13,7 +13,6 @@ export function useNotifications() {
         },
       ]);
 
-      // Register sleep reminder category
       await Notifications.setNotificationCategoryAsync("sleep-reminder", [
         {
           identifier: "VIEW_SLEEP",
@@ -32,15 +31,12 @@ export function useNotifications() {
           const now = Date.now();
           const amount = Number(data.message) || 250;
 
-          // Save water record and update reminder
           await saveWaterRecord(amount, now.toString());
           await updateWaterReminder(data.id, data.message, (new Date(data.expiresIn).getTime()).toString(), false);
 
-          // Update notification to show success
           const notificationId = response.notification.request.identifier;
           await Notifications.dismissNotificationAsync(notificationId);
 
-          // Show success notification with checkmark
           await Notifications.setNotificationCategoryAsync("water-added", [
             {
               identifier: "WATER_ADDED",
@@ -59,16 +55,13 @@ export function useNotifications() {
             trigger: null,
           });
 
-          // Clear the success notification after 5 seconds
           setTimeout(async () => {
             await Notifications.dismissNotificationAsync(successNotificationId);
           }, 5000);
         } else if (response.actionIdentifier === "VIEW_SLEEP") {
           console.log("View sleep action tapped:", data);
-          // User tapped "View" button on sleep notification - can navigate to sleep screen if needed
         } else if (data?.type === "sleep-reminder") {
           console.log("Sleep reminder notification tapped:", data);
-          // User tapped the notification body - can navigate to sleep screen if needed
         } else {
           console.log("App mở từ notification:", data);
         }

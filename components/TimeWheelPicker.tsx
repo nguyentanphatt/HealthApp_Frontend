@@ -35,7 +35,6 @@ const TimeWheelPicker = ({
   const [minute, setMinute] = useState(initialMinute);
   const [selectedHourIndex, setSelectedHourIndex] = useState(initialHour);
   const [selectedMinuteIndex, setSelectedMinuteIndex] = useState(initialMinute);
-  //console.log(selectedHourIndex, selectedMinuteIndex);
   
   const hoursRef = useRef<FlatList<{ label: string; value: number }>>(null);
   const minutesRef = useRef<FlatList<{ label: string; value: number }>>(null);

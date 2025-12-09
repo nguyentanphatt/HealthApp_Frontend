@@ -77,8 +77,7 @@ const Page = () => {
         );
         if (response.success) {
           queryClient.invalidateQueries({ queryKey: ["waterStatus"] });
-          console.log("response", response);
-          
+          console.log("response", response); 
           router.push("/water");
         }
       }

@@ -110,7 +110,7 @@ const Page = () => {
                             <TouchableOpacity onPress={() => { setIsLocked(true) }} className='size-[60px] rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.card }}>
                                 <FontAwesome6 name="lock" size={20} color={theme.colors.textPrimary} />
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={handlePause} className='size-[90px] rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.card }}>
+                            <TouchableOpacity activeOpacity={1} onPress={handlePause} className='size-[90px] rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.card }}>
                                 <FontAwesome6 name={isPause ? "play" : "pause"} size={36} color={theme.colors.textPrimary} />
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => { setIsStart(!isStart), stopTracking(), router.push("/activity/statistics" as Href) }} className='size-[60px] rounded-full flex items-center justify-center' style={{ backgroundColor: theme.colors.card }}>

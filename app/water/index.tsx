@@ -3,7 +3,6 @@ import InfoCard from "@/components/InfoCard";
 import ReminderList from "@/components/ReminderList";
 import WaterVector from "@/components/vector/WaterVector";
 import WaterHistory from "@/components/WaterHistory";
-import * as Location from 'expo-location';
 import Weather from "@/components/Weather";
 import { WaterStatus, WeatherResponse } from "@/constants/type";
 import { useAppTheme } from "@/context/appThemeContext";
@@ -23,6 +22,7 @@ import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-quer
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import * as Location from 'expo-location';
 import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -89,24 +89,17 @@ const Page = () => {
     queryKey: ["weatherReport"],
     queryFn: async () => {
       try {
-    
         const { status } = await Location.requestForegroundPermissionsAsync();
-
         if (status !== 'granted') {
           console.log('Location permission denied');
-      
           const ip = await getIp();
           return WeatherSuggest(ip);
         }
-
-    
         const location = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
-
         const { latitude, longitude } = location.coords;
         console.log('User location:', latitude, longitude);
-    
         return WeatherSuggest(`${latitude},${longitude}`);
       } catch (error) {
         console.error('Location error:', error);
@@ -115,7 +108,7 @@ const Page = () => {
         return WeatherSuggest(ip);
       }
     },
-    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
+    staleTime: 1000 * 60 * 30,
   });
 
   const {

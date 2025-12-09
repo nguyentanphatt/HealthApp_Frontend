@@ -26,7 +26,7 @@ const ScheduleItem = ({
       const m = Math.round((data - h) * 60);
       return `${h}h${m}m`;
     } else if (category === "steps") {
-      return `${data} bước`;
+      return `${data} ${t("bước")}`;
     } else if (category === "water") {
       return `${data} ml`;
     }

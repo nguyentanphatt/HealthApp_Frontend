@@ -200,7 +200,7 @@ export const formatDateStatistics = (start: string, end: string) => {
   const endDate = new Date(end);
   
   if (startDate.getMonth() === endDate.getMonth()) {
-    return `${startDate.getDate()} - ${endDate.getDate()} tháng ${startDate.getMonth() + 1}`;
+    return `${startDate.getDate()} - ${endDate.getDate()} / ${startDate.getMonth() + 1}`;
   } else {
     const startMonth = (startDate.getMonth() + 1).toString().padStart(2, '0');
     const endMonth = (endDate.getMonth() + 1).toString().padStart(2, '0');

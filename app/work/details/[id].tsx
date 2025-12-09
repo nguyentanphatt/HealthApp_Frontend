@@ -120,6 +120,7 @@ const Page = () => {
                 </View>
 
                 <TouchableOpacity
+                    activeOpacity={1}
                     className={`self-center flex-row items-center justify-center w-[70%] py-3 rounded-full ${isWorkoutActive ? 'bg-red-500' : 'bg-cyan-blue'
                         }`}
                     onPress={isWorkoutActive ? handleStopWorkout : handleStartWorkout}
