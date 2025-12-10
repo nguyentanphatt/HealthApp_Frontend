@@ -70,7 +70,8 @@ const Signup = () => {
   //Comment this when testing on local expo go
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: "Your Web Client ID",
+      webClientId:
+        "Your Web Client ID",
     });
   }, [])
 

@@ -88,6 +88,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (accessToken) {
           try {
             const userSettings = await getUserSetting();
+            console.log("userSettings", userSettings);
+            
             if (userSettings?.theme && (userSettings.theme === "light" || userSettings.theme === "dark")) {
               setModeState(userSettings.theme as ThemeMode);
               await AsyncStorage.setItem(STORAGE_KEY, userSettings.theme);
