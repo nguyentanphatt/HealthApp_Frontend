@@ -57,7 +57,7 @@ const FoodDaily = ({title, data, selectedDate}:{title:string, data:FoodDetail[],
                 ))}
                 <View className="self-end w-[160px]">
                   <View className="border border-black w-full" style={{ borderColor: theme.colors.border }} />
-                  <View className="flex-row items-center justify-between gap-2 mt-2">
+                  <View className="flex-row items-center gap-2 mt-2">
                     <Text className="text-xl text-right" style={{ color: theme.colors.textPrimary }}>{t("Tổng")}:</Text>
                     <Text className="text-2xl font-bold" style={{ color: theme.colors.textPrimary }}>
                       {item.calories} Kcal

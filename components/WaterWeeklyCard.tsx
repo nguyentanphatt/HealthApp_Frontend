@@ -64,20 +64,21 @@ const WaterWeeklyCard = ({ data }: { data: WaterWeekly }) => {
         style={{ backgroundColor: theme.colors.card }}
       >
         {!hasAnyWater ? (
-          <View className="flex-1 gap-5">
-            <Text
-              className="font-bold text-xl"
-              style={{ color: theme.colors.textPrimary }}
-            >
-              {t("Báo cáo nước uống")}
-            </Text>
-            <Text
-              className="text-sm text-center pb-2"
-              style={{ color: theme.colors.textSecondary }}
-            >
-              {t("Không có dữ liệu hãy thêm dữ liệu nước uống")}
-            </Text>
-          </View>
+          <View className="gap-5 py-1">
+          <Text
+            className="font-bold text-xl"
+            style={{ color: theme.colors.textPrimary }}
+          >
+            {t("Báo cáo nước uống")}
+          </Text>
+
+          <Text
+            className="text-sm text-center"
+            style={{ color: theme.colors.textSecondary }}
+          >
+            {t("Không có dữ liệu hãy thêm dữ liệu nước uống")}
+          </Text>
+        </View>
         ) : (
           <>
             <View className="flex-row justify-between items-center mb-3">
@@ -223,7 +224,9 @@ const WaterWeeklyCard = ({ data }: { data: WaterWeekly }) => {
                   spacing={12}
                   hideRules
                   yAxisThickness={0}
-                  xAxisThickness={0}
+                  xAxisThickness={1}
+                  xAxisColor={theme.colors.border}
+                  xAxisLabelTexts={['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']}
                   noOfSections={3}
                   maxValue={maxWater}
                   barBorderRadius={6}
@@ -249,6 +252,7 @@ const WaterWeeklyCard = ({ data }: { data: WaterWeekly }) => {
                   )}
                   xAxisLabelTextStyle={{
                     color: theme.colors.textSecondary,
+                    fontSize: 12,
                   }}
                   yAxisTextStyle={{
                     color: theme.colors.textSecondary,

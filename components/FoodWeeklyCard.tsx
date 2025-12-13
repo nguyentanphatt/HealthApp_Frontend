@@ -21,6 +21,11 @@ const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
         frontColor: day.isBalanced ? "#22c55e" : "#d1d5db",
         onPress: (x: number, y: number) => setTooltip({ x, y, item: day }),
     }));
+
+    const maxValue = Math.max(
+        ...barData.map((item) => item.value),
+        100 // Minimum value để đảm bảo biểu đồ có scale hợp lý
+    );
     
 
     useEffect(() => {
@@ -134,12 +139,16 @@ const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
                   spacing={12}
                   hideRules
                   yAxisThickness={0}
-                  xAxisThickness={0}
+                  xAxisThickness={1}
+                  xAxisColor={theme.colors.border}
+                  xAxisLabelTexts={['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']}
                   noOfSections={3}
+                  maxValue={maxValue}
                   barBorderRadius={6}
                   isAnimated
                   xAxisLabelTextStyle={{
                     color: theme.colors.textSecondary,
+                    fontSize: 12,
                   }}
                   yAxisTextStyle={{
                     color: theme.colors.textSecondary,

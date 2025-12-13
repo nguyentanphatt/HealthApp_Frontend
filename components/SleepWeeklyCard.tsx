@@ -71,7 +71,9 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
                                 spacing={12}
                                 hideRules
                                 yAxisThickness={0}
-                                xAxisThickness={0}
+                                xAxisThickness={1}
+                                xAxisColor={theme.colors.border}
+                                xAxisLabelTexts={['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']}
                                 noOfSections={3}
                                 maxValue={maxHours}
                                 barBorderRadius={6}
@@ -84,6 +86,7 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
                                 )}
                                 xAxisLabelTextStyle={{
                                     color: theme.colors.textSecondary,
+                                    fontSize: 12,
                                 }}
                                 yAxisTextStyle={{
                                     color: theme.colors.textSecondary,

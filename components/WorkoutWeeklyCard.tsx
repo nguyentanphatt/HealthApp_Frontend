@@ -153,7 +153,9 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
                         spacing={12}
                         hideRules
                         yAxisThickness={0}
-                        xAxisThickness={0}
+                        xAxisThickness={1}
+                        xAxisColor={theme.colors.border}
+                        xAxisLabelTexts={['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']}
                         noOfSections={3}
                         maxValue={maxSteps}
                         barBorderRadius={6}
@@ -166,10 +168,11 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
                         )}
                         xAxisLabelTextStyle={{
                             color: theme.colors.textSecondary,
-                          }}
-                          yAxisTextStyle={{
+                            fontSize: 12,
+                        }}
+                        yAxisTextStyle={{
                             color: theme.colors.textSecondary,
-                          }}
+                        }}
                     />
                 </View>
             </View>
@@ -185,6 +188,8 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
                             hideRules
                             yAxisThickness={0}
                             xAxisThickness={0}
+                            xAxisColor={theme.colors.border}
+                            xAxisLabelTexts={['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']}
                             noOfSections={3}
                             maxValue={maxCalories}
                             barBorderRadius={6}
@@ -197,10 +202,11 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
                             )}
                             xAxisLabelTextStyle={{
                                 color: theme.colors.textSecondary,
-                              }}
-                              yAxisTextStyle={{
+                                fontSize: 12,
+                            }}
+                            yAxisTextStyle={{
                                 color: theme.colors.textSecondary,
-                              }}
+                            }}
                         />
                     </View>
                 ) : (

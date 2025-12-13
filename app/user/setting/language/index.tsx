@@ -3,7 +3,7 @@ import { useUnits } from "@/context/unitContext";
 import i18n from "@/plugins/i18n";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -22,15 +22,9 @@ const Page = () => {
     { label: t("Tiếng Anh"), value: "en" },
   ];
 
-  useEffect(() => {
-    if (isLoaded) {
-      i18n.changeLanguage(units.language);
-    }
-  }, [units.language, isLoaded]);
-
   const onSelect = async (lang: "vi" | "en") => {
+    // Update language ngay lập tức
     setUnit("language", lang);
-    console.log(lang)
     await i18n.changeLanguage(lang);
   };
 

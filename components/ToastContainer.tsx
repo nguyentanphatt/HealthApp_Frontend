@@ -4,7 +4,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 
 const ToastContainer = () => {
-    const { toasts, removeToast } = useToastStore();
+    const { toasts } = useToastStore();
     const { theme } = useAppTheme();
 
     const getToastStyles = (type: "success" | "error" | "warning" | "info") => {
@@ -44,7 +44,7 @@ const ToastContainer = () => {
                     >
                         <Text
                             className="text-sm font-medium text-center"
-                            style={{ color: theme.colors.textPrimary }}
+                            style={{ color: theme.mode === "dark" ? "#000" : "#fff" }}
                         >
                             {toast.message}
                         </Text>
