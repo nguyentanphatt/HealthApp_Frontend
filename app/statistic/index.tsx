@@ -92,11 +92,6 @@ const Statistic = () => {
         }
     }, [weekStart, queryClient, isAtCurrentWeek]);
 
-    console.log("isLoadingFoodWeeklyData", isLoadingFoodWeeklyData)
-    console.log("food", foodWeeklyData);
-    
-
-    
     return (
         <View className='flex-1 pt-12' style={{ backgroundColor: theme.colors.background }}>
             <View className='flex-col items-center gap-5 py-5' style={{ backgroundColor: theme.colors.background }}>

@@ -390,10 +390,14 @@ const Page = () => {
               noOfSections={3}
               yAxisLabelTexts={yAxisLabelTexts}
               maxValue={displayWater(2000).value}
-              xAxisLabelTextStyle={{ color: theme.colors.textPrimary }}
-              yAxisTextStyle={{ color: theme.colors.textPrimary }}
+              xAxisThickness={1}
               xAxisColor={theme.colors.border}
               yAxisColor={theme.colors.border}
+              xAxisLabelTextStyle={{ 
+                color: theme.colors.textPrimary,
+                fontSize: 12,
+              }}
+              yAxisTextStyle={{ color: theme.colors.textPrimary }}
             />
           </ScrollView>
         </View>

@@ -145,7 +145,6 @@ const FoodWeeklyCard = ({ data }: { data: FoodWeekly }) => {
                   noOfSections={3}
                   maxValue={maxValue}
                   barBorderRadius={6}
-                  isAnimated
                   xAxisLabelTextStyle={{
                     color: theme.colors.textSecondary,
                     fontSize: 12,

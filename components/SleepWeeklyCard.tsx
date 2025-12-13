@@ -77,7 +77,6 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
                                 noOfSections={3}
                                 maxValue={maxHours}
                                 barBorderRadius={6}
-                                isAnimated
                                 renderTooltip={(item: any) => (
                                     <View className="rounded-lg shadow-lg p-2" style={{ backgroundColor: theme.colors.secondaryCard }}>
                                         <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>{item.label} • {item.date}</Text>
