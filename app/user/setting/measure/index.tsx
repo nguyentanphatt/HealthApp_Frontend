@@ -20,8 +20,8 @@ const Page = () => {
 
   if (!isLoaded) {
     return (
-      <View className="flex-1 bg-[#f6f6f6] items-center justify-center">
-        <ActivityIndicator size="large" color="#19B1FF" />
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.textPrimary} />
         <Text className="text-lg text-gray-600 mt-4">Loading</Text>
       </View>
     );
@@ -40,7 +40,7 @@ const Page = () => {
           <TouchableOpacity onPress={() => router.back()}>
             <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">{t("Đơn vị đo")}</Text>
+          <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{t("Đơn vị đo")}</Text>
           <View style={{ width: 24 }} />
         </View>
       </View>

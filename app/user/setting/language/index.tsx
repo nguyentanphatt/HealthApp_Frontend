@@ -23,7 +23,6 @@ const Page = () => {
   ];
 
   const onSelect = async (lang: "vi" | "en") => {
-    // Update language ngay lập tức
     setUnit("language", lang);
     await i18n.changeLanguage(lang);
   };
@@ -41,7 +40,7 @@ const Page = () => {
           <TouchableOpacity onPress={() => router.back()}>
             <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">{t("Ngôn ngữ")}</Text>
+          <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{t("Ngôn ngữ")}</Text>
           <View style={{ width: 24 }} />
         </View>
       </View>

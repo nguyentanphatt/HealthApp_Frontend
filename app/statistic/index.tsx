@@ -100,7 +100,7 @@ const Statistic = () => {
                         <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
                     </TouchableOpacity>
                     <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{t("Báo cáo chi tiết")}</Text>
-                    <View className='size-14 rounded-full' style={{ backgroundColor: theme.mode === "dark" ? theme.colors.card : theme.colors.background }} />
+                    <View className='size-14 rounded-full' style={{ backgroundColor: theme.mode === "dark" ? theme.colors.background : theme.colors.background }} />
                 </View>
                 <View className='rounded-md p-4 w-full flex-row items-center justify-between' style={{ backgroundColor: theme.colors.card }}>
                     <TouchableOpacity activeOpacity={1} onPress={() => setWeekAnchorMs(weekStart.subtract(7, 'day').valueOf())} className='px-3 py-2 rounded-md' style={{ backgroundColor: theme.colors.secondaryCard }}>

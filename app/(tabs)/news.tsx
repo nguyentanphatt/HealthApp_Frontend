@@ -214,7 +214,7 @@ const News = () => {
               <View className='size-14 rounded-full' style={{ backgroundColor: theme.colors.background }} />
             )}
             <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{type === "user" ? t("Cá nhân") : t("Cộng đồng")}</Text>
-            <TouchableOpacity onPress={() => router.push(`/(tabs)/news?type=user` as Href)}>
+            <TouchableOpacity activeOpacity={1} onPress={() => router.push(`/(tabs)/news?type=user` as Href)}>
               <Image source={user?.imageUrl ? { uri: user.imageUrl } : images.noImg} className='size-14 bg-gray-300 rounded-full' />
             </TouchableOpacity>
           </View>
@@ -261,7 +261,7 @@ const News = () => {
         )}
 
         {allBlogs.map((item, idx) => (
-          <TouchableOpacity className='px-4 py-2.5' key={idx} onPress={() => router.push(`/news/details/${item.id}` as Href)}>
+          <TouchableOpacity activeOpacity={1} className='px-4 py-2.5' key={idx} onPress={() => router.push(`/news/details/${item.id}` as Href)}>
             <View className='relative rounded-md shadow-md flex justify-between gap-2 w-full px-4 py-4' style={{ backgroundColor: theme.colors.card }}>
               <Image
                 source={item.image ? { uri: item.image } : images.noImg}

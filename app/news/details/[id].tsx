@@ -166,11 +166,11 @@ const Page = () => {
 
         </View>
       </ScrollView>
-      <TouchableOpacity
+{/*       <TouchableOpacity
         onPress={() => router.push(`/news/add` as Href)}
         className='absolute bottom-28 right-4 w-[60px] h-[60px] flex items-center justify-center bg-cyan-blue rounded-full'>
         <FontAwesome6 name="share" size={24} color={theme.mode === "dark" ? theme.colors.textPrimary : "#fff"} />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <TouchableOpacity
         onPress={() => likeBlogMutation.mutate(blog[0]?.id)}
         className='absolute bottom-8 right-4 w-[60px] h-[60px] flex items-center justify-center bg-red-400 rounded-full'>
@@ -190,8 +190,8 @@ const Page = () => {
             onPress: () => {
               router.push(`/news/add?id=${id}` as Href);
             },
-            backgroundColor: '#19B1FF',
-            textColor: theme.mode === "dark" ? theme.colors.textPrimary : "#fff",
+            //backgroundColor: '#19B1FF',
+            //textColor: theme.mode === "dark" ? theme.colors.textPrimary : "#fff",
           },
           {
             label: t('Xóa'),
@@ -199,8 +199,8 @@ const Page = () => {
               openModal("delete", { confirmDelete: () => deleteBlogMutation.mutate(id as string) });
               setShowAction(false);
             },
-            backgroundColor: '#ef4444',
-            textColor: theme.mode === "dark" ? theme.colors.textPrimary : "#fff",
+            //backgroundColor: '#ef4444',
+            //textColor: theme.mode === "dark" ? theme.colors.textPrimary : "#fff",
           }
         ]}
       />

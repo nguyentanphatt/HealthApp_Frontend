@@ -17,6 +17,7 @@ import { getUserProfile, getWeeklyGoal } from "@/services/user";
 import { getWaterStatus } from "@/services/water";
 import { getWorkoutVideo } from "@/services/workout";
 import { useModalStore } from "@/stores/useModalStore";
+import { useToastStore } from "@/stores/useToast";
 import { useUserStore } from "@/stores/useUserStore";
 import { convertWater } from "@/utils/convertMeasure";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -48,6 +49,7 @@ export default function HomeScreen() {
   const [showAll, setShowAll] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const hasLoadedSettings = useRef(false);
+  const { addToast } = useToastStore();
 
   useEffect(() => {
     const loadTempLanguage = async () => {
@@ -65,9 +67,8 @@ export default function HomeScreen() {
   }, [setUnit]);
 
   useEffect(() => {
-    // Only load settings once when component mounts
     if (hasLoadedSettings.current) return;
-    
+
     const loadSettings = async () => {
       try {
         hasLoadedSettings.current = true;
@@ -201,7 +202,7 @@ export default function HomeScreen() {
 
   const userProfileMutation = useMutation({
     mutationFn: async () => {
-        return await getUserProfile()
+      return await getUserProfile()
     },
     onSuccess: (response) => {
       setUser(response)
