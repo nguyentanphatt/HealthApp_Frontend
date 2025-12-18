@@ -132,6 +132,7 @@ const Page = () => {
       </View>
 
       <TouchableOpacity
+        activeOpacity={1}
         className="bg-cyan-blue rounded-full py-4 items-center mt-auto mx-5"
         onPress={onSubmit}
         disabled={isPending}
@@ -140,6 +141,7 @@ const Page = () => {
           {isPending ? t("Đang xử lý...") : t("Lưu thay đổi")}
         </Text>
       </TouchableOpacity>
+      <View className="h-[40px]"/>
     </View>
   );
 };

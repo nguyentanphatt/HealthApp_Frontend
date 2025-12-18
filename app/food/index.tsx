@@ -31,7 +31,6 @@ const Page = () => {
   const {
     data: foodStatus,
     isLoading: loadingFoodStatus,
-    refetch: refetchFoodStatus,
   } = useQuery({
     queryKey: ["foodStatus", { date: selectedDate }],
     queryFn: () =>
@@ -48,7 +47,6 @@ const Page = () => {
   const {
     data: foodWeeklyData,
     isLoading: loadingWeekly,
-    refetch: refetchWeekly,
   } = useQuery({
     queryKey: ["foodWeekly", { date: selectedDate }],
     queryFn: () =>
@@ -115,7 +113,6 @@ const Page = () => {
   );
 
   const filteredHistory = foodStatus?.history.filter((item) => item.name !== "Invalid") ?? [];
-
   const loading = loadingFoodStatus || loadingWeekly || loadingFoodStatus || loadingWeekly;
 
   if (loading) {
@@ -140,7 +137,7 @@ const Page = () => {
             <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
           <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{t("Thức ăn")}</Text>
-          <View className='size-14 rounded-full' style={{ backgroundColor: theme.mode === "dark" ? theme.colors.card : theme.colors.background }} />
+          <View className='size-14 rounded-full' style={{ backgroundColor: theme.mode === "dark" ? theme.colors.background : theme.colors.background }} />
         </View>
         <View className="px-4">
           <CalendarSwiper

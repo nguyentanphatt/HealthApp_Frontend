@@ -24,7 +24,7 @@ const Statistic = () => {
     const weekEnd = weekStart.add(7, 'day');
     const currentWeekStart = dayjs().startOf('isoWeek');
     const isAtCurrentWeek = weekStart.isSame(currentWeekStart, 'day');
-    const displayRange = `${weekStart.format('DD/MM')} - ${weekEnd.format('DD/MM')} Năm ${weekEnd.format('YYYY')}`;
+    const displayRange = `${weekStart.format('DD/MM')} - ${weekEnd.format('DD/MM')} ${t("Năm")} ${weekEnd.format('YYYY')}`;
     const { data: foodWeeklyData, isLoading: isLoadingFoodWeeklyData } = useQuery({
         queryKey: ["foodWeeklyData", weekStart.valueOf()],
         queryFn: () => foodWeekly({ date: weekStart.valueOf() }),
@@ -91,6 +91,7 @@ const Statistic = () => {
             });
         }
     }, [weekStart, queryClient, isAtCurrentWeek]);
+
     return (
         <View className='flex-1 pt-12' style={{ backgroundColor: theme.colors.background }}>
             <View className='flex-col items-center gap-5 py-5' style={{ backgroundColor: theme.colors.background }}>
@@ -99,10 +100,10 @@ const Statistic = () => {
                         <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
                     </TouchableOpacity>
                     <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{t("Báo cáo chi tiết")}</Text>
-                    <View className='size-14 rounded-full' style={{ backgroundColor: theme.mode === "dark" ? theme.colors.card : theme.colors.background }} />
+                    <View className='size-14 rounded-full' style={{ backgroundColor: theme.mode === "dark" ? theme.colors.background : theme.colors.background }} />
                 </View>
                 <View className='rounded-md p-4 w-full flex-row items-center justify-between' style={{ backgroundColor: theme.colors.card }}>
-                    <TouchableOpacity onPress={() => setWeekAnchorMs(weekStart.subtract(7, 'day').valueOf())} className='px-3 py-2 rounded-md' style={{ backgroundColor: theme.colors.secondaryCard }}>
+                    <TouchableOpacity activeOpacity={1} onPress={() => setWeekAnchorMs(weekStart.subtract(7, 'day').valueOf())} className='px-3 py-2 rounded-md' style={{ backgroundColor: theme.colors.secondaryCard }}>
                         <Text className='' style={{ color: theme.colors.textPrimary }}>{t("Trước")}</Text>
                     </TouchableOpacity>
                     <Text className='font-semibold text-xl' style={{ color: theme.colors.textPrimary }}>{displayRange}</Text>
@@ -112,6 +113,7 @@ const Statistic = () => {
                         </View>
                     ) : (
                         <TouchableOpacity
+                            activeOpacity={1}
                             onPress={() => setWeekAnchorMs(weekStart.add(7, 'day').valueOf())}
                             className='px-3 py-2 rounded-md' style={{ backgroundColor: theme.colors.secondaryCard }}>
                             <Text className='' style={{ color: theme.colors.textPrimary }}>{t("Sau")}</Text>

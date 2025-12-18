@@ -69,10 +69,10 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
         const hours = Math.floor(totalMinutes / 60);
         const minutes = Math.round(totalMinutes % 60);
         if (totalMinutes > 0 && totalMinutes < 1) {
-            return `${totalSeconds} giây`;
+            return `${totalSeconds} ${t("giây")}`;
         }
         if (totalMinutes >= 1) {
-            return `${hours} giờ ${minutes} phút`;
+            return `${hours} ${t("giờ")} ${minutes} ${t("phút")}`;
         }
     }
 
@@ -99,16 +99,16 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
                     <Text className="text-amber-500 font-semibold">{t("Calo")}: {(data?.summary?.totalCalories ?? 0).toFixed(2)} kcal</Text>
                 </View>
                 <View className="px-3 py-2 rounded-lg" style={{ backgroundColor: theme.colors.redInfoCard }}>
-                    <Text className="text-red-500 font-semibold">{t("Bước chân")}: {data?.summary?.totalSteps ?? 0} bước</Text>
+                    <Text className="text-red-500 font-semibold">{t("Bước chân")}: {data?.summary?.totalSteps ?? 0} {t("bước")}</Text>
                 </View>
             </View>
 
             <View className='flex-col gap-2'>
                 <Text className='font-semibold' style={{ color: theme.colors.textPrimary }}>{t("So với tuần trước")}</Text>
                 <View className="flex-row justify-between mb-3">
-                    {renderDelta('Bước', data.comparison.steps.percentage)}
-                    {renderDelta('Thời gian', data.comparison.time.percentage)}
-                    {renderDelta('Quãng đường', data.comparison.distance.percentage)}
+                    {renderDelta(t("Bước chân"), data.comparison.steps.percentage)}
+                    {renderDelta(t("Thời gian"), data.comparison.time.percentage)}
+                    {renderDelta(t("Quãng đường"), data.comparison.distance.percentage)}
                 </View>
             </View>
 
@@ -153,11 +153,12 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
                         spacing={12}
                         hideRules
                         yAxisThickness={0}
-                        xAxisThickness={0}
+                        xAxisThickness={1}
+                        xAxisColor={theme.colors.border}
+                        xAxisLabelTexts={['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']}
                         noOfSections={3}
                         maxValue={maxSteps}
                         barBorderRadius={6}
-                        isAnimated
                         renderTooltip={(item: any) => (
                             <View className="rounded-lg shadow-lg p-2" style={{ backgroundColor: theme.colors.secondaryCard }}>
                                 <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>{item.label} • {item.date}</Text>
@@ -166,10 +167,11 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
                         )}
                         xAxisLabelTextStyle={{
                             color: theme.colors.textSecondary,
-                          }}
-                          yAxisTextStyle={{
+                            fontSize: 12,
+                        }}
+                        yAxisTextStyle={{
                             color: theme.colors.textSecondary,
-                          }}
+                        }}
                     />
                 </View>
             </View>
@@ -184,11 +186,12 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
                             spacing={12}
                             hideRules
                             yAxisThickness={0}
-                            xAxisThickness={0}
+                            xAxisThickness={1}
+                            xAxisColor={theme.colors.border}
+                            xAxisLabelTexts={['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']}
                             noOfSections={3}
                             maxValue={maxCalories}
                             barBorderRadius={6}
-                            isAnimated
                             renderTooltip={(item: any) => (
                                 <View className="rounded-lg shadow-lg p-2" style={{ backgroundColor: theme.colors.secondaryCard }}>
                                     <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>{item.label} • {item.date}</Text>
@@ -197,10 +200,11 @@ const WorkoutWeeklyCard = ({ data }: { data: WorkoutWeekly }) => {
                             )}
                             xAxisLabelTextStyle={{
                                 color: theme.colors.textSecondary,
-                              }}
-                              yAxisTextStyle={{
+                                fontSize: 12,
+                            }}
+                            yAxisTextStyle={{
                                 color: theme.colors.textSecondary,
-                              }}
+                            }}
                         />
                     </View>
                 ) : (

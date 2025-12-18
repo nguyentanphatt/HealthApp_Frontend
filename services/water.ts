@@ -3,12 +3,13 @@ import {
   UpdateWaterDailyGoalResponse,
   UpdateWaterRecordResponse,
   UpdateWaterReminderResponse,
+  WaterRecords,
   WaterReminderResponse,
   WaterStatusResponse,
   WaterWeeklyResponse,
   WeatherResponse,
 } from "@/constants/type";
-import { privateClient, publicClient } from "./client";
+import { privateClient, publicClient, uploadClient } from "./client";
 
 export const getWaterStatus = async (options?: {
   date?: string;
@@ -150,6 +151,43 @@ export const updateWaterReminder = async (
       expiresIn,
       enabled,
     });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const submitWaterAI = async (
+  fileUri: string,
+): Promise<{success: boolean, message: string, data: WaterRecords}> => {
+  try {
+    console.log("Uploading file:", fileUri);
+    
+    const formData = new FormData();
+
+    const filename = fileUri.split("/").pop() || `photo.jpg`;
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+    const file: any = {
+      uri: fileUri,
+      name: filename,
+      type,
+    };
+
+    console.log("File object:", file);
+
+    formData.append("file", file);
+
+    console.log("FormData prepared, sending request...");
+
+    const response = await uploadClient.post("/api/water/waterai", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    
+    console.log("Upload response:", response.data);
     return response.data;
   } catch (error) {
     throw error;

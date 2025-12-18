@@ -15,7 +15,6 @@ export async function registerCategories() {
 }
 
 export async function registerForPushNotificationsAsync() {
-  // Set notification handler for all platforms - MUST be called before scheduling
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldPlaySound: true,
@@ -33,7 +32,6 @@ export async function registerForPushNotificationsAsync() {
       sound: "default",
     });
 
-    // Create sleep reminder channel with HIGH importance
     await Notifications.setNotificationChannelAsync("sleep-reminder", {
       name: "Sleep Reminders",
       importance: Notifications.AndroidImportance.HIGH,
@@ -51,15 +49,9 @@ export async function registerForPushNotificationsAsync() {
   return false;
 }
 
-// Lên lịch nhắc nhở theo ReminderList
-
 
 export async function scheduleReminders(reminders: WaterReminder[]) {
   console.log("Gọi scheduleReminders với reminders:", reminders);
-  // XÓA DÒNG NÀY (KHÔNG ĐĂNG KÝ LISTENER Ở ĐÂY)
-  // Notifications.addNotificationReceivedListener(notification => {
-  //   console.log("Notification received:", notification);
-  // });
 
   await Notifications.cancelAllScheduledNotificationsAsync();
 
@@ -93,10 +85,8 @@ export async function scheduleReminders(reminders: WaterReminder[]) {
   }
 }
 
-// Schedule sleep time notification
 export async function scheduleSleepNotification(sleepStartTime: string, wakeUpTime: string) {
   try {
-    // Cancel existing sleep notifications
     const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
     for (const notification of scheduledNotifications) {
       if (notification.content.categoryIdentifier === "sleep-reminder") {
@@ -104,29 +94,24 @@ export async function scheduleSleepNotification(sleepStartTime: string, wakeUpTi
       }
     }
 
-    // Parse times
     const [sleepHour, sleepMinute] = sleepStartTime.split(":").map(Number);
-    const [wakeHour, wakeMinute] = wakeUpTime.split(":").map(Number);
     const now = new Date();
 
     console.log(`[Sleep Notification] Current time: ${now.toLocaleString('vi-VN')}`);
     console.log(`[Sleep Notification] Sleep time: ${sleepStartTime}, Wake time: ${wakeUpTime}`);
 
-    // Calculate scheduled time for today
     const scheduledTime = new Date();
     scheduledTime.setHours(sleepHour, sleepMinute, 0, 0);
 
     console.log(`[Sleep Notification] Scheduled time (today): ${scheduledTime.toLocaleString('vi-VN')}`);
 
-    // Check if the sleep start time has already passed today
     if (scheduledTime.getTime() < now.getTime()) {
       console.log(`[Sleep Notification] Sleep start time (${sleepStartTime}) has already passed today. Skipping notification.`);
-      return true; // Skip notification, no need to schedule
+      return true; 
     }
 
     const delaySeconds = Math.floor((scheduledTime.getTime() - now.getTime()) / 1000);
 
-    // Don't schedule if delay is too short (less than 10 seconds)
     if (delaySeconds < 10) {
       console.log(`[Sleep Notification] Delay too short (${delaySeconds}s). Skipping notification.`);
       return true;
@@ -134,7 +119,6 @@ export async function scheduleSleepNotification(sleepStartTime: string, wakeUpTi
 
     console.log(`[Sleep Notification] Scheduling notification in ${delaySeconds} seconds (${Math.floor(delaySeconds / 3600)}h ${Math.floor((delaySeconds % 3600) / 60)}m)`);
 
-    // Schedule one-time notification at the specific time
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: "Đã đến giờ ngủ! 😴",
@@ -157,7 +141,6 @@ export async function scheduleSleepNotification(sleepStartTime: string, wakeUpTi
 
     console.log(`[Sleep Notification] ✅ Notification scheduled successfully with ID: ${notificationId}`);
 
-    // Verify the notification was scheduled
     const allScheduled = await Notifications.getAllScheduledNotificationsAsync();
     const sleepNotifications = allScheduled.filter(n => n.content.categoryIdentifier === "sleep-reminder");
     console.log(`[Sleep Notification] Total scheduled sleep notifications: ${sleepNotifications.length}`);
@@ -174,7 +157,6 @@ export async function scheduleSleepNotification(sleepStartTime: string, wakeUpTi
   }
 }
 
-// Cancel sleep notifications
 export async function cancelSleepNotifications() {
   try {
     const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();

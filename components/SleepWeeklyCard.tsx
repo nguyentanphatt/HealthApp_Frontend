@@ -71,11 +71,12 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
                                 spacing={12}
                                 hideRules
                                 yAxisThickness={0}
-                                xAxisThickness={0}
+                                xAxisThickness={1}
+                                xAxisColor={theme.colors.border}
+                                xAxisLabelTexts={['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']}
                                 noOfSections={3}
                                 maxValue={maxHours}
                                 barBorderRadius={6}
-                                isAnimated
                                 renderTooltip={(item: any) => (
                                     <View className="rounded-lg shadow-lg p-2" style={{ backgroundColor: theme.colors.secondaryCard }}>
                                         <Text className="text-xs" style={{ color: theme.colors.textPrimary }}>{item.label} • {item.date}</Text>
@@ -84,6 +85,7 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
                                 )}
                                 xAxisLabelTextStyle={{
                                     color: theme.colors.textSecondary,
+                                    fontSize: 12,
                                 }}
                                 yAxisTextStyle={{
                                     color: theme.colors.textSecondary,
@@ -98,7 +100,7 @@ const SleepWeeklyCard = ({ data: propsData }: { data: SleepWeekly }) => {
                             <Text className="font-semibold text-xl" style={{ color: theme.colors.textPrimary }}>{actual.longestSleep?.date || '-'}</Text>
                             <Text className="text-blue-600 font-semibold text-xl">{(actual.longestSleep?.hours ?? 0).toFixed(1)}h</Text>
                         </View>
-                        <Text className="text-sm mt-0.5" style={{ color: theme.colors.textSecondary }}>Từ {actual.longestSleep?.startTime || '--:--'} đến {actual.longestSleep?.endTime || '--:--'}</Text>
+                        <Text className="text-sm mt-0.5" style={{ color: theme.colors.textSecondary }}>{t("Từ")} {actual.longestSleep?.startTime || '--:--'} {t("đến")} {actual.longestSleep?.endTime || '--:--'}</Text>
                     </View>
                 </>
             )}

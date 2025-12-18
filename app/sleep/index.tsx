@@ -47,7 +47,7 @@ const Page = () => {
     select: (res) => res.data,
   });
 
-  const { data: sleepSession, isLoading: loadingSleepSession } = useQuery({
+  const { data: sleepSession } = useQuery({
     queryKey: ["sleepSession", {recordId: sleepStatus?.history?.[0]?.recordId}],
     queryFn: () =>
       getSleepSession(sleepStatus?.history?.[0]?.recordId || ""),
@@ -86,7 +86,6 @@ const Page = () => {
       const sleepRecord = sleepStatus.history[0];
       const recordId = sleepRecord.recordId;
 
-      // Use the actual timestamps from the record
       const startTimestamp = new Date(sleepRecord.startAt).getTime();
       const endTimestamp = new Date(sleepRecord.endedAt).getTime();
 
@@ -99,19 +98,11 @@ const Page = () => {
         currentTime: Date.now()
       });
 
-      // Callback function to save sleep points
       const handleSaveSleepPoint = async (type: 'sleep' | 'awake', timestamp: number) => {
         try {
           const response = await saveSleepPoint(type, timestamp.toString(), recordId);
           if (response.success) {
             console.log(`[Sleep Screen] Sleep point saved: ${type} at ${new Date(timestamp).toLocaleString('vi-VN')}`);
-            // Optionally show a subtle toast notification
-            // Toast.show({
-            //   type: "info",
-            //   text1: t(`Đã ghi nhận ${type === 'sleep' ? 'ngủ' : 'thức'}`),
-            //   position: "bottom",
-            //   visibilityTime: 2000,
-            // });
           }
         } catch (error) {
           console.error(`[Sleep Screen] Failed to save sleep point:`, error);
@@ -122,25 +113,21 @@ const Page = () => {
             position: "bottom",
             visibilityTime: 3000,
           });
-          throw error; // Re-throw to trigger retry logic in screenMonitor
+          throw error; 
         }
       };
 
-      // Start screen monitoring with actual timestamps
-      // The service will automatically stop when endTime is reached
       screenMonitor.startTracking(startTimestamp, endTimestamp, recordId, handleSaveSleepPoint);
     }
   }, [hasSleepData, sleepStatus?.history?.[0]?.recordId, t]);
 
-  // Transform sleepSession data to chart format
   const getSleepChartData = () => {
     if (!sleepSession || (!sleepSession.sleep && !sleepSession.awake)) {
       return [];
     }
 
-    const chartPoints: Array<{ value: number; label: string; time: string }> = [];
+    const chartPoints: { value: number; label: string; time: string }[] = [];
 
-    // Add sleep points (value = 1)
     if (sleepSession.sleep && Array.isArray(sleepSession.sleep)) {
       sleepSession.sleep.forEach((point: { pointId: string; time: string }) => {
         chartPoints.push({
@@ -151,7 +138,6 @@ const Page = () => {
       });
     }
 
-    // Add awake points (value = 0)
     if (sleepSession.awake && Array.isArray(sleepSession.awake)) {
       sleepSession.awake.forEach((point: { pointId: string; time: string }) => {
         chartPoints.push({
@@ -162,10 +148,8 @@ const Page = () => {
       });
     }
 
-    // Sort by time
     chartPoints.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-
-    // Format labels with time in HH:mm format (Vietnam time)
+    
     chartPoints.forEach((point) => {
       const vnTime = utcTimeToVnTime(new Date(point.time).getTime());
       point.label = `${String(vnTime.hour).padStart(2, '0')}:${String(vnTime.minute).padStart(2, '0')}`;
@@ -284,8 +268,8 @@ const Page = () => {
   const loading = loadingSleepStatus
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#000" />
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.textPrimary} />
       </View>
     );
   }

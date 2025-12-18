@@ -10,7 +10,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FlatList, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import Toast from 'react-native-toast-message'
-const index = () => {
+const Page = () => {
     const router = useRouter();
     const { openModal } = useModalStore();
     const { id } = useLocalSearchParams();
@@ -30,6 +30,8 @@ const index = () => {
         queryFn: () => getBlogById(id as string),
         select: (res) => res.blogs[0],
     });
+    console.log("id", id);
+    
 
     useEffect(() => {
         if (blog) {
@@ -39,7 +41,8 @@ const index = () => {
             setSelectedTag({ label: blog.category, value: blog.category });
             shouldAutoScrollRef.current = false;
         }
-    }, [id]);
+        console.log(blog)
+    }, [blog]);
 
     const pickImage = async () => {
         contentInputRef.current?.blur();
@@ -146,22 +149,6 @@ const index = () => {
         }
     };
 
-    const logData = (title: string, image: string, content: string, category: string) => {
-        const date = new Date();
-        const timestamp = date.getTime();
-        let filename = "";
-        if (image) {
-            filename = image.split('/').pop() || '';
-        }
-
-        console.log("title", title);
-        console.log("image", image);
-        console.log("filename", filename);
-        console.log("content", content);
-        console.log("createAt", timestamp);
-        console.log("category", category);
-    }
-
     return (
         <ScrollView
             ref={scrollViewRef}
@@ -177,7 +164,7 @@ const index = () => {
                     </TouchableOpacity>
                     <Text className="text-2xl font-bold self-center ml-2" style={{ color: theme.colors.textPrimary }}>{id ? t("Sửa bài viết") : t("Thêm bài viết")}</Text>
                     <TouchableOpacity onPress={handleSave}>
-                        <Text className="text-xl font-bold text-cyan-blue self-center">{id ? t("Sửa") : t("Lưu")}</Text>
+                        <Text className="text-xl font-bold text-cyan-blue self-center">{id ? t("Sửa") : t("Tạo")}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -213,6 +200,7 @@ const index = () => {
                                 const isSelectedTag = selectedTag.value === item.value;
                                 return (
                                     <TouchableOpacity
+                                        activeOpacity={1}
                                         onPress={() => setSelectedTag(item)}
                                         className={`px-4 py-2 rounded-full`}
                                         style={{
@@ -332,4 +320,4 @@ const index = () => {
     )
 }
 
-export default index
+export default Page;

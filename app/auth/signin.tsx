@@ -65,7 +65,8 @@ const Signin = () => {
   //Comment this when testing on local expo go
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: "Your Web Client ID",
+      webClientId:
+        "Your Web Client ID",
     });
   },[])
 
@@ -74,7 +75,7 @@ const Signin = () => {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
       if (isSuccessResponse(response)) {
-        const { idToken, user } = response.data;
+        const { user } = response.data;
         const { name, email, photo } = user;
         console.log("name", name);
         console.log("email", email);

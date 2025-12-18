@@ -1,7 +1,8 @@
+import i18n from "@/plugins/i18n";
 import { getUserSetting, updateUserSetting } from "@/services/user";
 import { useAuthStore } from "@/stores/useAuthStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 
 type Units = {
   height: "cm" | "ft";
@@ -38,9 +39,16 @@ const UNITS_STORAGE_KEY = '@health_app_units';
 export const UnitProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [units, setUnits] = useState<Units>(defaultUnits);
   const [isLoaded, setIsLoaded] = useState(false);
+  const isUpdatingLanguage = useRef(false);
+  const languageUpdateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     loadUnits();
+    return () => {
+      if (languageUpdateTimeout.current) {
+        clearTimeout(languageUpdateTimeout.current);
+      }
+    };
   }, []);
 
   const loadUnits = async () => {
@@ -50,15 +58,20 @@ export const UnitProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const userSettings = await getUserSetting();
           if (userSettings) {
+            const language = ((userSettings as any).lang || userSettings.language) as "vi" | "en" | undefined;
             const apiUnits: Units = {
               height: (userSettings.height as "cm" | "ft") || defaultUnits.height,
               weight: (userSettings.weight as "kg" | "g") || defaultUnits.weight,
               water: (userSettings.water as "ml" | "fl oz") || defaultUnits.water,
               temperature: (userSettings.temp as "C" | "F") || defaultUnits.temperature,
-              language: (userSettings.language as "vi" | "en") || defaultUnits.language,
+              language: (language === "vi" || language === "en") ? language : defaultUnits.language,
             };
             setUnits(apiUnits);
             await AsyncStorage.setItem(UNITS_STORAGE_KEY, JSON.stringify(apiUnits));
+            if (apiUnits.language === "vi" || apiUnits.language === "en") {
+              await i18n.changeLanguage(apiUnits.language);
+              await AsyncStorage.setItem("language", apiUnits.language);
+            }
             setIsLoaded(true);
             return;
           }
@@ -96,15 +109,25 @@ export const UnitProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       const userSettings = await getUserSetting();
       if (userSettings) {
+        // API trả về 'lang' nhưng type có 'language', cần map lại
+        const language = ((userSettings as any).lang || userSettings.language) as "vi" | "en" | undefined;
         const apiUnits: Units = {
           height: (userSettings.height as "cm" | "ft") || defaultUnits.height,
           weight: (userSettings.weight as "kg" | "g") || defaultUnits.weight,
           water: (userSettings.water as "ml" | "fl oz") || defaultUnits.water,
           temperature: (userSettings.temp as "C" | "F") || defaultUnits.temperature,
-          language: (userSettings.language as "vi" | "en") || defaultUnits.language,
+          // Nếu đang trong quá trình update language, giữ nguyên language hiện tại
+          language: isUpdatingLanguage.current 
+            ? units.language 
+            : ((language === "vi" || language === "en") ? language : defaultUnits.language),
         };
         setUnits(apiUnits);
         await AsyncStorage.setItem(UNITS_STORAGE_KEY, JSON.stringify(apiUnits));
+        // Chỉ cập nhật i18n nếu không đang trong quá trình update language
+        if (!isUpdatingLanguage.current && (apiUnits.language === "vi" || apiUnits.language === "en")) {
+          await i18n.changeLanguage(apiUnits.language);
+          await AsyncStorage.setItem("language", apiUnits.language);
+        }
       }
     } catch (error) {
       console.error('Error loading units from API:', error);
@@ -116,6 +139,24 @@ export const UnitProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUnits(newUnits);
     saveUnitsToStorage(newUnits);
     updateUnitsToAPI(newUnits);
+    // Cập nhật i18n ngay khi thay đổi language
+    if (key === "language" && (value === "vi" || value === "en")) {
+      // Set flag để tránh loadFromAPI override
+      isUpdatingLanguage.current = true;
+      i18n.changeLanguage(value);
+      AsyncStorage.setItem("language", value);
+      
+      // Clear timeout cũ nếu có
+      if (languageUpdateTimeout.current) {
+        clearTimeout(languageUpdateTimeout.current);
+      }
+      
+      // Reset flag sau 3 giây (đủ thời gian để API update xong)
+      languageUpdateTimeout.current = setTimeout(() => {
+        isUpdatingLanguage.current = false;
+        languageUpdateTimeout.current = null;
+      }, 3000);
+    }
   };
 
   const saveUnitsToStorage = async (unitsToSave: Units) => {

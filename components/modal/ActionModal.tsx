@@ -25,8 +25,15 @@ export default function ActionModal({ visible, closeModal , title, options }: Ac
             animationType="fade"
             onRequestClose={closeModal}
         >
-            <View className="flex-1 justify-end bg-black/50">
-                <View className="rounded-t-3xl p-6" style={{ backgroundColor: theme.colors.card }}>
+            <TouchableOpacity 
+                activeOpacity={1}
+                className="flex-1 justify-end bg-black/50"
+                onPress={closeModal}
+            >
+                <View 
+                    className="rounded-t-3xl p-6" 
+                    style={{ backgroundColor: theme.colors.card }}
+                >
                     <Text className="text-xl font-bold text-center mb-4" style={{ color: theme.colors.textPrimary }}>{title}</Text>
                     {options.map((option, index) => (
                         <TouchableOpacity
@@ -48,14 +55,8 @@ export default function ActionModal({ visible, closeModal , title, options }: Ac
                             </Text>
                         </TouchableOpacity>
                     ))}
-                    <TouchableOpacity
-                        onPress={closeModal}
-                        className="py-4 px-4 rounded-lg bg-gray-200"
-                    >
-                        <Text className="text-lg text-center text-gray-700">{t("Hủy")}</Text>
-                    </TouchableOpacity>
                 </View>
-            </View>
+            </TouchableOpacity>
         </Modal>
     );
 }

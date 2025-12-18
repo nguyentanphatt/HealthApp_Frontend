@@ -3,7 +3,7 @@ import { useUnits } from "@/context/unitContext";
 import i18n from "@/plugins/i18n";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -21,12 +21,6 @@ const Page = () => {
     { label: t("Tiếng Việt"), value: "vi" },
     { label: t("Tiếng Anh"), value: "en" },
   ];
-
-  useEffect(() => {
-    if (isLoaded) {
-      i18n.changeLanguage(units.language);
-    }
-  }, [units.language, isLoaded]);
 
   const onSelect = async (lang: "vi" | "en") => {
     setUnit("language", lang);
@@ -46,7 +40,7 @@ const Page = () => {
           <TouchableOpacity onPress={() => router.back()}>
             <FontAwesome6 name="chevron-left" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold  self-center">{t("Ngôn ngữ")}</Text>
+          <Text className="text-2xl font-bold  self-center" style={{ color: theme.colors.textPrimary }}>{t("Ngôn ngữ")}</Text>
           <View style={{ width: 24 }} />
         </View>
       </View>
@@ -54,6 +48,7 @@ const Page = () => {
         <View className="flex w-full gap-4 rounded-md shadow-md p-4" style={{ backgroundColor: theme.colors.secondaryCard }}>
           {options.map((item, idx) => (
             <TouchableOpacity
+              activeOpacity={1}
               key={item.value}
               onPress={() => onSelect(item.value as "vi" | "en")}
               className="flex gap-4"

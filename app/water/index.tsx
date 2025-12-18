@@ -1,9 +1,9 @@
 import CalendarSwiper from "@/components/CalendarSwiper";
 import InfoCard from "@/components/InfoCard";
+import ActionModal from "@/components/modal/ActionModal";
 import ReminderList from "@/components/ReminderList";
 import WaterVector from "@/components/vector/WaterVector";
 import WaterHistory from "@/components/WaterHistory";
-import * as Location from 'expo-location';
 import Weather from "@/components/Weather";
 import { WaterStatus, WeatherResponse } from "@/constants/type";
 import { useAppTheme } from "@/context/appThemeContext";
@@ -13,16 +13,20 @@ import {
   getWaterReminder,
   getWaterStatus,
   saveWaterRecord,
+  submitWaterAI,
   updateWaterDailyGoal,
   WaterWeekly,
   WeatherSuggest,
 } from "@/services/water";
 import { useModalStore } from "@/stores/useModalStore";
+import { useToastStore } from "@/stores/useToast";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import * as ImagePicker from "expo-image-picker";
+import * as Location from 'expo-location';
 import { Href, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -34,7 +38,6 @@ import {
   View
 } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
-import Toast from "react-native-toast-message";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const Page = () => {
@@ -48,6 +51,9 @@ const Page = () => {
   const [selectedDate, setSelectedDate] = useState(
     params.selectedDate ? Number(params.selectedDate) : 0
   );
+  const { addToast } = useToastStore();
+  const [isUploading, setIsUploading] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
   const currentDate = Date.now();
   const initialValue =
     units.water === "ml"
@@ -89,33 +95,26 @@ const Page = () => {
     queryKey: ["weatherReport"],
     queryFn: async () => {
       try {
-    
         const { status } = await Location.requestForegroundPermissionsAsync();
-
         if (status !== 'granted') {
           console.log('Location permission denied');
-      
           const ip = await getIp();
           return WeatherSuggest(ip);
         }
-
-    
         const location = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
-
         const { latitude, longitude } = location.coords;
         console.log('User location:', latitude, longitude);
-    
         return WeatherSuggest(`${latitude},${longitude}`);
       } catch (error) {
         console.error('Location error:', error);
-    
+
         const ip = await getIp();
         return WeatherSuggest(ip);
       }
     },
-    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
+    staleTime: 1000 * 60 * 30,
   });
 
   const {
@@ -213,14 +212,55 @@ const Page = () => {
     try {
       const response = await updateWaterDailyGoal(amount, time);
       if (response.success) {
-        Toast.show({
-          type: "success",
-          text1: response.message,
-        });
+        console.log("response", response);
+        
         refetchWaterStatus();
       }
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const pickImage = async () => {
+    setShowImageModal(false);
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 1,
+      allowsMultipleSelection: false,
+    });
+    if (!result.canceled && result.assets[0]) {
+      await handleImageUpload(result.assets[0].uri);
+    }
+  };
+
+  const takePhoto = async () => {
+    setShowImageModal(false);
+    let result = await ImagePicker.launchCameraAsync({
+      quality: 1,
+    });
+    if (!result.canceled && result.assets[0]) {
+      await handleImageUpload(result.assets[0].uri);
+    }
+  };
+
+  const handleImageUpload = async (uri: string) => {
+    try {
+      setIsUploading(true);
+      const response = await submitWaterAI(uri);
+      console.log("response", response);
+      if (response.success) {
+        await saveWaterRecord(response.data.amount, response.data.time);
+        refetchWaterStatus();
+        refetchWeekly();
+        refetchReminder();
+      } else if(response.success === false) {
+        addToast("Ảnh không hợp lệ, vui lòng thử lại", "error");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      console.log("Có lỗi xảy ra khi upload ảnh");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -334,20 +374,29 @@ const Page = () => {
           {(() => {
             const isToday = selectedDate === 0 || dayjs.unix(selectedDate).isSame(dayjs(), 'day');
             return (
-              <TouchableOpacity
-                disabled={!isToday}
-                accessibilityState={{ disabled: !isToday }}
-                className={`self-center flex-row items-center justify-center w-[70%] py-3 rounded-full ${isToday ? 'bg-cyan-blue' : 'bg-gray-300'}`}
-                onPress={isToday ? () => openModal("waterwheel", {
-                  title: `${t("Lượng nước uống")} (${units.water})`,
-                  items: items,
-                  initialValue: initialValue,
-                  currentDate: currentDate,
-                  handleConfirm: handleConfirm,
-                }) : undefined}
-              >
-                <Text className="text-xl text-white">{t("Thêm")}</Text>
-              </TouchableOpacity>
+              <View className="flex flex-row items-center justify-center gap-2">
+                <TouchableOpacity
+                  disabled={!isToday}
+                  accessibilityState={{ disabled: !isToday }}
+                  className={`self-center flex-row items-center justify-center w-[70%] py-3 rounded-full ${isToday ? 'bg-cyan-blue' : 'bg-gray-300'}`}
+                  onPress={isToday ? () => openModal("waterwheel", {
+                    title: `${t("Lượng nước uống")} (${units.water})`,
+                    items: items,
+                    initialValue: initialValue,
+                    currentDate: currentDate,
+                    handleConfirm: handleConfirm,
+                  }) : undefined}
+                >
+                  <Text className="text-xl text-white">{t("Thêm")}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  activeOpacity={1} 
+                  className="size-14 rounded-full flex items-center justify-center bg-cyan-blue"
+                  onPress={() => setShowImageModal(true)}
+                >
+                  <FontAwesome6 name="camera" size={24} color={theme.colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
             )
           })()}
         </View>
@@ -397,10 +446,14 @@ const Page = () => {
               noOfSections={3}
               yAxisLabelTexts={yAxisLabelTexts}
               maxValue={displayWater(2000).value}
-              xAxisLabelTextStyle={{ color: theme.colors.textPrimary }}
-              yAxisTextStyle={{ color: theme.colors.textPrimary }}
+              xAxisThickness={1}
               xAxisColor={theme.colors.border}
               yAxisColor={theme.colors.border}
+              xAxisLabelTextStyle={{
+                color: theme.colors.textPrimary,
+                fontSize: 12,
+              }}
+              yAxisTextStyle={{ color: theme.colors.textPrimary }}
             />
           </ScrollView>
         </View>
@@ -413,6 +466,36 @@ const Page = () => {
           waterStatus={waterStatus as WaterStatus}
         />
       </ScrollView>
+
+      <ActionModal
+        visible={showImageModal}
+        closeModal={() => setShowImageModal(false)}
+        title={t("Chọn ảnh")}
+        options={[
+          {
+            label: t("Thư viện"),
+            onPress: pickImage,
+          },
+          {
+            label: t("Chụp ảnh"),
+            onPress: takePhoto,
+          },
+        ]}
+      />
+
+      {isUploading && (
+        <View className="absolute inset-0 bg-black/50 justify-center items-center z-50">
+          <View className="rounded-lg p-6 flex items-center justify-center w-[90%] h-[300px]" style={{ backgroundColor: theme.colors.card }}>
+            <ActivityIndicator size="large" color="#19B1FF" />
+            <Text className="text-2xl font-bold mt-4 text-center" style={{ color: theme.colors.textPrimary }}>
+              {t("Đang upload ảnh...")}
+            </Text>
+            <Text className="text-lg mt-2 text-center" style={{ color: theme.colors.textPrimary }}>
+              {t("Vui lòng chờ trong giây lát")}
+            </Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
