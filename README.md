@@ -103,6 +103,11 @@ Common scripts (may vary depending on `package.json`):
 - `npm run lint`: run linter (if configured).
 
 ---
+## Document
+- [Figma](https://www.figma.com/design/ZaRVF6WRn12aYFgCpMooQ5/HealthCare?node-id=0-1&t=DT3ILbTUToV0jg3K-1)
+
+---
+
 ## Learn More
 
 - Expo → https://docs.expo.dev  
